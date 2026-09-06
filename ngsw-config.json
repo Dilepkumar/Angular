@@ -1,0 +1,22 @@
+{
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "foreground",
+      "resources": {
+        "files": ["/favicon.ico", "/index.html", "/*.css", "/*.js", "/manifest.webmanifest"]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "api-cache",
+      "urls": { "v1": { "urlPattern": "^https://your-api.onmonsterasp.com/api/.*", "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 100,
+        "maxAge": "5m"
+      }}}
+    }
+  ]
+}

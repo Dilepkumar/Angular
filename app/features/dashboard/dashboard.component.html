@@ -1,0 +1,95 @@
+<div class="min-h-dvh bg-slate-50">
+  <header class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white px-5 pt-6 pb-8 rounded-b-3xl">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-emerald-200 text-xs">Welcome back,</p>
+        <h1 class="font-bold text-lg">{{ me()?.fullName?.split(' ')[0] }} 👋</h1>
+      </div>
+      <button (click)="openNotifications()"
+              class="relative bg-white/15 rounded-full p-2.5 text-xl">
+        🔔
+        @if (unreadCount() > 0) {
+          <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold
+                       rounded-full w-5 h-5 flex items-center justify-center">
+            {{ unreadCount() > 9 ? '9+' : unreadCount() }}
+          </span>
+        }
+      </button>
+    </div>
+    <p class="mt-3 text-emerald-100 text-sm font-medium">{{ data()?.groupName }}</p>
+  </header>
+
+  @if (data()?.actionItems?.length) {
+    <section class="px-4 -mt-5 space-y-2">
+      @for (a of data()!.actionItems; track a.message) {
+        <button [routerLink]="[a.link]"
+                class="w-full bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3 text-left border-l-4
+                       {{ a.type === 'pool_low' ? 'border-red-500' : 'border-amber-400' }}">
+          <span class="text-2xl">{{ a.type === 'iou_owe' ? '💸' : a.type === 'iou_owed' ? '📥' :
+                                     a.type === 'bill_due' ? '📋' : a.type === 'pool_contribute' ? '💰' : '⚠️' }}</span>
+          <span class="flex-1 text-sm font-medium text-slate-700">{{ a.message }}</span>
+          <span class="text-slate-300">›</span>
+        </button>
+      }
+    </section>
+  } @else {
+    <section class="px-4 -mt-5">
+      <div class="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3 border-l-4 border-emerald-500">
+        <span class="text-2xl">🎉</span>
+        <span class="text-sm font-medium text-slate-700">All caught up! Nothing needs your attention.</span>
+      </div>
+    </section>
+  }
+
+  <section class="px-4 mt-4 space-y-3">
+    @for (b of bucketCards(); track b.title) {
+      <button [routerLink]="b.link"
+              class="w-full bg-white rounded-2xl shadow-sm p-4 flex items-center gap-4 text-left active:scale-[0.98] transition">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl {{ b.bg }}">{{ b.icon }}</div>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs text-slate-400 font-medium">{{ b.title }}</p>
+          <p class="text-xl font-bold {{ b.amountClass }}">₹{{ abs(b.amount) | number:'1.2-2' }}</p>
+          <p class="text-xs text-slate-500 truncate">{{ b.subtitle }}</p>
+        </div>
+        <span class="text-xs font-semibold px-2 py-1 rounded-full {{ b.badgeClass }}">{{ b.badge }}</span>
+      </button>
+    }
+  </section>
+
+  <section class="px-4 mt-5">
+    <h2 class="text-sm font-semibold text-slate-600 mb-2">Flatmates</h2>
+    <div class="flex gap-3 overflow-x-auto pb-1">
+      @for (m of data()?.members ?? []; track m.id; let i = $index) {
+        <div class="shrink-0 flex flex-col items-center w-16">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg
+                      {{ avatarColors(i) }} relative">
+            {{ m.name.charAt(0) }}
+            @if (m.isAdmin) {
+              <span class="absolute -bottom-1 -right-1 bg-amber-400 rounded-full w-5 h-5
+                           flex items-center justify-center text-[10px]">👑</span>
+            }
+          </div>
+          <span class="text-[11px] text-slate-600 mt-1 truncate w-full text-center">{{ m.name.split(' ')[0] }}</span>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="px-4 mt-5 pb-8">
+    <h2 class="text-sm font-semibold text-slate-600 mb-2">Recent activity</h2>
+    <div class="bg-white rounded-2xl shadow-sm divide-y divide-slate-100">
+      @for (a of data()?.recentActivity ?? []; track a.at) {
+        <div class="flex items-center gap-3 p-3">
+          <span class="text-lg">{{ a.bucket === 'iou' ? '🤝' : a.bucket === 'bills' ? '📋' : '🛒' }}</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm truncate"><span class="font-semibold">{{ a.actor }}</span>
+               <span class="text-slate-600"> {{ a.text }}</span></p>
+            <p class="text-xs text-slate-400">{{ a.at | date:'EEE, dd MMM · hh:mm a' }}</p>
+          </div>
+        </div>
+      } @empty {
+        <p class="p-4 text-sm text-slate-400 text-center">No activity yet — start by adding an expense!</p>
+      }
+    </div>
+  </section>
+</div>

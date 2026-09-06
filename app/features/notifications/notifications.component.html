@@ -1,0 +1,29 @@
+<div class="min-h-dvh bg-slate-50">
+  <header class="bg-white border-b p-4 flex items-center gap-3 sticky top-0 z-10">
+    <button (click)="back()" class="text-xl">‹</button>
+    <h1 class="font-bold text-lg flex-1">Notifications</h1>
+    @if (hasUnread()) {
+      <button (click)="markAllRead()" class="text-emerald-600 text-sm font-semibold">Mark all read</button>
+    }
+  </header>
+
+  <div class="divide-y divide-slate-100">
+    @for (n of items(); track n.id) {
+      <div class="flex gap-3 p-4 bg-white {{ n.isRead ? '' : 'bg-emerald-50/60' }}">
+        <span class="text-xl mt-0.5">{{ icon(n.type) }}</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold" [class.text-slate-900]="!n.isRead" [class.text-slate-500]="n.isRead">
+            {{ n.title }}
+          </p>
+          <p class="text-sm text-slate-600">{{ n.body }}</p>
+          <p class="text-xs text-slate-400 mt-1">{{ n.createdAt | date:'EEE, dd MMM · hh:mm a' }}</p>
+        </div>
+        @if (!n.isRead) {
+          <span class="w-2 h-2 rounded-full bg-emerald-500 mt-2 shrink-0"></span>
+        }
+      </div>
+    } @empty {
+      <p class="p-10 text-center text-slate-400 text-sm">🔕 No notifications yet</p>
+    }
+  </div>
+</div>

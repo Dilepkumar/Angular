@@ -1,0 +1,47 @@
+<div class="min-h-dvh bg-slate-50 p-4 pt-10">
+  <h1 class="text-2xl font-bold">Your groups</h1>
+  <p class="text-slate-500 text-sm mb-6">Choose a flat to continue</p>
+
+  <div class="space-y-3">
+    @for (g of groups(); track g.id) {
+      <button (click)="enter(g.id)"
+              class="w-full bg-white rounded-2xl shadow-sm p-5 flex items-center gap-4 text-left active:scale-[0.98] transition">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-2xl">🏠</div>
+        <div class="flex-1">
+          <p class="font-bold">{{ g.groupName }}</p>
+          @if (g.memberCount) { <p class="text-xs text-slate-500">{{ g.memberCount }} members</p> }
+        </div>
+        <span class="text-slate-300 text-xl">›</span>
+      </button>
+    } @empty {
+      <p class="text-slate-400 text-sm text-center py-6">No groups yet — create one below!</p>
+    }
+  </div>
+
+  <button (click)="showJoin = true"
+          class="mt-6 w-full border-2 border-dashed border-slate-300 rounded-2xl p-5 text-slate-500 font-medium">
+    + Create or join a flat
+  </button>
+
+  @if (showJoin) {
+    <div class="fixed inset-0 bg-black/40 flex items-end z-50" (click)="showJoin = false">
+      <div class="w-full bg-white rounded-t-3xl p-6 space-y-6" (click)="$event.stopPropagation()">
+        <div>
+          <h2 class="font-bold mb-3">Join with invite code</h2>
+          <input [(ngModel)]="inviteCode" maxlength="6" placeholder="e.g. A7X2KP"
+                 class="w-full border rounded-xl px-4 py-3 text-center font-mono text-lg tracking-widest uppercase" />
+          <button (click)="joinByCode()"
+                  class="mt-3 w-full bg-emerald-600 text-white font-bold py-3 rounded-xl">Join Group</button>
+        </div>
+        <div class="border-t pt-4">
+          <h2 class="font-bold mb-3">Or create a new group</h2>
+          <input [(ngModel)]="newGroupName" placeholder="Group name, e.g. Green Villa"
+                 class="w-full border rounded-xl px-4 py-3" />
+          <button (click)="createGroup()"
+                  class="mt-3 w-full bg-slate-800 text-white font-bold py-3 rounded-xl">Create Group</button>
+        </div>
+        @if (error()) { <p class="text-red-600 text-sm">{{ error() }}</p> }
+      </div>
+    </div>
+  }
+</div>

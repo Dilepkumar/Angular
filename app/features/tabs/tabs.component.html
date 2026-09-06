@@ -1,0 +1,14 @@
+<div class="min-h-dvh bg-slate-50">
+  <main class="pb-24"><router-outlet /></main>
+
+  <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200
+              grid grid-cols-4 z-40" style="padding-bottom: env(safe-area-inset-bottom)">
+    @for (tab of tabs; track tab.path) {
+      <a [routerLink]="tab.path" routerLinkActive="text-emerald-600"
+         class="flex flex-col items-center justify-center h-20 text-slate-400">
+        <span class="text-2xl">{{ tab.icon }}</span>
+        <span class="text-[11px] font-medium">{{ tab.label }}</span>
+      </a>
+    }
+  </nav>
+</div>

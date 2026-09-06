@@ -1,0 +1,25 @@
+<div class="min-h-dvh bg-slate-50 p-6 pt-10">
+  <h1 class="text-2xl font-bold text-slate-800">Create account</h1>
+  <p class="text-slate-500 text-sm mb-6">We'll send a 6-digit code to verify your email</p>
+
+  <div class="space-y-4">
+    <input [(ngModel)]="fullName" placeholder="Full name"
+           class="w-full border rounded-xl px-4 py-3" />
+    <input [(ngModel)]="email" type="email" placeholder="Email"
+           class="w-full border rounded-xl px-4 py-3" />
+    <input [(ngModel)]="phone" placeholder="Phone (10 digits)"
+           class="w-full border rounded-xl px-4 py-3" />
+    <input [(ngModel)]="password" type="password" placeholder="Password (min 8 chars)"
+           class="w-full border rounded-xl px-4 py-3" />
+
+    @if (error()) { <p class="text-red-600 text-sm bg-red-50 rounded-xl p-3">{{ error() }}</p> }
+
+    <button (click)="submit()" [disabled]="loading()"
+            class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-50">
+      {{ loading() ? 'Creating…' : 'Create Account' }}
+    </button>
+    <p class="text-center text-sm text-slate-500">
+      Already have an account? <a routerLink="/auth/login" class="text-emerald-600 font-semibold">Sign in</a>
+    </p>
+  </div>
+</div>

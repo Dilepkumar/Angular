@@ -1,0 +1,108 @@
+<div class="min-h-dvh bg-slate-50 pb-24">
+  <header class="bg-white border-b p-4 flex items-center sticky top-0 z-10">
+    <h1 class="font-bold text-lg flex-1">🤝 Settle Up</h1>
+  </header>
+
+  @if (balance(); as b) {
+
+    <section class="p-4">
+      <div class="rounded-2xl p-5 text-white text-center {{ b.netBalance < 0 ? 'bg-red-500' : b.netBalance > 0 ? 'bg-emerald-600' : 'bg-slate-700' }}">
+        <p class="text-xs opacity-80">Your net balance</p>
+        <p class="text-3xl font-bold mt-1">₹{{ abs(b.netBalance) | number:'1.2-2' }}</p>
+        <p class="text-xs mt-1 opacity-90">
+          {{ b.netBalance < 0 ? 'You owe in total' : b.netBalance > 0 ? 'You are owed' : 'All settled — perfect!' }}
+        </p>
+      </div>
+    </section>
+
+    <section class="px-4">
+      <h2 class="text-sm font-semibold text-red-600 mb-2">💸 You owe</h2>
+      @for (d of b.iOwe; track d.toUserId) {
+        <div class="bg-white rounded-2xl p-4 flex items-center gap-3 mb-2 shadow-sm">
+          <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold">
+            {{ d.toUserName.charAt(0) }}
+          </div>
+          <div="flex-1">
+            <p class="font-semibold text-sm">{{ d.toUserName }}</p>
+            <p class="text-xs text-slate-500">You borrowed ₹{{ d.amount | number:'1.2-2' }}</p>
+          </div>
+          <button (click)="openSettle(d)"
+                  class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl">
+            Settle
+          </button>
+        </div>
+      } @empty {
+        <p class="text-slate-400 text-sm mb-2">Nothing — nice!</p>
+      }
+    </section>
+
+    <section class="px-4 mt-2">
+      <h2 class="text-sm font-semibold text-emerald-600 mb-2">📥 Owed to you</h2>
+      @for (d of b.owedToMe; track d.fromUserId) {
+        <div class="bg-white rounded-2xl p-4 flex items-center gap-3 mb-2 shadow-sm">
+          <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+            {{ d.fromUserName.charAt(0) }}
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold text-sm">{{ d.fromUserName }}</p>
+            <p class="text-xs text-slate-500">owes you ₹{{ d.amount | number:'1.2-2' }}</p>
+          </div>
+          <span class="text-emerald-600 font-bold text-sm">₹{{ d.amount | number:'1.2-2' }}</span>
+        </div>
+      } @empty {
+        <p class="text-slate-400 text-sm">No one owes you.</p>
+      }
+    </section>
+  }
+
+  <button (click)="showAdd = true"
+          class="fixed bottom-24 right-4 bg-emerald-600 text-white rounded-full w-14 h-14 text-3xl
+                 shadow-lg flex items-center justify-center z-30">＋</button>
+
+  @if (showAdd) {
+    <div class="fixed inset-0 bg-black/40 flex items-end z-50" (click)="showAdd = false">
+      <div class="w-full bg-white rounded-t-3xl p-6 space-y-4" (click)="$event.stopPropagation()">
+        <h2 class="font-bold text-lg">Add shared expense</h2>
+        <input [(ngModel)]="description" placeholder="What was it? e.g. Pizza night"
+               class="w-full border rounded-xl px-4 py-3" />
+        <input [(ngModel)]="amount" type="number" placeholder="Amount ₹"
+               class="w-full border rounded-xl px-4 py-3" />
+        <div>
+          <p class="text-sm font-medium text-slate-600 mb-2">Shared with (tap to select):</p>
+          <div class="flex flex-wrap gap-2">
+            @for (m of groupMembers(); track m.id) {
+              <button (click)="toggleMember(m.id)"
+                      class="px-3 py-2 rounded-full text-sm border
+                             {{ selectedMembers().has(m.id) ? 'bg-emerald-600 text-white border-emerald-600' : 'border-slate-300' }}">
+                {{ m.name }}
+              </button>
+            }
+          </div>
+        </div>
+        @if (error()) { <p class="text-red-600 text-sm">{{ error() }}</p> }
+        <button (click)="addExpense()" [disabled]="!description || !amount"
+                class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-50">
+          Add Expense
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (showSettle) {
+    <div class="fixed inset-0 bg-black/40 flex items-end z-50" (click)="showSettle = false">
+      <div class="w-full bg-white rounded-t-3xl p-6 space-y-4" (click)="$event.stopPropagation()">
+        <h2 class="font-bold text-lg">Settle with {{ settleTarget?.toUserName }}</h2>
+        <p class="text-sm text-slate-500">You owe ₹{{ settleTarget?.amount | number:'1.2-2' }}</p>
+        <input [(ngModel)]="settleAmount" type="number" placeholder="Amount"
+               class="w-full border rounded-xl px-4 py-3" />
+        <input [(ngModel)]="settleNote" placeholder="Note (optional) e.g. Paid via UPI"
+               class="w-full border rounded-xl px-4 py-3" />
+        @if (error()) { <p class="text-red-600 text-sm">{{ error() }}</p> }
+        <button (click)="settleUp()" [disabled]="!settleAmount"
+                class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-50">
+          Confirm Settlement
+        </button>
+      </div>
+    </div>
+  }
+</div>

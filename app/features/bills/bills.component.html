@@ -1,0 +1,95 @@
+<div class="min-h-dvh bg-slate-50 pb-24">
+  <header class="bg-white border-b p-4 flex items-center sticky top-0 z-10">
+    <h1 class="font-bold text-lg flex-1">📋 Monthly Bills</h1>
+    @if (isAdmin) {
+      <button (click)="generateNextMonth()"
+              class="text-xs bg-slate-800 text-white px-3 py-2 rounded-xl font-semibold">
+        Generate next month
+      </button>
+    }
+  </header>
+
+  @if (overview(); as o) {
+    <section class="p-4 grid grid-cols-2 gap-3">
+      <div class="bg-white rounded-2xl p-4 shadow-sm">
+        <p class="text-xs text-slate-400">Total due</p>
+        <p class="text-xl font-bold text-slate-800">₹{{ o.totalDue | number:'1.2-2' }}</p>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-sm">
+        <p class="text-xs text-slate-400">Collected</p>
+        <p class="text-xl font-bold text-emerald-600">₹{{ o.totalPaid | number:'1.2-2' }}</p>
+      </div>
+    </section>
+
+    <section class="px-4 space-y-3">
+      @for (bill of o.bills; track bill.id) {
+        <div class="bg-white rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="font-bold">{{ bill.billName }}</p>
+              <p class="text-xs text-slate-500">Due {{ bill.dueDate | date:'dd MMM' }} · ₹{{ bill.amount | number:'1.2-2' }}</p>
+            </div>
+            <span class="text-xs font-bold px-2 py-1 rounded-full"
+                  [class]="progressClass(progress(bill))">{{ progress(bill) }}%</span>
+          </div>
+
+          <!-- progress bar -->
+          <div class="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full bg-emerald-500 rounded-full transition-all" [style.width.%]="progress(bill)"></div>
+          </div>
+
+          <!-- splits -->
+          <div class="mt-3 divide-y divide-slate-100">
+            @for (s of bill.splits; track s.id) {
+              <div class="flex items-center gap-3 py-2">
+                <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold">
+                  {{ s.userName.charAt(0) }}
+                </div>
+                <span class="flex-1 text-sm">{{ s.userName }}</span>
+                <span class="text-sm font-semibold">₹{{ s.shareAmount | number:'1.2-2' }}</span>
+                @if (s.isPaid) {
+                  <span class="text-emerald-600 text-xs font-bold">✓ Paid</span>
+                } @else if (isMine(s)) {
+                  <button (click)="markPaid(s)"
+                          class="bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl">
+                    Mark paid
+                  </button>
+                } @else {
+                  <span class="text-amber-500 text-xs font-semibold">Pending</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      } @empty {
+        <p class="text-center text-slate-400 text-sm py-8">No bills for this month yet</p>
+      }
+    </section>
+  }
+
+  <button (click)="showAdd = true"
+          class="fixed bottom-24 right-4 bg-emerald-600 text-white rounded-full w-14 h-14 text-3xl
+                 shadow-lg flex items-center justify-center z-30">＋</button>
+
+  @if (showAdd) {
+    <div class="fixed inset-0 bg-black/40 flex items-end z-50" (click)="showAdd = false">
+      <div class="w-full bg-white rounded-t-3xl p-6 space-y-4" (click)="$event.stopPropagation()">
+        <h2 class="font-bold text-lg">Create bill</h2>
+        <input [(ngModel)]="billName" placeholder="Bill name e.g. WiFi, Rent, Electricity"
+               class="w-full border rounded-xl px-4 py-3" />
+        <input [(ngModel)]="amount" type="number" placeholder="Total amount ₹"
+               class="w-full border rounded-xl px-4 py-3" />
+        <div class="flex gap-3">
+          <input [(ngModel)]="billingMonth" type="month" class="flex-1 border rounded-xl px-4 py-3" />
+          <input [(ngModel)]="dueDate" type="date" class="flex-1 border rounded-xl px-4 py-3" />
+        </div>
+        <p class="text-xs text-slate-400">Split equally among all active members automatically.</p>
+        @if (error()) { <p class="text-red-600 text-sm">{{ error() }}</p> }
+        <button (click)="addBill()" [disabled]="!billName || !amount"
+                class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-50">
+          Create Bill
+        </button>
+      </div>
+    </div>
+  }
+</div>

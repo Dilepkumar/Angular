@@ -1,0 +1,21 @@
+<div class="min-h-dvh bg-slate-50 p-6 pt-12 text-center">
+  <div class="text-4xl">📧</div>
+  <h1 class="text-xl font-bold mt-3">Enter the code</h1>
+  <p class="text-slate-500 text-sm mt-1">Sent to <b>{{ email }}</b></p>
+
+  <input [(ngModel)]="code" maxlength="6"
+         class="mt-6 w-48 text-center text-2xl font-bold tracking-[0.5em] border-2
+                rounded-xl py-3 focus:ring-2 ring-emerald-500 outline-none"
+         (keyup.enter)="submit()" inputmode="numeric" />
+
+  @if (error()) { <p class="mt-4 text-red-600 text-sm bg-red-50 rounded-xl p-3">{{ error() }}</p> }
+
+  <button (click)="submit()" [disabled]="loading() || code.length < 6"
+          class="mt-6 w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-50">
+    {{ loading() ? 'Verifying…' : 'Verify' }}
+  </button>
+
+  <button (click)="resend()" class="mt-4 text-emerald-600 text-sm font-medium block mx-auto">
+    Didn't get it? Resend code
+  </button>
+</div>

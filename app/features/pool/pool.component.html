@@ -1,0 +1,138 @@
+<div class="min-h-dvh bg-slate-50 pb-24">
+  <header class="bg-white border-b p-4 sticky top-0 z-10">
+    <h1 class="font-bold text-lg">🛒 Shared Pool</h1>
+  </header>
+
+  @if (pool(); as p) {
+    <!-- Balance card -->
+    <section class="p-4">
+      <div class="rounded-2xl p-5 text-white bg-gradient-to-br from-orange-500 to-amber-600">
+        <p class="text-xs opacity-80">Pool balance</p>
+        <p class="text-3xl font-bold mt-1">₹{{ p.currentBalance | number:'1.2-2' }}</p>
+        <div class="flex gap-6 mt-3 text-xs opacity-90">
+          <span>↓ In: ₹{{ p.totalContributions | number:'1.2-2' }}</span>
+          <span>↑ Out: ₹{{ p.totalSpent | number:'1.2-2' }}</span>
+        </div>
+        @if (p.currentBalance < p.monthlyTarget) {
+          <div class="mt-3 bg-white/20 rounded-xl px-3 py-2 text-xs font-semibold">
+            ⚠️ Running low — target ₹{{ p.monthlyTarget | number:'1.2-2' }}
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Who paid this month -->
+    <section class="px-4">
+      <h2 class="text-sm font-semibold text-slate-600 mb-2">This month's contributions</h2>
+      <div class="bg-white rounded-2xl shadow-sm divide-y divide-slate-100">
+        @for (m of p.memberStatuses; track m.userId) {
+          <div class="flex items-center gap-3 p-3">
+            <div class="w-9 h-9 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">
+              {{ m.userName.charAt(0) }}
+            </div>
+            <span class="flex-1 text-sm font-medium">{{ m.userName }}</span>
+            <div class="text-right">
+              <p class="text-sm font-bold">₹{{ m.contributedThisMonth | number:'1.2-2' }}</p>
+              <p class="text-[11px] text-slate-400">of ₹{{ m.expectedThisMonth | number:'1.2-2' }}</p>
+            </div>
+            @if (m.hasPaidTarget) {
+              <span class="text-emerald-500 text-lg">✓</span>
+            } @else {
+              <span class="text-amber-500 text-xs font-semibold">Due</span>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Transactions -->
+    <section class="px-4 mt-4">
+      <h2 class="text-sm font-semibold text-slate-600 mb-2">Recent transactions</h2>
+      <div class="bg-white rounded-2xl shadow-sm divide-y divide-slate-100">
+        @for (t of p.recentTransactions; track t.id) {
+          <div class="flex items-center gap-3 p-3">
+            <span class="text-lg">{{ t.type === 'Contribution' ? '💰' : '🧾' }}</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium truncate">{{ t.description }}</p>
+              <p class="text-xs text-slate-400">{{ t.userName }} · {{ t.date | date:'dd MMM' }}</p>
+            </div>
+            <span class="text-sm font-bold {{ t.type === 'Contribution' ? 'text-emerald-600' : 'text-slate-800' }}">
+              {{ t.type === 'Contribution' ? '+' : '−' }}₹{{ t.amount | number:'1.2-2' }}
+            </span>
+          </div>
+        } @empty { <p class="p-4 text-sm text-slate-400 text-center">No transactions yet</p> }
+      </div>
+    </section>
+  }
+
+  <!-- Two FABs -->
+  <button (click)="showContribute = true"
+          class="fixed bottom-24 right-4 bg-orange-600 text-white rounded-full w-14 h-14 shadow-lg
+                 flex items-center justify-center z-30 text-xs font-bold flex-col leading-tight">
+    <span class="text-lg">💰</span>Add
+  </button>
+  <button (click)="openExpense()"
+          class="fixed bottom-24 right-20 bg-slate-800 text-white rounded-full w-14 h-14 shadow-lg
+                 flex items-center justify-center z-30 text-xs font-bold flex-col">
+    <span class="text-lg">🧾</span>Spend
+  </button>
+
+  <!-- Contribute sheet -->
+  @if (showContribute) {
+    <div class="fixed inset-0 bg-black/40 flex items-end z-50" (click)="showContribute = false">
+      <div class="w-full bg-white rounded-t-3xl p-6 space-y-4" (click)="$event.stopPropagation()">
+        <h2 class="font-bold text-lg">Add to pool</h2>
+        <input [(ngModel)]="amount" type="number" placeholder="Amount ₹"
+               class="w-full border rounded-xl px-4 py-3" />
+        <input [(ngModel)]="txnRef" placeholder="UPI / GPay reference (optional)"
+               class="w-full border rounded-xl px-4 py-3" />
+        @if (error()) { <p class="text-red-600 text-sm">{{ error() }}</p> }
+        <button (click)="contribute()" [disabled]="!amount"
+                class="w-full bg-orange-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-50">
+          Add Contribution
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Pool expense sheet with strict item-sum validation -->
+  @if (showExpense) {
+    <div class="fixed inset-0 bg-black/40 flex items-end z-50" (click)="showExpense = false">
+      <div class="w-full bg-white rounded-t-3xl p-6 space-y-4 max-h-[85dvh] overflow-y-auto" (click)="$event.stopPropagation()">
+        <h2 class="font-bold text-lg">Log pool expense</h2>
+        <p class="text-xs text-slate-400 bg-amber-50 p-2 rounded-lg">
+          ⚠️ Each item's amount must sum exactly to the expense total.
+        </p>
+        <input [(ngModel)]="description" placeholder="e.g. Weekly BigBasket run"
+               class="w-full border rounded-xl px-4 py-3" />
+        <input [(ngModel)]="expenseDate" type="date" class="w-full border rounded-xl px-4 py-3" />
+
+        <div class="space-y-2">
+          @for (it of items(); track $index) {
+            <div class="flex gap-2 items-center">
+              <input [(ngModel)]="it.itemName" placeholder="Item"
+                     class="flex-1 border rounded-xl px-3 py-2 text-sm" />
+              <input [(ngModel)]="it.amount" type="number" placeholder="₹"
+                     class="w-20 border rounded-xl px-3 py-2 text-sm text-right" />
+              <button (click)="removeItem($index)" class="text-red-400 text-xl px-1">×</button>
+            </div>
+          }
+          <button (click)="addItem()" class="text-orange-600 text-sm font-semibold">+ Add item</button>
+        </div>
+
+        <div class="flex justify-between bg-slate-100 rounded-xl p-3 text-sm font-semibold">
+          <span>Items total</span>
+          <span [class]="itemsTotal() > 0 ? 'text-orange-700' : 'text-slate-400'">
+            ₹{{ itemsTotal() | number:'1.2-2' }}
+          </span>
+        </div>
+
+        @if (error()) { <p class="text-red-600 text-sm">{{ error() }}</p> }
+        <button (click)="addExpense()" [disabled]="!description || items().length === 0"
+                class="w-full bg-orange-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-50">
+          Save Expense
+        </button>
+      </div>
+    </div>
+  }
+</div>
