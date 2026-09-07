@@ -3,8 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { AuthResult } from '../../shared/models';
-
+import { LoginResponse } from '../../../core/services/auth.service';
 @Component({
   selector: 'app-verify-otp',
   standalone: true,
@@ -25,7 +24,7 @@ export class VerifyOtpComponent {
 
   submit() {
     this.loading.set(true); this.error.set(null);
-    this.api.post<AuthResult>('auth/verify-otp', { email: this.email, code: this.code })
+    this.api.post<LoginResponse>('auth/verify-otp', { email: this.email, code: this.code })
       .subscribe({
         next: res => { this.auth.saveSession(res); this.router.navigate(['/']); },
         error: e => { this.error.set(e.error?.message ?? 'Invalid or expired code'); this.loading.set(false); }

@@ -1,25 +1,96 @@
-<div class="min-h-dvh bg-slate-50 p-6 pt-10">
-  <h1 class="text-2xl font-bold text-slate-800">Create account</h1>
-  <p class="text-slate-500 text-sm mb-6">We'll send a 6-digit code to verify your email</p>
+<div class="min-h-dvh bg-slate-50 p-5 pt-10 flex flex-col">
 
-  <div class="space-y-4">
-    <input [(ngModel)]="fullName" placeholder="Full name"
-           class="w-full border rounded-xl px-4 py-3" />
-    <input [(ngModel)]="email" type="email" placeholder="Email"
-           class="w-full border rounded-xl px-4 py-3" />
-    <input [(ngModel)]="phone" placeholder="Phone (10 digits)"
-           class="w-full border rounded-xl px-4 py-3" />
-    <input [(ngModel)]="password" type="password" placeholder="Password (min 8 chars)"
-           class="w-full border rounded-xl px-4 py-3" />
-
-    @if (error()) { <p class="text-red-600 text-sm bg-red-50 rounded-xl p-3">{{ error() }}</p> }
-
-    <button (click)="submit()" [disabled]="loading()"
-            class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-50">
-      {{ loading() ? 'Creating…' : 'Create Account' }}
-    </button>
-    <p class="text-center text-sm text-slate-500">
-      Already have an account? <a routerLink="/auth/login" class="text-emerald-600 font-semibold">Sign in</a>
-    </p>
+  <div class="mb-6">
+    <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-2xl mb-4">🏠</div>
+    <h1 class="text-2xl font-extrabold">Create your account</h1>
+    <p class="text-slate-500 text-sm mt-1">Split rent, bills &amp; pool with your flatmates</p>
   </div>
+
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-2xl p-3 mb-4">{{ error() }}</div>
+  }
+
+  <form (ngSubmit)="submit()" class="space-y-4 flex-1">
+
+    <!-- Name -->
+    <div>
+      <label class="text-xs font-semibold text-slate-500">FULL NAME</label>
+      <input [(ngModel)]="fullName" name="fullName" placeholder="e.g. Ramesh Kumar"
+             class="w-full border rounded-xl px-4 py-3 mt-1"
+             [class.border-red-400]="touched() && nameError()" [class.bg-red-50]="touched() && nameError()" />
+      @if (touched() && nameError()) { <p class="text-xs text-red-600 mt-1">{{ nameError() }}</p> }
+    </div>
+
+    <!-- Email -->
+    <div>
+      <label class="text-xs font-semibold text-slate-500">EMAIL</label>
+      <input [(ngModel)]="email" name="email" type="email" placeholder="you@mail.com" autocomplete="email"
+             class="w-full border rounded-xl px-4 py-3 mt-1"
+             [class.border-red-400]="touched() && emailError()" [class.bg-red-50]="touched() && emailError()" />
+      @if (touched() && emailError()) { <p class="text-xs text-red-600 mt-1">{{ emailError() }}</p> }
+    </div>
+
+    <!-- Phone -->
+    <div>
+      <label class="text-xs font-semibold text-slate-500">MOBILE NUMBER</label>
+      <div class="flex mt-1">
+        <span class="border rounded-l-xl px-3 py-3 bg-slate-100 text-slate-500 text-sm font-bold border-r-0">+91</span>
+        <input [(ngModel)]="phone" name="phone" type="tel" maxlength="10" inputmode="numeric"
+               placeholder="98765 43210" autocomplete="tel"
+               class="flex-1 border rounded-r-xl px-4 py-3"
+               [class.border-red-400]="touched() && phoneError()" [class.bg-red-50]="touched() && phoneError()" />
+      </div>
+      @if (touched() && phoneError()) { <p class="text-xs text-red-600 mt-1">{{ phoneError() }}</p> }
+    </div>
+
+    <!-- Password -->
+    <div>
+      <label class="text-xs font-semibold text-slate-500">PASSWORD</label>
+      <div class="relative mt-1">
+        <input [type]="showPw ? 'text' : 'password'" [(ngModel)]="password" name="password"
+               placeholder="Min 8 chars, A-z, 0-9, special" autocomplete="new-password"
+               class="w-full border rounded-xl px-4 py-3 pr-12"
+               [class.border-red-400]="touched() && passwordError()" [class.bg-red-50]="touched() && passwordError()" />
+        <button type="button" (click)="showPw = !showPw"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-lg">{{ showPw ? '🙈' : '👁️' }}</button>
+      </div>
+      @if (touched() && passwordError()) {
+        <p class="text-xs text-red-600 mt-1">{{ passwordError() }}</p>
+      } @else if (password) {
+        <div class="flex gap-1 mt-2">
+          @for (i of [1, 2, 3, 4]; track i) {
+            <div class="h-1.5 flex-1 rounded-full" [class]="score >= i ? scoreColor : 'bg-slate-200'"></div>
+          }
+        </div>
+        <p class="text-xs mt-1 font-semibold"
+           [class]="score <= 1 ? 'text-red-500' : score === 2 ? 'text-amber-500' : score === 3 ? 'text-lime-600' : 'text-emerald-600'">
+          {{ scoreLabel }}
+        </p>
+      }
+    </div>
+
+    <!-- Confirm password -->
+    <div>
+      <label class="text-xs font-semibold text-slate-500">CONFIRM PASSWORD</label>
+      <div class="relative mt-1">
+        <input [type]="showCpw ? 'text' : 'password'" [(ngModel)]="confirmPassword" name="confirmPassword"
+               placeholder="Re-enter password" autocomplete="new-password"
+               class="w-full border rounded-xl px-4 py-3 pr-12"
+               [class.border-red-400]="touched() && confirmPasswordError()"
+               [class.bg-red-50]="touched() && confirmPasswordError()" />
+        <button type="button" (click)="showCpw = !showCpw"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-lg">{{ showCpw ? '🙈' : '👁️' }}</button>
+      </div>
+      @if (touched() && confirmPasswordError()) { <p class="text-xs text-red-600 mt-1">{{ confirmPasswordError() }}</p> }
+    </div>
+
+    <button type="submit" [disabled]="loading()"
+            class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-40 mt-2">
+      {{ loading() ? 'Creating…' : 'Create account' }}
+    </button>
+  </form>
+
+  <p class="text-center text-sm text-slate-500 mt-6">
+    Already have an account? <a routerLink="/auth/login" class="text-emerald-700 font-bold">Login</a>
+  </p>
 </div>

@@ -1,36 +1,47 @@
-<div class="min-h-dvh flex flex-col justify-center p-6 bg-gradient-to-b from-emerald-600 to-teal-700">
-  <div class="text-center text-white mb-8">
-    <div class="text-5xl">🏠</div>
-    <h1 class="text-2xl font-bold mt-2">RoomLedger</h1>
-    <p class="text-emerald-200 text-sm">Bills · IOU · Pool — sorted.</p>
+<div class="min-h-dvh bg-slate-50 p-5 pt-16 flex flex-col">
+
+  <div class="mb-10">
+    <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-2xl mb-4">🏠</div>
+    <h1 class="text-2xl font-extrabold">Welcome back</h1>
+    <p class="text-slate-500 text-sm mt-1">Login with email or mobile number</p>
   </div>
 
-  <div class="bg-white rounded-3xl p-6 shadow-xl space-y-4">
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-2xl p-3 mb-4">⚠️ {{ error() }}</div>
+  }
+
+  <form (ngSubmit)="submit()" class="space-y-4 flex-1">
+
     <div>
-      <label class="text-sm font-medium text-slate-600">Email</label>
-      <input type="email" [(ngModel)]="email" placeholder="you@gmail.com"
-             class="w-full mt-1 border rounded-xl px-4 py-3 focus:ring-2 ring-emerald-500 outline-none" />
-    </div>
-    <div>
-      <label class="text-sm font-medium text-slate-600">Password</label>
-      <input type="password" [(ngModel)]="password" placeholder="••••••••"
-             (keyup.enter)="submit()"
-             class="w-full mt-1 border rounded-xl px-4 py-3 focus:ring-2 ring-emerald-500 outline-none" />
+      <label class="text-xs font-semibold text-slate-500">EMAIL OR MOBILE</label>
+      <div class="relative mt-1">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm">{{ isPhone ? '📱' : '📧' }}</span>
+        <input [(ngModel)]="identifier" name="identifier" placeholder="you@mail.com or 98765 43210"
+               autocomplete="username" spellcheck="false"
+               class="w-full border rounded-xl pl-10 pr-4 py-3"
+               [class.border-red-400]="touched() && identifierError"
+               [class.bg-red-50]="touched() && identifierError" />
+      </div>
+      @if (touched() && identifierError) { <p class="text-xs text-red-600 mt-1">{{ identifierError }}</p> }
     </div>
 
-    @if (error()) {
-      <p class="text-red-600 text-sm bg-red-50 rounded-xl p-3">{{ error() }}</p>
-    }
+    <div>
+      <label class="text-xs font-semibold text-slate-500">PASSWORD</label>
+      <input [(ngModel)]="password" name="password" type="password"
+             autocomplete="current-password" placeholder="Your password"
+             class="w-full border rounded-xl px-4 py-3 mt-1"
+             [class.border-red-400]="touched() && passwordError"
+             [class.bg-red-50]="touched() && passwordError" />
+      @if (touched() && passwordError) { <p class="text-xs text-red-600 mt-1">{{ passwordError }}</p> }
+    </div>
 
-    <button (click)="submit()" [disabled]="loading()"
-            class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl
-                   disabled:opacity-50 active:scale-[0.98] transition">
-      {{ loading() ? 'Signing in…' : 'Sign In' }}
+    <button type="submit" [disabled]="loading()"
+            class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-40">
+      {{ loading() ? 'Logging in…' : 'Login' }}
     </button>
+  </form>
 
-    <div class="flex justify-between text-sm">
-      <a routerLink="/auth/forgot-password" class="text-emerald-600">Forgot password?</a>
-      <a routerLink="/auth/register" class="text-emerald-600 font-semibold">Create account</a>
-    </div>
-  </div>
+  <p class="text-center text-sm text-slate-500 mt-8">
+    New here? <a routerLink="/auth/register" class="text-emerald-700 font-bold">Create an account</a>
+  </p>
 </div>

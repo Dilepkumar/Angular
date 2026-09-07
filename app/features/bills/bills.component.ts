@@ -29,19 +29,25 @@ export class BillsComponent implements OnInit {
   error = signal<string | null>(null);
 
   ngOnInit() {
-    this.groupId = this.route.snapshot.paramMap.get('groupId')!;
-    this.load();
-    this.api.get<any>(`groups/${this.groupId}/dashboard`)
-      .subscribe(d => {
-        const me = d.members.find((m: any) => m.id === this.auth.user()?.id);
+  this.groupId = this.route.snapshot.paramMap.get('groupId')!;
+  this.load();
+  this.api.get<any>(`groups/${this.groupId}/dashboard`)
+    .subscribe({
+      next: d => {
+        const me = d?.members?.find((m: any) => m.id === this.auth.user()?.id);
         this.isAdmin = me?.isAdmin ?? false;
-      });
+      },
+      error: e => console.error('dashboard failed', e)
+    });
   }
 
   load() {
     const month = new Date().toISOString().slice(0, 7);
     this.api.get<MonthlyBillsOverview>(`groups/this.groupId/bills?month={this.groupId}/bills?month=this.groupId/bills?month={month}`)
-      .subscribe(o => this.overview.set(o));
+      .subscribe({
+        next: o => this.overview.set(o),
+        error: e => console.error('bills failed', e)
+      });
   }
 
   addBill() {

@@ -140,14 +140,18 @@ export interface PoolMemberStatus {
   hasPaidTarget?: boolean;
 }
 
+
+
 export interface PoolTransaction {
-  id: string;
-  type?: string;             // 'Contribution' | ...
-  description?: string;
-  userName?: string;
-  date?: string;
-  amount?: number;
-  createdAt?: string;
+  id: string; 
+  type: string; 
+  description: string; 
+  userName: string;
+  date: string; 
+  amount: number;
+  status: string; 
+  approvedBy: string | null; 
+  rejectReason: string | null;
 }
 
 export interface PoolBalance {
@@ -169,4 +173,19 @@ export interface Notification {
   message?: string;
   createdAt?: string;
   isRead?: boolean;
+}
+export interface PendingContribution {
+  id: number; 
+  userId: number; 
+  userName: string;
+  amount: number; 
+  contributedOn: string; 
+  periodMonth: string; 
+  transactionRef: string | null;
+}
+
+export interface MemberStatus {
+  userId: number; userName: string; isAlias: boolean;
+  contributedThisMonth: number; expectedThisMonth: number;
+  hasPaidTarget: boolean; pendingAmount: number;
 }

@@ -1,7 +1,13 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ApiService } from './api.service';
-import { AuthResult, User } from '../../features/shared/models';
+import { User } from '../../features/shared/models';
+
+export interface LoginResponse {
+  token: string;
+  refreshToken?: string;
+  user: User;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -10,26 +16,31 @@ export class AuthService {
 
   user = signal<User | null>(this.loadUser());
 
-  login(email: string, password: string) {
-    return this.api.post<AuthResult>('auth/login', { email, password });
+  register(body: { fullName: string; email: string; phone: string; password: string }) {
+    return this.api.post<{ message: string; devOtp?: string }>('auth/register', body);
+  }
+
+  verifyOtp(email: string, code: string) {
+    return this.api.post<{ message: string }>('auth/verify-otp', { email, code });
+  }
+
+  login(identifier: string, password: string) {
+    return this.api.post<LoginResponse>('auth/login', { identifier, password });
   }
 
   isLoggedIn(): boolean {
     return !!localStorage.getItem('rl_access_token');
   }
 
-  saveSession(result: AuthResult): void {
-    localStorage.setItem('rl_access_token', result.accessToken);
-    localStorage.setItem('rl_refresh_token', result.refreshToken);
-    localStorage.setItem('rl_token_expires', result.accessTokenExpiresAt);
+  saveSession(result: LoginResponse): void {
+    localStorage.setItem('rl_access_token', result.token);
+    if (result.refreshToken) localStorage.setItem('rl_refresh_token', result.refreshToken);
     localStorage.setItem('rl_user', JSON.stringify(result.user));
     this.user.set(result.user);
   }
 
   logout(): void {
-    this.api.post('auth/logout', { refreshToken: localStorage.getItem('rl_refresh_token') })
-      .subscribe({ complete: () => this.clearAndGo() });
-    setTimeout(() => { if (this.isLoggedIn()) this.clearAndGo(); }, 2000);
+    this.clearAndGo();
   }
 
   private loadUser(): User | null {

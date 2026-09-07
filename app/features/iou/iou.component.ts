@@ -53,7 +53,7 @@ export class IouComponent implements OnInit {
   }
 
   load() {
-    this.api.get<MyBalance>(`groups/${this.groupId}/iou/balance`)
+    this.api.get<MyBalance>(`groups/${this.groupId}/iou/my-balance`)
       .subscribe(b => this.balance.set(b));
   }
 

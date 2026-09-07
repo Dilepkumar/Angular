@@ -1,137 +1,297 @@
-<div class="min-h-dvh bg-slate-50 pb-24">
-  <header class="bg-white border-b p-4 sticky top-0 z-10">
-    <h1 class="font-bold text-lg">🛒 Shared Pool</h1>
-  </header>
+<div class="min-h-dvh bg-slate-50 p-4 pt-6 pb-24">
 
-  @if (pool(); as p) {
+  <!-- Header -->
+  <div class="flex items-center gap-3 mb-5">
+    <div class="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center text-xl">💰</div>
+    <div class="flex-1">
+      <h1 class="text-xl font-bold">Pool</h1>
+      <p class="text-slate-500 text-xs">Shared money for the flat</p>
+    </div>
+    <button (click)="load()" class="text-slate-400 text-sm">↻</button>
+  </div>
+
+  @if (loading()) {
+    <p class="text-slate-400 text-sm text-center py-10">Loading pool…</p>
+  } @else if (error()) {
+    <p class="text-red-600 text-sm text-center py-10">{{ error() }}</p>
+    <button (click)="load()" class="block mx-auto text-sm text-emerald-700 font-bold">Retry</button>
+  } @else {
+
     <!-- Balance card -->
-    <section class="p-4">
-      <div class="rounded-2xl p-5 text-white bg-gradient-to-br from-orange-500 to-amber-600">
-        <p class="text-xs opacity-80">Pool balance</p>
-        <p class="text-3xl font-bold mt-1">₹{{ p.currentBalance | number:'1.2-2' }}</p>
-        <div class="flex gap-6 mt-3 text-xs opacity-90">
-          <span>↓ In: ₹{{ p.totalContributions | number:'1.2-2' }}</span>
-          <span>↑ Out: ₹{{ p.totalSpent | number:'1.2-2' }}</span>
-        </div>
-        @if (p.currentBalance < p.monthlyTarget) {
-          <div class="mt-3 bg-white/20 rounded-xl px-3 py-2 text-xs font-semibold">
-            ⚠️ Running low — target ₹{{ p.monthlyTarget | number:'1.2-2' }}
-          </div>
-        }
-      </div>
-    </section>
-
-    <!-- Who paid this month -->
-    <section class="px-4">
-      <h2 class="text-sm font-semibold text-slate-600 mb-2">This month's contributions</h2>
-      <div class="bg-white rounded-2xl shadow-sm divide-y divide-slate-100">
-        @for (m of p.memberStatuses; track m.userId) {
-          <div class="flex items-center gap-3 p-3">
-            <div class="w-9 h-9 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">
-              {{ m.userName.charAt(0) }}
-            </div>
-            <span class="flex-1 text-sm font-medium">{{ m.userName }}</span>
-            <div class="text-right">
-              <p class="text-sm font-bold">₹{{ m.contributedThisMonth | number:'1.2-2' }}</p>
-              <p class="text-[11px] text-slate-400">of ₹{{ m.expectedThisMonth | number:'1.2-2' }}</p>
-            </div>
-            @if (m.hasPaidTarget) {
-              <span class="text-emerald-500 text-lg">✓</span>
-            } @else {
-              <span class="text-amber-500 text-xs font-semibold">Due</span>
+    <div class="bg-emerald-600 text-white rounded-3xl p-6 shadow-md">
+      <p class="text-emerald-100 text-xs">Current balance</p>
+      <p class="text-4xl font-extrabold mt-1">₹{{ balance()?.currentBalance }}</p>
+      <div class="flex gap-6 mt-4 text-xs">
+        <div>
+          <p class="text-emerald-100">
+            Monthly target
+            @if (isAdmin()) {
+              <button (click)="openTarget()" class="ml-1 underline text-emerald-200">✏️ edit</button>
             }
-          </div>
-        }
+          </p>
+          <p class="font-bold text-base">₹{{ balance()?.monthlyTarget }}</p>
+        </div>
+        <div>
+          <p class="text-emerald-100">Contributed</p>
+          <p class="font-bold text-base">₹{{ balance()?.totalContributions }}</p>
+        </div>
+        <div>
+          <p class="text-emerald-100">Spent</p>
+          <p class="font-bold text-base">₹{{ balance()?.totalSpent }}</p>
+        </div>
       </div>
-    </section>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="mt-4 grid grid-cols-2 gap-3">
+      <button (click)="openContribute()"
+              class="bg-white rounded-2xl shadow-sm p-4 font-bold text-emerald-700 flex flex-col items-center gap-1 active:scale-[0.98] transition">
+        <span class="text-2xl">💰</span><span class="text-sm">Add money</span>
+      </button>
+      <button (click)="openExpense()"
+              class="bg-white rounded-2xl shadow-sm p-4 font-bold text-red-600 flex flex-col items-center gap-1 active:scale-[0.98] transition">
+        <span class="text-2xl">🛒</span><span class="text-sm">Add expense</span>
+      </button>
+    </div>
+
+    <!-- Admin: pending approvals -->
+    @if (isAdmin()) {
+      <button (click)="showPending = !showPending"
+              class="w-full mt-3 bg-amber-50 border border-amber-300 text-amber-800 rounded-2xl p-3 font-semibold text-sm flex justify-between items-center">
+        <span>⏳ Pending approvals</span>
+        <span class="bg-amber-500 text-white rounded-full px-2 py-0.5 text-xs">{{ pending().length }}</span>
+      </button>
+
+      @if (showPending) {
+        <div class="mt-2 space-y-2">
+          @for (c of pending(); track c.id) {
+            <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3">
+              <div class="flex-1">
+                <p class="font-semibold text-sm">{{ c.userName }} — ₹{{ c.amount }}</p>
+                <p class="text-xs text-slate-500">
+                  {{ c.contributedOn }} @if (c.transactionRef) { · {{ c.transactionRef }} }
+                </p>
+              </div>
+              <button (click)="approve(c)" class="bg-emerald-600 text-white text-xs font-bold px-3 py-2 rounded-xl">Approve</button>
+              <button (click)="openReject(c)" class="bg-red-100 text-red-700 text-xs font-bold px-3 py-2 rounded-xl">Reject</button>
+            </div>
+          } @empty {
+            <p class="text-slate-400 text-xs text-center py-3">Nothing waiting 🎉</p>
+          }
+        </div>
+      }
+
+      <button (click)="openShares()"
+              class="w-full mt-3 border-2 border-dashed border-slate-300 rounded-2xl p-3 text-slate-600 font-medium text-sm">
+        ⚙️ Set per-person monthly shares
+      </button>
+    }
+
+    <!-- Who has paid this month -->
+    <h2 class="font-bold mt-6 mb-2 text-sm">This month — who has paid</h2>
+    <div class="space-y-2">
+      @for (m of balance()?.memberStatuses; track m.userId) {
+        <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold"
+               [class.bg-emerald-100]="m.hasPaidTarget" [class.text-emerald-700]="m.hasPaidTarget"
+               [class.bg-amber-100]="!m.hasPaidTarget" [class.text-amber-700]="!m.hasPaidTarget">
+            {{ m.userName.charAt(0) }}
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold text-sm">
+              {{ m.userName }}
+              @if (m.isAlias) {
+                <span class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full">alias</span>
+              }
+            </p>
+            <p class="text-xs text-slate-500">
+              Given ₹{{ m.contributedThisMonth }}
+              @if (m.pendingAmount > 0) { · pending ₹{{ m.pendingAmount }} }
+              @if (m.hasPaidTarget) { · ✅ done }
+            </p>
+          </div>
+          <p class="text-xs text-slate-400">of ₹{{ m.expectedThisMonth }}</p>
+        </div>
+      }
+    </div>
+
+    <!-- Transaction filter tabs -->
+    <div class="flex gap-2 mt-6 mb-2">
+      @for (f of filters; track f) {
+        <button (click)="filter.set(f)"
+                class="text-xs font-bold px-3 py-1.5 rounded-full transition"
+                [class.bg-slate-800]="filter() === f" [class.text-white]="filter() === f"
+                [class.bg-white]="filter() !== f" [class.text-slate-600]="filter() !== f" [class.shadow-sm]="filter() !== f">
+          {{ f === 'all' ? 'All' : (f === 'Contribution' ? 'Money In' : 'Money Out') }}
+        </button>
+      }
+    </div>
 
     <!-- Transactions -->
-    <section class="px-4 mt-4">
-      <h2 class="text-sm font-semibold text-slate-600 mb-2">Recent transactions</h2>
-      <div class="bg-white rounded-2xl shadow-sm divide-y divide-slate-100">
-        @for (t of p.recentTransactions; track t.id) {
-          <div class="flex items-center gap-3 p-3">
-            <span class="text-lg">{{ t.type === 'Contribution' ? '💰' : '🧾' }}</span>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium truncate">{{ t.description }}</p>
-              <p class="text-xs text-slate-400">{{ t.userName }} · {{ t.date | date:'dd MMM' }}</p>
-            </div>
-            <span class="text-sm font-bold {{ t.type === 'Contribution' ? 'text-emerald-600' : 'text-slate-800' }}">
-              {{ t.type === 'Contribution' ? '+' : '−' }}₹{{ t.amount | number:'1.2-2' }}
-            </span>
+    <div class="space-y-2">
+      @for (t of filteredTransactions(); track t.id) {
+        <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3">
+          <div class="w-9 h-9 rounded-2xl flex items-center justify-center"
+               [class.bg-emerald-50]="t.type === 'Contribution'" [class.bg-red-50]="t.type === 'Expense'">
+            {{ t.type === 'Contribution' ? '⬇️' : '🛒' }}
           </div>
-        } @empty { <p class="p-4 text-sm text-slate-400 text-center">No transactions yet</p> }
-      </div>
-    </section>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold truncate">{{ t.description }}</p>
+            <p class="text-xs text-slate-500">{{ t.userName }} · {{ t.date }}</p>
+            @if (t.status === 'Pending') {
+              <span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">⏳ PENDING APPROVAL</span>
+            } @else if (t.status === 'Rejected') {
+              <span class="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">✗ REJECTED{{ t.rejectReason ? ' · ' + t.rejectReason : '' }}</span>
+            } @else if (t.type === 'Contribution' && t.approvedBy) {
+              <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">✓ Approved by {{ t.approvedBy }}</span>
+            }
+          </div>
+          <p class="font-bold text-sm" [class.text-emerald-600]="t.type === 'Contribution'" [class.text-red-600]="t.type === 'Expense'">
+            {{ t.type === 'Contribution' ? '+' : '−' }}₹{{ t.amount }}
+          </p>
+        </div>
+      } @empty {
+        <p class="text-slate-400 text-sm text-center py-6">No transactions yet</p>
+      }
+    </div>
   }
 
-  <!-- Two FABs -->
-  <button (click)="showContribute = true"
-          class="fixed bottom-24 right-4 bg-orange-600 text-white rounded-full w-14 h-14 shadow-lg
-                 flex items-center justify-center z-30 text-xs font-bold flex-col leading-tight">
-    <span class="text-lg">💰</span>Add
-  </button>
-  <button (click)="openExpense()"
-          class="fixed bottom-24 right-20 bg-slate-800 text-white rounded-full w-14 h-14 shadow-lg
-                 flex items-center justify-center z-30 text-xs font-bold flex-col">
-    <span class="text-lg">🧾</span>Spend
-  </button>
-
-  <!-- Contribute sheet -->
+  <!-- ── Contribute sheet ── -->
   @if (showContribute) {
     <div class="fixed inset-0 bg-black/40 flex items-end z-50" (click)="showContribute = false">
       <div class="w-full bg-white rounded-t-3xl p-6 space-y-4" (click)="$event.stopPropagation()">
-        <h2 class="font-bold text-lg">Add to pool</h2>
-        <input [(ngModel)]="amount" type="number" placeholder="Amount ₹"
-               class="w-full border rounded-xl px-4 py-3" />
-        <input [(ngModel)]="txnRef" placeholder="UPI / GPay reference (optional)"
-               class="w-full border rounded-xl px-4 py-3" />
-        @if (error()) { <p class="text-red-600 text-sm">{{ error() }}</p> }
-        <button (click)="contribute()" [disabled]="!amount"
-                class="w-full bg-orange-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-50">
-          Add Contribution
+        <h2 class="font-bold text-lg">Add money to pool</h2>
+        <div>
+          <label class="text-xs text-slate-500">Amount (₹)</label>
+          <input type="number" [(ngModel)]="amount" placeholder="e.g. 1500"
+                 class="w-full border rounded-xl px-4 py-3 mt-1 text-lg font-bold" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-500">UPI / transaction reference (optional)</label>
+          <input [(ngModel)]="transactionRef" placeholder="e.g. UPI ref 482913…"
+                 class="w-full border rounded-xl px-4 py-3 mt-1" />
+        </div>
+        @if (!isAdmin()) {
+          <p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-3">
+            ℹ️ Your contribution will be added once the admin approves it.
+          </p>
+        }
+        <button (click)="submitContribution()" [disabled]="!amount || amount <= 0 || contributing"
+                class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl disabled:opacity-40">
+          {{ contributing ? 'Submitting…' : (isAdmin() ? 'Add to pool' : 'Submit for approval') }}
         </button>
       </div>
     </div>
   }
 
-  <!-- Pool expense sheet with strict item-sum validation -->
+  <!-- ── Expense sheet (items-based) ── -->
   @if (showExpense) {
     <div class="fixed inset-0 bg-black/40 flex items-end z-50" (click)="showExpense = false">
       <div class="w-full bg-white rounded-t-3xl p-6 space-y-4 max-h-[85dvh] overflow-y-auto" (click)="$event.stopPropagation()">
-        <h2 class="font-bold text-lg">Log pool expense</h2>
-        <p class="text-xs text-slate-400 bg-amber-50 p-2 rounded-lg">
-          ⚠️ Each item's amount must sum exactly to the expense total.
-        </p>
-        <input [(ngModel)]="description" placeholder="e.g. Weekly BigBasket run"
-               class="w-full border rounded-xl px-4 py-3" />
-        <input [(ngModel)]="expenseDate" type="date" class="w-full border rounded-xl px-4 py-3" />
+        <h2 class="font-bold text-lg">Add pool expense</h2>
 
-        <div class="space-y-2">
-          @for (it of items(); track $index) {
-            <div class="flex gap-2 items-center">
-              <input [(ngModel)]="it.itemName" placeholder="Item"
+        <div>
+          <label class="text-xs text-slate-500">Overall description</label>
+          <input [(ngModel)]="expenseDescription" placeholder="e.g. Monthly groceries"
+                 class="w-full border rounded-xl px-4 py-3 mt-1" />
+        </div>
+
+        <div>
+          <label class="text-xs text-slate-500">Items</label>
+          @for (it of expenseItems; track $index) {
+            <div class="flex gap-2 mt-2">
+              <input [(ngModel)]="it.name" placeholder="Item (e.g. Milk)"
                      class="flex-1 border rounded-xl px-3 py-2 text-sm" />
-              <input [(ngModel)]="it.amount" type="number" placeholder="₹"
+              <input type="number" [(ngModel)]="it.amount" placeholder="₹"
                      class="w-20 border rounded-xl px-3 py-2 text-sm text-right" />
-              <button (click)="removeItem($index)" class="text-red-400 text-xl px-1">×</button>
+              <select [(ngModel)]="it.categoryId" class="border rounded-xl px-2 py-2 text-sm hidden">
+                <option [ngValue]="null">—</option>
+                @for (c of categories; track c.id) {
+                  <option [ngValue]="c.id">{{ c.name }}</option>
+                }
+              </select>
+              <button (click)="removeExpenseItem($index)" class="text-slate-400 px-1">✕</button>
             </div>
           }
-          <button (click)="addItem()" class="text-orange-600 text-sm font-semibold">+ Add item</button>
+          <button (click)="addExpenseItem()" class="text-xs text-emerald-700 font-bold mt-2">＋ Add item</button>
         </div>
 
-        <div class="flex justify-between bg-slate-100 rounded-xl p-3 text-sm font-semibold">
-          <span>Items total</span>
-          <span [class]="itemsTotal() > 0 ? 'text-orange-700' : 'text-slate-400'">
-            ₹{{ itemsTotal() | number:'1.2-2' }}
-          </span>
+        <div>
+          <label class="text-xs text-slate-500">Date</label>
+          <input type="date" [(ngModel)]="expenseDate" class="w-full border rounded-xl px-4 py-3 mt-1" />
         </div>
 
-        @if (error()) { <p class="text-red-600 text-sm">{{ error() }}</p> }
-        <button (click)="addExpense()" [disabled]="!description || items().length === 0"
-                class="w-full bg-orange-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-50">
-          Save Expense
+        <p class="text-sm font-bold">Total: ₹{{ expenseTotal }}</p>
+        <p class="text-xs text-slate-500 bg-slate-50 rounded-xl p-3">ℹ️uces pool balance by the total immediately.</p>
+
+        <button (click)="submitExpense()" [disabled]="expenseTotal <= 0 || !expenseDescription.trim() || savingExpense"
+                class="w-full bg-red-600 text-white font-bold py-3 rounded-xl disabled:opacity-40">
+          {{ savingExpense ? 'Saving…' : 'Add expense (₹' + expenseTotal + ')' }}
         </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Reject sheet ── -->
+  @if (showRejectFor) {
+    <div class="fixed inset-0 bg-black/40 flex items-end z-50" (click)="showRejectFor = null">
+      <div class="w-full bg-white rounded-t-3xl p-6" (click)="$event.stopPropagation()">
+        <h2 class="font-bold mb-3">Reject ₹{{ showRejectFor.amount }} from {{ showRejectFor.userName }}</h2>
+        <input [(ngModel)]="rejectReason" placeholder="Reason (required)"
+               class="w-full border rounded-xl px-4 py-3" />
+        <button (click)="confirmReject()" [disabled]="!rejectReason.trim()"
+                class="mt-3 w-full bg-red-600 text-white font-bold py-3 rounded-xl disabled:opacity-40">Confirm Reject</button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Monthly target sheet ── -->
+  @if (showTarget) {
+    <div class="fixed inset-0 bg-black/40 flex items-end z-50" (click)="showTarget = false">
+      <div class="w-full bg-white rounded-t-3xl p-6" (click)="$event.stopPropagation()">
+        <h2 class="font-bold mb-1">Monthly pool target</h2>
+        <p class="text-xs text-slate-500 mb-4">Total the group aims to collect each month. Per-person shares can override this.</p>
+        <input type="number" [(ngModel)]="targetInput" placeholder="e.g. 10000"
+               class="w-full border rounded-xl px-4 py-3 text-lg font-bold" />
+        <button (click)="saveTarget()" [disabled]="targetInput === null || targetInput < 0 || savingTarget"
+                class="mt-3 w-full bg-slate-800 text-white font-bold py-3 rounded-xl disabled:opacity-40">
+          {{ savingTarget ? 'Saving…' : 'Save target' }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Shares sheet ── -->
+  @if (showShares) {
+    <div class="fixed inset-0 bg-black/40 flex items-end z-50" (click)="showShares = false">
+      <div class="w-full bg-white rounded-t-3xl p-6 max-h-[85dvh] overflow-y-auto" (click)="$event.stopPropagation()">
+        <h2 class="font-bold">Monthly shares</h2>
+        <p class="text-xs text-slate-500 mt-1">
+          Total: <b>₹{{ shareTotal }}</b> · {{ realMembers.length + aliasMembers.filter(a => a.aliasName.trim()).length }} people
+        </p>
+
+        <p class="text-xs font-bold text-slate-400 uppercase mt-4 mb-2">Group members</p>
+        @for (m of realMembers; track m.userId) {
+          <div class="flex items-center gap-3 mb-2">
+            <span class="flex-1 text-sm font-medium text-slate-700">{{ m.name }}</span>
+            <input type="number" [(ngModel)]="m.monthlyShare" placeholder="₹"
+                   class="w-28 border rounded-xl px-3 py-2 text-sm text-right" />
+          </div>
+        }
+
+        <p class="text-xs font-bold text-slate-400 uppercase mt-4 mb-2">Non-app roommates (aliases)</p>
+        @for (a of aliasMembers; track $index) {
+          <div class="flex gap-2 mb-2">
+            <input [(ngModel)]="a.aliasName" placeholder="Name (e.g. Bhaiya)"
+                   class="flex-1 border rounded-xl px-3 py-2 text-sm" />
+            <input type="number" [(ngModel)]="a.monthlyShare" placeholder="₹"
+                   class="w-24 border rounded-xl px-3 py-2 text-sm text-right" />
+            <button (click)="aliasMembers.splice($index, 1)" class="text-slate-400 px-1">✕</button>
+          </div>
+        }
+        <button (click)="addAliasRow()" class="text-xs text-emerald-700 font-bold mt-1">＋ Add another alias</button>
+
+        <button (click)="saveShares()" class="mt-5 w-full bg-slate-800 text-white font-bold py-3 rounded-xl">Save Shares</button>
       </div>
     </div>
   }
