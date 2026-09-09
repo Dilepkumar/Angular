@@ -53,4 +53,12 @@ export class AuthService {
     this.user.set(null);
     this.router.navigate(['/auth/login']);
   }
+
+  forgotPassword(email: string) {
+    return this.api.post<{ message: string; devOtp?: string }>('auth/forgot-password', { email });
+  }
+
+  resetPassword(email: string, code: string, newPassword: string) {
+    return this.api.post<{ message: string }>('auth/reset-password', { email, code, newPassword });
+  }
 }

@@ -40,19 +40,31 @@ export class LoginComponent {
   }
 
   submit() {
+    console.log('[Login] submit called with identifier:', this.identifier);
     this.touched.set(true);
-    if (this.identifierError || this.passwordError || this.loading()) return;
+
+    if (this.identifierError || this.passwordError || this.loading()) {
+      console.warn('[Login] validation blocked submit:', {
+        identifierError: this.identifierError,
+        passwordError: this.passwordError,
+        loading: this.loading()
+      });
+      return;
+    }
 
     this.loading.set(true);
     this.error.set(null);
 
-    this.auth.login(this.identifier.trim(), this.password)   // service sends { identifier, password }
+    console.log('[Login] sending request to API...');
+    this.auth.login(this.identifier.trim(), this.password)
       .subscribe({
         next: (res: LoginResponse) => {
+          console.log('[Login] success response:', res);
           this.auth.saveSession(res);
           this.router.navigate(['/']);
         },
         error: e => {
+          console.error('[Login] API error occurred:', e);
           this.error.set(e.error?.message ?? 'Invalid email/phone or password');
           this.loading.set(false);
         }

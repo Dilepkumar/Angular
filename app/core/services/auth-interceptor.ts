@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { BehaviorSubject, catchError, filter, switchMap, take, throwError } from 'rxjs';
-import { environment } from '../../environment/environment';
+import { environment } from '../../../environments/environment';
 
 let refreshing = false;
 const refreshSubject = new BehaviorSubject<string | null>(null);

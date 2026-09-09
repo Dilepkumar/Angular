@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { MyBalance, DebtPair } from '../shared/models';
-import { environment } from '../../environment/environment';
+import { environment } from '../../../environments/environment';
 
 interface GroupMemberVm { id: string; name: string; isAdmin: boolean; }
 

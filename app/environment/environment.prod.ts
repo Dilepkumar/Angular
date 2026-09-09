@@ -1,4 +1,1 @@
-export const environment = {
-  production: true,
-  apiUrl: 'https://YOUR-APP.onmonsterasp.com/api/'   // your MonsterASP URL
-};
+export * from '../../environments/environment.prod';

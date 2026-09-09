@@ -62,5 +62,11 @@ export class GroupPickerComponent implements OnInit {
     });
   }
 
-  get me() { return this.auth.user(); }
+    get me() { return this.auth.user(); }
+
+  get initials(): string {
+    const n = this.me?.fullName ?? '?';
+    return n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  }
+  goProfile() { this.router.navigateByUrl('/profile'); }
 }
