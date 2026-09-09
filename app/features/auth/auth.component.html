@@ -1,0 +1,530 @@
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+
+<div class="min-h-screen flex flex-col md:flex-row relative z-10">
+
+  <!-- ═══════════════════════════════════════════
+       1. MOBILE-ONLY BRAND HEADER (< md)
+  ═══════════════════════════════════════════ -->
+  <div class="block md:hidden relative overflow-hidden"
+       style="background: var(--hero); padding: 28px 20px 42px 20px;">
+    
+    <!-- Soft Decorative Glow -->
+    <div class="absolute -top-16 -right-16 w-56 h-56 rounded-full pointer-events-none"
+         style="background: rgba(255, 255, 255, 0.08);"></div>
+
+    <!-- Mobile Branding Header -->
+    <div class="flex items-center justify-between relative z-10 mb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl text-white shadow-md"
+             style="background: rgba(255, 255, 255, 0.22); backdrop-filter: blur(8px); border: 1.5px solid rgba(255, 255, 255, 0.35);">
+          RL
+        </div>
+        <div>
+          <div class="text-xl font-black text-white tracking-tight leading-none">RoomLedger</div>
+          <div class="text-[9px] font-extrabold tracking-widest text-white/70 uppercase mt-0.5">Smart Expense Sharing</div>
+        </div>
+      </div>
+
+      <!-- Live Room Activity Badge / Peek Toggle -->
+      <button type="button"
+              (click)="toggleMobileDemo()"
+              class="px-2.5 py-1 rounded-full text-[10px] font-bold text-white/90 flex items-center gap-1.5 cursor-pointer border"
+              style="background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.3); backdrop-filter: blur(8px);">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+        <span>{{ showMobileHeroDemo() ? 'Hide Updates ▲' : 'Live Demo ▼' }}</span>
+      </button>
+    </div>
+
+    <!-- Mobile Headline -->
+    <div class="relative z-10">
+      <h1 class="text-2xl font-black text-white leading-tight tracking-tight">
+        Your room. <span class="text-white/75">One budget.</span> <span class="text-white/50">Zero confusion.</span>
+      </h1>
+      <p class="text-xs text-white/70 mt-1 font-medium leading-relaxed">
+        Split bills fairly, track every rupee, and settle instantly via UPI.
+      </p>
+    </div>
+
+    <!-- Expandable Mobile Hero Demo Cards -->
+    @if (showMobileHeroDemo()) {
+      <div class="mt-4 flex flex-col gap-2 relative z-10 fade-up">
+        <div class="p-2.5 px-3 rounded-xl flex items-center gap-2.5 shadow-sm"
+             style="background: rgba(255, 255, 255, 0.16); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.25);">
+          <div class="text-base">✅</div>
+          <div class="flex-1">
+            <div class="text-xs font-bold text-white">Rahul settled ₹450 via UPI</div>
+            <div class="text-[10px] text-white/65">● Just now · Apartment 402</div>
+          </div>
+        </div>
+
+        <div class="p-2.5 px-3 rounded-xl flex items-center gap-2.5 shadow-sm"
+             style="background: rgba(255, 255, 255, 0.16); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.25);">
+          <div class="text-base">🛒</div>
+          <div class="flex-1">
+            <div class="flex justify-between text-xs font-bold text-white">
+              <span>Daily Pool Fund</span>
+              <span>₹14,500</span>
+            </div>
+            <div class="h-1 rounded-full overflow-hidden mt-1" style="background: rgba(255, 255, 255, 0.25);">
+              <div class="h-full rounded-full" style="width: 72%; background: rgba(255, 255, 255, 0.85);"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-2.5 px-3 rounded-xl flex items-center gap-2.5 shadow-sm"
+             style="background: rgba(255, 255, 255, 0.16); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.25);">
+          <div class="text-base">⚡</div>
+          <div class="flex-1">
+            <div class="text-xs font-bold text-white">Electricity bill due in 3 days</div>
+            <div class="text-[10px] text-white/65">₹4,500 · 3 of 7 paid</div>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center px-1 pt-1 text-white/70 text-[10px] font-extrabold uppercase tracking-widest">
+          <span>₹2.4L+ TRACKED</span>
+          <span>1,200+ ROOMS</span>
+          <span>₹0 DISPUTES</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       2. DESKTOP LEFT HERO SECTION (>= md)
+  ═══════════════════════════════════════════ -->
+  <div class="hidden md:flex flex-1 p-10 lg:p-14 flex-col justify-center relative overflow-hidden"
+       style="background: var(--hero); min-width: 320px;">
+    
+    <!-- Ambient Glowing Circles -->
+    <div class="absolute -top-20 -right-16 w-88 h-88 rounded-full pointer-events-none"
+         style="background: rgba(255, 255, 255, 0.08);"></div>
+    <div class="absolute -bottom-16 -left-10 w-72 h-72 rounded-full pointer-events-none"
+         style="background: rgba(255, 255, 255, 0.05);"></div>
+    <div class="absolute top-[45%] right-[10%] w-44 h-44 rounded-full pointer-events-none"
+         style="background: rgba(255, 255, 255, 0.04);"></div>
+
+    <div class="relative z-10 max-w-lg">
+      <!-- App Brand Header -->
+      <div class="flex items-center gap-3.5 mb-12">
+        <div class="w-13 h-13 rounded-2xl flex items-center justify-center font-black text-2xl text-white shadow-lg"
+             style="background: rgba(255, 255, 255, 0.22); backdrop-filter: blur(8px); border: 1.5px solid rgba(255, 255, 255, 0.35);">
+          RL
+        </div>
+        <div>
+          <div class="text-2xl font-black text-white tracking-tight leading-none">RoomLedger</div>
+          <div class="text-[10px] font-extrabold tracking-widest text-white/70 mt-1 uppercase">Smart Expense Sharing</div>
+        </div>
+      </div>
+
+      <!-- Hero Headline -->
+      <div class="text-4xl lg:text-5xl font-black text-white leading-[1.1] tracking-tight mb-3.5">
+        Your room.<br/>
+        <span class="text-white/75">One budget.</span><br/>
+        <span class="text-white/45 text-3xl lg:text-4xl font-extrabold">Zero confusion.</span>
+      </div>
+      <p class="text-white/65 text-sm lg:text-base leading-relaxed max-w-sm mb-10 font-medium">
+        Split bills fairly, track every rupee, and settle instantly via UPI. Designed for modern shared living.
+      </p>
+
+      <!-- 3 Live Floating Cards -->
+      <div class="flex flex-col gap-3 max-w-xs lg:max-w-sm mb-10">
+        <!-- Card 1: Rahul settled -->
+        <div class="fa p-3.5 px-4 rounded-2xl flex items-center gap-3.5 shadow-sm"
+             style="background: rgba(255, 255, 255, 0.14); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.22);">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
+               style="background: rgba(255, 255, 255, 0.2);">
+            ✅
+          </div>
+          <div>
+            <div class="text-xs lg:text-[13px] font-bold text-white">Rahul settled ₹450 via UPI</div>
+            <div class="text-[11px] text-white/65 font-semibold mt-0.5">● Just now · Apartment 402</div>
+          </div>
+        </div>
+
+        <!-- Card 2: Daily Pool Fund -->
+        <div class="fb p-3.5 px-4 rounded-2xl flex items-center gap-3.5 shadow-sm"
+             style="background: rgba(255, 255, 255, 0.14); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.22);">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
+               style="background: rgba(255, 255, 255, 0.2);">
+            🛒
+          </div>
+          <div class="flex-1">
+            <div class="text-xs lg:text-[13px] font-bold text-white">Daily Pool Fund</div>
+            <div class="h-1.5 rounded-full overflow-hidden mt-1.5"
+                 style="background: rgba(255, 255, 255, 0.2);">
+              <div class="h-full rounded-full" style="width: 70%; background: rgba(255, 255, 255, 0.85);"></div>
+            </div>
+            <div class="text-[10px] text-white/65 font-semibold mt-1">70% remaining · ₹14,500</div>
+          </div>
+        </div>
+
+        <!-- Card 3: Electricity bill -->
+        <div class="fc p-3.5 px-4 rounded-2xl flex items-center gap-3.5 shadow-sm"
+             style="background: rgba(255, 255, 255, 0.14); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.22);">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
+               style="background: rgba(255, 255, 255, 0.2);">
+            ⚡
+          </div>
+          <div>
+            <div class="text-xs lg:text-[13px] font-bold text-white">Electricity bill due in 3 days</div>
+            <div class="text-[11px] text-white/65 font-semibold mt-0.5">₹4,500 · 3 of 7 paid</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trust Metrics -->
+      <div class="flex items-center gap-7 pt-2">
+        <div>
+          <div class="text-2xl lg:text-3xl font-black text-white">₹2.4L+</div>
+          <div class="text-[9px] text-white/50 font-extrabold tracking-widest uppercase mt-0.5">TRACKED</div>
+        </div>
+        <div class="w-px h-8" style="background: rgba(255, 255, 255, 0.2);"></div>
+        <div>
+          <div class="text-2xl lg:text-3xl font-black text-white">1,200+</div>
+          <div class="text-[9px] text-white/50 font-extrabold tracking-widest uppercase mt-0.5">ROOMS</div>
+        </div>
+        <div class="w-px h-8" style="background: rgba(255, 255, 255, 0.2);"></div>
+        <div>
+          <div class="text-2xl lg:text-3xl font-black text-white">₹0</div>
+          <div class="text-[9px] text-white/50 font-extrabold tracking-widest uppercase mt-0.5">DISPUTES</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       3. RIGHT AUTH CONTAINER (MATCHING SCREENSHOT 2)
+  ═══════════════════════════════════════════ -->
+  <div class="w-full md:w-[440px] shrink-0 -mt-6 md:mt-0 rounded-t-[28px] md:rounded-t-none p-6 sm:p-9 md:p-10 lg:p-12 flex flex-col justify-center overflow-y-auto relative z-20 shadow-2xl md:shadow-none"
+       style="background: var(--card); border-left: 2px solid var(--border);">
+    
+    <div class="max-w-[360px] w-full mx-auto">
+      
+      <!-- Gradient Accent Pill (as in Screenshot 2) -->
+      <div style="width: 48px; height: 5px; background: var(--grad); border-radius: 3px; margin-bottom: 24px;"></div>
+
+      <!-- Header Title & Subtitle -->
+      <h2 style="font-size: 28px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; margin-bottom: 6px;">
+        {{ activeTab() === 'login' ? 'Welcome back 👋' : 'Create account 🚀' }}
+      </h2>
+      <p style="color: var(--t2); font-size: 14px; margin-bottom: 24px; line-height: 1.5;">
+        {{ activeTab() === 'login' ? 'Sign in to manage your room\'s shared expenses.' : 'Join your room and start splitting expenses with zero confusion.' }}
+      </p>
+
+      <!-- Primary Segmented Tab Switcher (Sign In vs Create Account) -->
+      <div style="background: var(--bg2); border-radius: 14px; padding: 4px; display: flex; margin-bottom: 20px; border: 1.5px solid var(--border);">
+        <button type="button"
+                class="atab"
+                style="flex: 1;"
+                [class.on]="activeTab() === 'login'"
+                (click)="setTab('login')">
+          Sign In
+        </button>
+        <button type="button"
+                class="atab"
+                style="flex: 1;"
+                [class.on]="activeTab() === 'register'"
+                (click)="setTab('register')">
+          Create Account
+        </button>
+      </div>
+
+      <!-- Error Alert Box -->
+      @if (error()) {
+        <div class="fade-up p-3 rounded-xl text-xs font-bold mb-4 flex items-start gap-2"
+             style="background: color-mix(in srgb, var(--err) 10%, transparent); color: var(--err); border: 1.5px solid color-mix(in srgb, var(--err) 25%, transparent);">
+          <span>⚠️</span>
+          <span class="flex-1">{{ error() }}</span>
+        </div>
+      }
+
+      <!-- ───────────────────────────────────────────
+           FORM 1: SIGN IN (MATCHING SCREENSHOT 2)
+      ─────────────────────────────────────────── -->
+      @if (activeTab() === 'login') {
+        <form (ngSubmit)="submitLogin()" class="fade-up">
+          
+          <!-- Sub-tabs: Email vs Mobile (Screenshot 2) -->
+          <div style="background: var(--bg2); border-radius: 10px; padding: 3px; display: flex; gap: 3px; margin-bottom: 18px; border: 1px solid var(--border);">
+            <button type="button"
+                    (click)="setLoginMode('email')"
+                    [style.background]="loginMode() === 'email' ? 'var(--btn)' : 'transparent'"
+                    [style.color]="loginMode() === 'email' ? '#fff' : 'var(--t3)'"
+                    style="flex: 1; padding: 8px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: var(--font);">
+              📧 Email
+            </button>
+            <button type="button"
+                    (click)="setLoginMode('phone')"
+                    [style.background]="loginMode() === 'phone' ? 'var(--btn)' : 'transparent'"
+                    [style.color]="loginMode() === 'phone' ? '#fff' : 'var(--t3)'"
+                    style="flex: 1; padding: 8px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: var(--font);">
+              📱 Mobile
+            </button>
+          </div>
+
+          <!-- Email Mode Input -->
+          @if (loginMode() === 'email') {
+            <div style="margin-bottom: 16px;">
+              <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 6px; letter-spacing: 0.07em;">
+                EMAIL ADDRESS
+              </label>
+              <input class="inp"
+                     type="email"
+                     name="emailLogin"
+                     [(ngModel)]="emailLogin"
+                     placeholder="dileep@roomledger.app"
+                     autocomplete="email"
+                     [class.border-red-400]="loginTouched() && emailLoginError" />
+              @if (loginTouched() && emailLoginError) {
+                <p style="color: var(--err); font-size: 11px; font-weight: 800; margin-top: 5px;">{{ emailLoginError }}</p>
+              }
+            </div>
+          }
+
+          <!-- Mobile Mode Input -->
+          @if (loginMode() === 'phone') {
+            <div style="margin-bottom: 16px;">
+              <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 6px; letter-spacing: 0.07em;">
+                MOBILE NUMBER
+              </label>
+              <div style="display: flex; gap: 8px;">
+                <div style="padding: 11px 12px; border: 1.5px solid var(--border); border-radius: 12px; background: var(--bg2); color: var(--p1); font-weight: 800; font-size: 13px; flex-shrink: 0;">
+                  +91
+                </div>
+                <input class="inp"
+                       style="flex: 1;"
+                       type="tel"
+                       name="phoneLogin"
+                       [(ngModel)]="phoneLogin"
+                       maxlength="10"
+                       placeholder="9876543210"
+                       autocomplete="tel"
+                       [class.border-red-400]="loginTouched() && phoneLoginError" />
+              </div>
+              @if (loginTouched() && phoneLoginError) {
+                <p style="color: var(--err); font-size: 11px; font-weight: 800; margin-top: 5px;">{{ phoneLoginError }}</p>
+              }
+            </div>
+          }
+
+          <!-- Password Field -->
+          <div style="margin-bottom: 8px;">
+            <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 6px; letter-spacing: 0.07em;">
+              PASSWORD
+            </label>
+            <div style="position: relative;">
+              <input class="inp"
+                     style="padding-right: 46px;"
+                     [type]="showLoginPw ? 'text' : 'password'"
+                     name="loginPassword"
+                     [(ngModel)]="loginPassword"
+                     placeholder="Enter your password"
+                     autocomplete="current-password"
+                     [class.border-red-400]="loginTouched() && loginPasswordError" />
+              <button type="button"
+                      (click)="showLoginPw = !showLoginPw"
+                      style="position: absolute; right: 13px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 17px; line-height: 1;">
+                {{ showLoginPw ? '🙈' : '👁' }}
+              </button>
+            </div>
+            @if (loginTouched() && loginPasswordError) {
+              <p style="color: var(--err); font-size: 11px; font-weight: 800; margin-top: 5px;">{{ loginPasswordError }}</p>
+            }
+          </div>
+
+          <!-- Right-aligned Forgot Password (Exactly as in Screenshot 2) -->
+          <div style="text-align: right; margin-bottom: 20px;">
+            <a routerLink="/auth/forgot-password"
+               style="font-size: 12px; color: var(--p1); font-weight: 800; text-decoration: none;">
+              Forgot Password?
+            </a>
+          </div>
+
+          <!-- Sign In Button -->
+          <button type="submit"
+                  [disabled]="loading()"
+                  class="btn">
+            @if (loading()) {
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+              <span>Signing in…</span>
+            } @else {
+              <span>Sign In to RoomLedger →</span>
+            }
+          </button>
+
+          <!-- No Account Link -->
+          <p style="text-align: center; margin-top: 16px; font-size: 13px; color: var(--t3); font-family: var(--font);">
+            No account?
+            <a href="javascript:void(0)"
+               (click)="setTab('register')"
+               style="color: var(--p1); font-weight: 800; text-decoration: none; margin-left: 3px;">
+              Create one
+            </a>
+          </p>
+        </form>
+      }
+
+      <!-- ───────────────────────────────────────────
+           FORM 2: CREATE ACCOUNT (REGISTER)
+      ─────────────────────────────────────────── -->
+      @if (activeTab() === 'register') {
+        <form (ngSubmit)="submitRegister()" class="fade-up">
+          
+          <!-- Full Name & Mobile Number Grid -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div>
+              <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 5px; letter-spacing: 0.07em;">
+                FULL NAME
+              </label>
+              <input class="inp"
+                     type="text"
+                     name="regFullName"
+                     [(ngModel)]="regFullName"
+                     placeholder="Dileep Kumar"
+                     autocomplete="name"
+                     [class.border-red-400]="regTouched() && regNameError" />
+              @if (regTouched() && regNameError) {
+                <p style="color: var(--err); font-size: 10px; font-weight: 800; margin-top: 4px;">{{ regNameError }}</p>
+              }
+            </div>
+
+            <div>
+              <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 5px; letter-spacing: 0.07em;">
+                PHONE
+              </label>
+              <input class="inp"
+                     type="tel"
+                     name="regPhone"
+                     [(ngModel)]="regPhone"
+                     maxlength="10"
+                     placeholder="9876543210"
+                     autocomplete="tel"
+                     [class.border-red-400]="regTouched() && regPhoneError" />
+              @if (regTouched() && regPhoneError) {
+                <p style="color: var(--err); font-size: 10px; font-weight: 800; margin-top: 4px;">{{ regPhoneError }}</p>
+              }
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div style="margin-bottom: 12px;">
+            <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 5px; letter-spacing: 0.07em;">
+              EMAIL
+            </label>
+            <input class="inp"
+                   type="email"
+                   name="regEmail"
+                   [(ngModel)]="regEmail"
+                   placeholder="you@example.com"
+                   autocomplete="email"
+                   [class.border-red-400]="regTouched() && regEmailError" />
+            @if (regTouched() && regEmailError) {
+              <p style="color: var(--err); font-size: 10px; font-weight: 800; margin-top: 4px;">{{ regEmailError }}</p>
+            }
+          </div>
+
+          <!-- Password with Interactive Strength Meter -->
+          <div style="margin-bottom: 12px;">
+            <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 5px; letter-spacing: 0.07em;">
+              PASSWORD
+            </label>
+            <div style="position: relative;">
+              <input class="inp"
+                     style="padding-right: 46px;"
+                     [type]="showRegPw ? 'text' : 'password'"
+                     name="regPassword"
+                     [(ngModel)]="regPassword"
+                     placeholder="Min. 8 characters"
+                     autocomplete="new-password"
+                     [class.border-red-400]="regTouched() && regPasswordError" />
+              <button type="button"
+                      (click)="showRegPw = !showRegPw"
+                      style="position: absolute; right: 13px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 17px; line-height: 1;">
+                {{ showRegPw ? '🙈' : '👁' }}
+              </button>
+            </div>
+
+            <!-- Password Strength Bar & Label -->
+            <div style="margin-top: 7px;">
+              <div style="height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden;">
+                <div class="sbar"
+                     [style.width]="pwScoreWidth"
+                     [style.background]="pwScoreColor"></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 3px;">
+                <span [style.color]="pwScoreColor" style="font-size: 11px; font-weight: 800;">
+                  {{ pwScoreLabel }}
+                </span>
+                <span style="font-size: 10px; color: var(--t3); font-weight: 600;">
+                  Min 8 chars, number & symbol
+                </span>
+              </div>
+            </div>
+            @if (regTouched() && regPasswordError) {
+              <p style="color: var(--err); font-size: 10px; font-weight: 800; margin-top: 4px;">{{ regPasswordError }}</p>
+            }
+          </div>
+
+          <!-- Room Invite Code -->
+          <div style="margin-bottom: 20px;">
+            <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 5px; letter-spacing: 0.07em;">
+              ROOM INVITE CODE
+            </label>
+            <div style="position: relative;">
+              <input class="inp"
+                     style="text-transform: uppercase; letter-spacing: 3px; font-weight: 900;"
+                     type="text"
+                     name="regRoomCode"
+                     [(ngModel)]="regRoomCode"
+                     maxlength="8"
+                     placeholder="e.g. APT402" />
+              @if (hasValidRoomCode) {
+                <div class="fade-up"
+                     style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 3px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); border: 1.5px solid color-mix(in srgb, var(--ok) 28%, transparent); pointer-events: none;">
+                  ✓ Apt 402
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Join Room Button -->
+          <button type="submit"
+                  [disabled]="loading()"
+                  class="btn">
+            @if (loading()) {
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+              <span>Joining room…</span>
+            } @else {
+              <span>Join Room &amp; Get Started →</span>
+            }
+          </button>
+
+          <!-- Already a Member Link -->
+          <p style="text-align: center; margin-top: 16px; font-size: 13px; color: var(--t3); font-family: var(--font);">
+            Already a member?
+            <a href="javascript:void(0)"
+               (click)="setTab('login')"
+               style="color: var(--p1); font-weight: 800; text-decoration: none; margin-left: 3px;">
+              Sign In
+            </a>
+          </p>
+        </form>
+      }
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+@if (toastMsg()) {
+  <div class="toast flex items-center gap-3">
+    <div style="font-size: 13px; font-weight: 800; color: var(--text);">{{ toastMsg() }}</div>
+  </div>
+}

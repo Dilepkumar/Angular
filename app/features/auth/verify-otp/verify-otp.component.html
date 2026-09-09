@@ -1,21 +1,55 @@
-<div class="min-h-dvh bg-slate-50 p-6 pt-12 text-center">
-  <div class="text-4xl">📧</div>
-  <h1 class="text-xl font-bold mt-3">Enter the code</h1>
-  <p class="text-slate-500 text-sm mt-1">Sent to <b>{{ email }}</b></p>
+<div class="blob b1"></div>
+<div class="blob b2"></div>
 
-  <input [(ngModel)]="code" maxlength="6"
-         class="mt-6 w-48 text-center text-2xl font-bold tracking-[0.5em] border-2
-                rounded-xl py-3 focus:ring-2 ring-emerald-500 outline-none"
-         (keyup.enter)="submit()" inputmode="numeric" />
+<div class="min-h-screen flex items-center justify-center p-4 sm:p-6 relative z-10">
+  <div class="card max-w-md w-full p-8 shadow-xl text-center">
+    
+    <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl shadow-sm"
+         style="background: color-mix(in srgb, var(--p1) 14%, transparent); border: 1.5px solid color-mix(in srgb, var(--p1) 30%, transparent);">
+      📧
+    </div>
 
-  @if (error()) { <p class="mt-4 text-red-600 text-sm bg-red-50 rounded-xl p-3">{{ error() }}</p> }
+    <h1 class="text-xl font-black mb-1" style="color: var(--text);">Enter Verification Code</h1>
+    <p class="text-xs font-semibold mb-6" style="color: var(--t2);">
+      We sent a 6-digit code to <b style="color: var(--p1);">{{ email }}</b>
+    </p>
 
-  <button (click)="submit()" [disabled]="loading() || code.length < 6"
-          class="mt-6 w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-50">
-    {{ loading() ? 'Verifying…' : 'Verify' }}
-  </button>
+    <div class="flex justify-center mb-5">
+      <input [(ngModel)]="code"
+             maxlength="6"
+             placeholder="••••••"
+             class="inp w-48 text-center text-2xl font-black tracking-[0.4em]"
+             (keyup.enter)="submit()"
+             inputmode="numeric" />
+    </div>
 
-  <button (click)="resend()" class="mt-4 text-emerald-600 text-sm font-medium block mx-auto">
-    Didn't get it? Resend code
-  </button>
+    @if (error()) {
+      <div class="p-3 rounded-xl text-xs font-bold mb-4"
+           style="background: color-mix(in srgb, var(--err) 10%, transparent); color: var(--err); border: 1.5px solid color-mix(in srgb, var(--err) 25%, transparent);">
+        {{ error() }}
+      </div>
+    }
+
+    <button (click)="submit()"
+            [disabled]="loading() || code.length < 6"
+            class="btn mb-4">
+      {{ loading() ? 'Verifying…' : 'Verify & Continue →' }}
+    </button>
+
+    <button (click)="resend()"
+            type="button"
+            class="text-xs font-extrabold hover:underline block mx-auto cursor-pointer border-none bg-transparent"
+            style="color: var(--p1);">
+      Didn't get it? Resend code
+    </button>
+
+    <div class="mt-6 pt-4 border-t" style="border-color: var(--border);">
+      <a routerLink="/auth/login"
+         class="text-xs font-extrabold hover:underline"
+         style="color: var(--t3);">
+        ← Back to Sign In
+      </a>
+    </div>
+
+  </div>
 </div>

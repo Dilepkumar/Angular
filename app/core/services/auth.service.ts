@@ -16,8 +16,8 @@ export class AuthService {
 
   user = signal<User | null>(this.loadUser());
 
-  register(body: { fullName: string; email: string; phone: string; password: string }) {
-    return this.api.post<{ message: string; devOtp?: string }>('auth/register', body);
+  register(body: { fullName: string; email: string; phone: string; password: string; roomInviteCode?: string }) {
+    return this.api.post<LoginResponse>('auth/register', body);
   }
 
   verifyOtp(email: string, code: string) {

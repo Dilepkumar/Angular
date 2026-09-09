@@ -1,1 +1,485 @@
 @use "tailwindcss";
+
+@theme {
+  --color-brand: #1ABC9C;
+  --color-brand-dark: #16A085;
+  --color-brand-light: #26D4B2;
+  --color-brand-bg: #F8FFFE;
+  --color-brand-surface: #EDFAF8;
+  --color-brand-border: #C2EDE8;
+  --color-brand-text: #1A3330;
+  --color-brand-muted: #4A7A74;
+  --color-brand-subtle: #84AFA9;
+  --font-inter: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ═══════════════════════════════════════════
+   ROOMLEDGER — SPLITWISE TEAL THEME DESIGN SYSTEM
+════════════════════════════════════════════ */
+:root, body, body.t3 {
+  --bg: #F8FFFE;
+  --bg2: #EDFAF8;
+  --bg3: #D4F4F0;
+  --card: #FFFFFF;
+  --card2: #F0FBF9;
+  --border: #C2EDE8;
+  --border2: #1ABC9C;
+  --text: #1A3330;
+  --t2: #4A7A74;
+  --t3: #84AFA9;
+  --p1: #1ABC9C;
+  --p2: #16A085;
+  --p3: #E74C3C;
+  --p4: #F39C12;
+  --grad: linear-gradient(135deg, #1ABC9C, #26D4B2);
+  --grad2: linear-gradient(135deg, #E74C3C, #FF6B6B);
+  --btn: linear-gradient(135deg, #1ABC9C, #16A085);
+  --kpi1: linear-gradient(135deg, #E8FAF7, #D1F5EF);
+  --kpi2: linear-gradient(135deg, #FEF9E7, #FEF3CD);
+  --kpi3: linear-gradient(135deg, #E8FAF7, #D1F5EF);
+  --ok: #1ABC9C;
+  --err: #E74C3C;
+  --warn: #F39C12;
+  --hero: linear-gradient(145deg, #148A74 0%, #1ABC9C 55%, #26D4B2 100%);
+  --sh: 0 2px 16px rgba(26, 188, 156, 0.10);
+  --sh2: 0 8px 32px rgba(26, 188, 156, 0.18);
+  --sc: #7DCCBE;
+  --font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-family: var(--font);
+  overflow-x: hidden;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg2);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--sc);
+  border-radius: 4px;
+}
+
+/* Subtle dot texture background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--p1) 5%, transparent) 1.5px, transparent 1.5px);
+  background-size: 32px 32px;
+}
+
+/* Soft ambient blobs */
+.blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+}
+.b1 {
+  width: 600px;
+  height: 600px;
+  top: -15%;
+  right: -12%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--p1) 12%, transparent), transparent);
+  animation: bF 12s ease-in-out infinite;
+}
+.b2 {
+  width: 450px;
+  height: 450px;
+  bottom: -12%;
+  left: -10%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--p4) 8%, transparent), transparent);
+  animation: bF 9s ease-in-out infinite 4s;
+}
+@keyframes bF {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(20px, -15px); }
+}
+
+/* ══ FLOATING MICRO-ANIMATIONS ══ */
+@keyframes fa {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes fb {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+@keyframes fc {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+.fa { animation: fa 4s ease-in-out infinite; }
+.fb { animation: fb 5s ease-in-out infinite 1.5s; }
+.fc { animation: fc 3.5s ease-in-out infinite 0.8s; }
+
+@keyframes fU {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fU 0.3s ease; }
+
+/* ══ CARDS ══ */
+.card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: var(--sh);
+  transition: all 0.25s ease;
+  position: relative;
+  z-index: 1;
+}
+.card:hover {
+  box-shadow: var(--sh2);
+  border-color: var(--border2);
+  transform: translateY(-2px);
+}
+.card2 {
+  background: var(--card2);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ══ INPUTS ══ */
+.inp {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--bg2);
+  color: var(--text);
+  font-size: 13px;
+  font-family: var(--font);
+  outline: none;
+  transition: all 0.2s ease;
+}
+.inp:focus {
+  border-color: var(--p1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--p1) 14%, transparent);
+  background: var(--card);
+}
+.inp::placeholder {
+  color: var(--t3);
+}
+select.inp {
+  cursor: pointer;
+  appearance: none;
+}
+
+/* ══ BUTTONS ══ */
+.btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  background: var(--btn);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s ease;
+  font-family: var(--font);
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.btn:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--p1) 35%, transparent);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btns {
+  padding: 10px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--t2);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.2s ease;
+}
+.btns:hover {
+  border-color: var(--p1);
+  color: var(--p1);
+  background: color-mix(in srgb, var(--p1) 5%, transparent);
+}
+
+.btng {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 9px;
+  background: var(--ok);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.2s ease;
+}
+.btng:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.btnr {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 9px;
+  background: var(--err);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.2s ease;
+}
+.btnr:hover {
+  opacity: 0.88;
+}
+
+/* ══ PILLS & BADGES ══ */
+.pk {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--ok) 14%, transparent);
+  color: var(--ok);
+  border: 1.5px solid color-mix(in srgb, var(--ok) 28%, transparent);
+}
+.pp {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--warn) 14%, transparent);
+  color: var(--warn);
+  border: 1.5px solid color-mix(in srgb, var(--warn) 28%, transparent);
+}
+.pr {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--err) 14%, transparent);
+  color: var(--err);
+  border: 1.5px solid color-mix(in srgb, var(--err) 28%, transparent);
+}
+
+/* ══ SEGMENTED TABS ══ */
+.atab {
+  padding: 9px 28px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--t3);
+  transition: all 0.2s ease;
+  border: none;
+  background: transparent;
+  font-family: var(--font);
+}
+.atab.on {
+  background: var(--btn);
+  color: #fff;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--p1) 28%, transparent);
+}
+
+.btab {
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--t3);
+  white-space: nowrap;
+  border: 1.5px solid transparent;
+  background: transparent;
+  transition: all 0.2s ease;
+  font-family: var(--font);
+}
+.btab.on {
+  background: color-mix(in srgb, var(--p1) 10%, transparent);
+  color: var(--p1);
+  border-color: color-mix(in srgb, var(--p1) 25%, transparent);
+}
+.btab:not(.on):hover {
+  color: var(--t2);
+}
+
+/* ══ TOGGLES & CHECKBOXES ══ */
+.tog {
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--bg3);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+.tog.on {
+  background: var(--ok);
+}
+.tt {
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.tog.on .tt {
+  transform: translateX(20px);
+}
+
+.chk {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.chk.on {
+  background: var(--ok);
+  border-color: var(--ok);
+}
+
+/* ══ MISC UTILITIES ══ */
+.sl {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--t3);
+  margin-bottom: 8px;
+}
+.pt {
+  height: 7px;
+  background: var(--bg3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.pf {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--grad);
+}
+.div {
+  height: 1px;
+  background: var(--border);
+  margin: 10px 0;
+}
+.av {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.otp {
+  width: 42px;
+  height: 50px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 900;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--bg2);
+  color: var(--text);
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: var(--font);
+}
+.otp:focus {
+  border-color: var(--p1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--p1) 14%, transparent);
+}
+.sbar {
+  height: 5px;
+  border-radius: 3px;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+.dropz {
+  border: 2px dashed var(--border);
+  border-radius: 16px;
+  padding: 22px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--bg);
+}
+.dropz:hover {
+  border-color: var(--p1);
+  background: color-mix(in srgb, var(--p1) 4%, transparent);
+}
+.vok {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ok) 10%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--ok) 25%, transparent);
+}
+.verr {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--err) 10%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--err) 25%, transparent);
+}
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--card);
+  border: 1.5px solid var(--border2);
+  border-radius: 16px;
+  padding: 14px 20px;
+  z-index: 600;
+  min-width: 260px;
+  animation: fU 0.3s ease;
+  box-shadow: var(--sh2);
+}
