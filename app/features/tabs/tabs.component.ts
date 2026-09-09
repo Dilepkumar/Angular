@@ -5,7 +5,8 @@ import { RouterModule } from '@angular/router';
   selector: 'app-tabs',
   standalone: true,
   imports: [RouterModule],
-  templateUrl: './tabs.component.html'
+  templateUrl: './tabs.component.html',
+  styleUrls: ['./tabs.component.scss']
 })
 export class TabsComponent {
   tabs = [

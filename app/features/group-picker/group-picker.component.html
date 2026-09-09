@@ -1,59 +1,287 @@
-<div class="min-h-dvh bg-slate-50 p-4 pt-10">
-    <div class="flex items-center justify-between mb-6">
-    <div>
-      <h1 class="text-2xl font-bold">Your groups</h1>
-      <p class="text-slate-500 text-sm">Welcome back, <b>{{ me?.fullName ?? 'there' }}</b></p>
-      <p class="text-slate-500 text-sm">Choose a flat to continue</p>
-    </div>
-    <button (click)="goProfile()" aria-label="Open profile"
-            class="w-11 h-11 rounded-full bg-emerald-600 text-white font-extrabold flex items-center justify-center shadow active:scale-95 transition">
-      {{ initials }}
-    </button>
-  </div>
+<div class="blob b1"></div>
+<div class="blob b2"></div>
 
-  <div class="space-y-3">
-    @for (g of groups(); track g.id) {
-      <button (click)="enter(g.id)"
-              class="w-full bg-white rounded-2xl shadow-sm p-5 flex items-center gap-4 text-left active:scale-[0.98] transition">
-        <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-2xl">🏠</div>
-        <div class="flex-1">
-          <p class="font-bold">{{ g.groupName }}</p>
-          @if (g.memberCount) { <p class="text-xs text-slate-500">{{ g.memberCount }} members</p> }
-        </div>
-        <span class="text-slate-300 text-xl">›</span>
-      </button>
-    } @empty {
-      <p class="text-slate-400 text-sm text-center py-6">No groups yet — create one below!</p>
-    }
-  </div>
+<div class="min-h-screen py-6 px-4 sm:px-6 lg:px-8 max-w-2xl mx-auto relative z-10 pb-20">
 
-  <button (click)="showJoin = true"
-          class="mt-6 w-full border-2 border-dashed border-slate-300 rounded-2xl p-5 text-slate-500 font-medium">
-    + Create or join a flat
-  </button>
-
-  @if (showJoin) {
-    <div class="fixed inset-0 bg-black/40 flex items-end z-50" (click)="showJoin = false">
-      <div class="w-full bg-white rounded-t-3xl p-6 space-y-6" (click)="$event.stopPropagation()">
-        <div>
-          <h2 class="font-bold mb-3">Join with invite code</h2>
-          <input [(ngModel)]="inviteCode" maxlength="6" placeholder="e.g. A7X2KP"
-                 class="w-full border rounded-xl px-4 py-3 text-center font-mono text-lg tracking-widest uppercase" />
-          <button (click)="joinByCode()"
-                  class="mt-3 w-full bg-emerald-600 text-white font-bold py-3 rounded-xl">Join Group</button>
-        </div>
-        <div class="border-t pt-4">
-          <h2 class="font-bold mb-3">Or create a new group</h2>
-          <input [(ngModel)]="newGroupName" placeholder="Group name, e.g. Green Villa"
-                class="w-full border rounded-xl px-4 py-3" />
-          <input type="number" [(ngModel)]="newGroupTarget" name="newGroupTarget"
-                placeholder="Monthly pool target (₹),.g. 3000"
-                class="w-full border rounded-xl px-4 py-3 mt-2" />
-          <button (click)="createGroup()"
-                  class="mt-3 w-full bg-slate-800 text-white font-bold py-3 rounded-xl">Create Group</button>
-        </div>
-        @if (error()) { <p class="text-red-600 text-sm">{{ error() }}</p> }
+  <!-- ═══════════════════════════════════════════
+       TOP BRAND BAR
+  ═══════════════════════════════════════════ -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg text-white shadow-md"
+           style="background: var(--btn);">
+        RL
+      </div>
+      <div>
+        <div class="text-lg font-black tracking-tight leading-none" style="color: var(--text);">RoomLedger</div>
+        <div class="text-[9px] font-extrabold tracking-widest uppercase mt-0.5" style="color: var(--p1);">Your Flats &amp; Rooms</div>
       </div>
     </div>
-  }
+
+    <!-- Actions: Profile Avatar & Logout -->
+    <div class="flex items-center gap-2.5">
+      <button type="button"
+              (click)="goProfile()"
+              title="View Profile"
+              class="w-10 h-10 rounded-full font-black text-xs text-white flex items-center justify-center shadow-md active:scale-95 transition cursor-pointer border"
+              style="background: var(--btn); border-color: rgba(255, 255, 255, 0.3);">
+        {{ initials }}
+      </button>
+
+      <button type="button"
+              (click)="logout()"
+              title="Logout"
+              class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition cursor-pointer border"
+              style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
+        🚪
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       WELCOME GREETING BANNER
+  ═══════════════════════════════════════════ -->
+  <div class="rounded-3xl p-6 sm:p-7 mb-6 relative overflow-hidden shadow-xl"
+       style="background: var(--hero);">
+    
+    <!-- Ambient Overlay Circle -->
+    <div class="absolute -top-10 -right-10 w-40 h-40 rounded-full pointer-events-none"
+         style="background: rgba(255, 255, 255, 0.08);"></div>
+
+    <div class="relative z-10">
+      <div class="inline-block px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-widest text-white/90 mb-2 border"
+           style="background: rgba(255, 255, 255, 0.18); border-color: rgba(255, 255, 255, 0.3);">
+        Welcome back
+      </div>
+      
+      <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight mb-1.5 leading-tight">
+        Hello, {{ firstName }} 👋
+      </h1>
+      <p class="text-xs sm:text-sm text-white/75 font-medium leading-relaxed max-w-md">
+        Choose a flat to continue tracking shared expenses, or create a new room with your flatmates.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ACTIVE FLATS LIST
+  ═══════════════════════════════════════════ -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between mb-3 px-1">
+      <span class="sl mb-0">YOUR FLATS ({{ groups().length }})</span>
+      <span class="text-xs font-bold" style="color: var(--t3);">Tap to open</span>
+    </div>
+
+    <div class="space-y-3">
+      @for (g of groups(); track g.id) {
+        <div (click)="enter(g.id)"
+             class="card cursor-pointer p-4 sm:p-5 flex items-center gap-4 active:scale-[0.99] transition hover:shadow-lg">
+          
+          <!-- Flat Icon -->
+          <div class="w-13 h-13 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-sm"
+               style="background: color-mix(in srgb, var(--p1) 12%, transparent); border: 1.5px solid color-mix(in srgb, var(--p1) 25%, transparent);">
+            🏠
+          </div>
+
+          <!-- Flat Details -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap mb-1">
+              <h2 class="text-base sm:text-lg font-black truncate" style="color: var(--text);">
+                {{ g.groupName }}
+              </h2>
+              @if (g.myRole) {
+                <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-md border select-none"
+                      [style.background]="g.myRole === 'Admin' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'var(--bg2)'"
+                      [style.color]="g.myRole === 'Admin' ? 'var(--p1)' : 'var(--t2)'"
+                      [style.borderColor]="g.myRole === 'Admin' ? 'color-mix(in srgb, var(--p1) 30%, transparent)' : 'var(--border)'">
+                  {{ g.myRole === 'Admin' ? '👑 Admin' : '👤 Member' }}
+                </span>
+              }
+            </div>
+
+            <div class="flex items-center gap-3 text-xs font-medium" style="color: var(--t2);">
+              <span>{{ g.memberCount || 1 }} Roommates</span>
+              <span>·</span>
+              <span>₹{{ g.monthlyPoolTarget | number:'1.0-0' }} / mo pool</span>
+            </div>
+
+            @if (g.inviteCode) {
+              <div class="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold border"
+                   style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
+                <span>🔑 Code:</span>
+                <span class="font-mono font-black tracking-wider" style="color: var(--p1);">{{ g.inviteCode }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Enter Arrow -->
+          <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition"
+               style="background: var(--bg2); color: var(--p1);">
+            <span class="text-lg font-black">›</span>
+          </div>
+
+        </div>
+      } @empty {
+        <div class="card text-center py-10 px-4">
+          <div class="text-4xl mb-3">🏡</div>
+          <h3 class="text-base font-black mb-1" style="color: var(--text);">No Flats Yet</h3>
+          <p class="text-xs font-medium max-w-xs mx-auto mb-4" style="color: var(--t2);">
+            You haven't joined or created a flat yet. Create one now or join using an invite code.
+          </p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ACTION BUTTONS (CREATE OR JOIN)
+  ═══════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+    
+    <!-- Button 1: Create New Flat -->
+    <button type="button"
+            (click)="openCreate()"
+            class="btn py-4 text-xs sm:text-sm font-black flex items-center justify-center gap-2">
+      <span class="text-lg leading-none">+</span>
+      <span>Create New Flat</span>
+    </button>
+
+    <!-- Button 2: Join with Invite Code -->
+    <button type="button"
+            (click)="openJoin()"
+            class="btns py-4 text-xs sm:text-sm font-black flex items-center justify-center gap-2 bg-white"
+            style="border-color: var(--border2); color: var(--p1);">
+      <span class="text-base leading-none">🔑</span>
+      <span>Join with Invite Code</span>
+    </button>
+
+  </div>
+
 </div>
+
+<!-- ═══════════════════════════════════════════
+     MODAL SHEET: CREATE OR JOIN FLAT
+═══════════════════════════════════════════ -->
+@if (modalMode()) {
+  <div class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 fade-up"
+       (click)="closeModal()">
+    
+    <div class="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-6 sm:p-7 shadow-2xl relative"
+         style="background: var(--card); border: 1.5px solid var(--border);"
+         (click)="$event.stopPropagation()">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg text-white"
+               style="background: var(--btn);">
+            {{ modalMode() === 'create' ? '🏠' : '🔑' }}
+          </div>
+          <div>
+            <h2 class="text-lg font-black" style="color: var(--text);">
+              {{ modalMode() === 'create' ? 'Create New Flat' : 'Join with Invite Code' }}
+            </h2>
+            <p class="text-xs font-semibold" style="color: var(--t3);">
+              {{ modalMode() === 'create' ? 'Set up a shared pool for your apartment' : 'Enter the 6-character room invite code' }}
+            </p>
+          </div>
+        </div>
+
+        <button type="button"
+                (click)="closeModal()"
+                class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black cursor-pointer border bg-transparent"
+                style="border-color: var(--border); color: var(--t2);">
+          ✕
+        </button>
+      </div>
+
+      <!-- Mode Switcher Tabs inside Modal -->
+      <div style="background: var(--bg2); border-radius: 12px; padding: 3px; display: flex; gap: 3px; margin-bottom: 18px; border: 1px solid var(--border);">
+        <button type="button"
+                (click)="modalMode.set('create'); error.set(null)"
+                [style.background]="modalMode() === 'create' ? 'var(--btn)' : 'transparent'"
+                [style.color]="modalMode() === 'create' ? '#fff' : 'var(--t3)'"
+                style="flex: 1; padding: 7px 10px; border-radius: 8px; border: none; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s;">
+          ➕ Create Flat
+        </button>
+        <button type="button"
+                (click)="modalMode.set('join'); error.set(null)"
+                [style.background]="modalMode() === 'join' ? 'var(--btn)' : 'transparent'"
+                [style.color]="modalMode() === 'join' ? '#fff' : 'var(--t3)'"
+                style="flex: 1; padding: 7px 10px; border-radius: 8px; border: none; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s;">
+          🔑 Join with Code
+        </button>
+      </div>
+
+      <!-- Error Alert -->
+      @if (error()) {
+        <div class="p-3 rounded-xl text-xs font-bold mb-4 flex items-center gap-2"
+             style="background: color-mix(in srgb, var(--err) 12%, transparent); color: var(--err); border: 1.5px solid color-mix(in srgb, var(--err) 25%, transparent);">
+          <span>⚠️</span>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      <!-- Form 1: Create Flat -->
+      @if (modalMode() === 'create') {
+        <form (ngSubmit)="createGroup()" class="space-y-4">
+          <div>
+            <label class="sl block">FLAT / APARTMENT NAME</label>
+            <input class="inp"
+                   type="text"
+                   name="newGroupName"
+                   [(ngModel)]="newGroupName"
+                   placeholder="e.g. Apartment 402, Green Glen" />
+          </div>
+
+          <div>
+            <label class="sl block">MONTHLY POOL TARGET (₹)</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold" style="color: var(--p1);">₹</span>
+              <input class="inp font-bold"
+                     style="padding-left: 28px;"
+                     type="number"
+                     name="newGroupTarget"
+                     [(ngModel)]="newGroupTarget"
+                     placeholder="e.g. 20000" />
+            </div>
+            <p class="text-[10px] font-medium mt-1" style="color: var(--t3);">
+              Estimated total monthly shared grocery/utility budget.
+            </p>
+          </div>
+
+          <button type="submit"
+                  [disabled]="submitting()"
+                  class="btn mt-2">
+            {{ submitting() ? 'Creating flat…' : 'Create Flat & Enter →' }}
+          </button>
+        </form>
+      }
+
+      <!-- Form 2: Join Flat -->
+      @if (modalMode() === 'join') {
+        <form (ngSubmit)="joinByCode()" class="space-y-4">
+          <div>
+            <label class="sl block">6-CHARACTER INVITE CODE</label>
+            <input class="inp text-center font-mono font-black text-xl tracking-[0.25em] uppercase"
+                   type="text"
+                   name="inviteCode"
+                   maxlength="8"
+                   [(ngModel)]="inviteCode"
+                   placeholder="APT402" />
+            <p class="text-[10px] font-medium mt-1.5 text-center" style="color: var(--t3);">
+              Ask your flat admin for the room invite code.
+            </p>
+          </div>
+
+          <button type="submit"
+                  [disabled]="submitting()"
+                  class="btn mt-2">
+            {{ submitting() ? 'Joining flat…' : 'Join Flat & Enter →' }}
+          </button>
+        </form>
+      }
+
+    </div>
+  </div>
+}

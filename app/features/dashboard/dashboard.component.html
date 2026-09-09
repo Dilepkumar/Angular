@@ -1,95 +1,1022 @@
-<div class="min-h-dvh bg-slate-50">
-  <header class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white px-5 pt-6 pb-8 rounded-b-3xl">
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-emerald-200 text-xs">Welcome back,</p>
-        <h1 class="font-bold text-lg">{{ me()?.fullName?.split(' ')[0] }} 👋</h1>
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+
+<div class="min-h-screen py-6 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto relative z-10 pb-28">
+
+  <!-- ═══════════════════════════════════════════
+       TOP HEADER (SCREEN 2 PROTOTYPE)
+  ═══════════════════════════════════════════ -->
+  <div class="flex items-center justify-between flex-wrap gap-4 mb-7">
+    
+    <!-- Flat Identity & Switcher -->
+    <div class="flex items-center gap-3.5 cursor-pointer" (click)="switchFlat()" title="Switch Flat / Room">
+      <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl text-white shadow-md"
+           style="background: var(--btn);">
+        🏠
       </div>
-      <button (click)="openNotifications()"
-              class="relative bg-white/15 rounded-full p-2.5 text-xl">
-        🔔
+      <div>
+        <div class="text-xl font-black tracking-tight flex items-center gap-2" style="color: var(--text);">
+          <span>{{ groupName() }}</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--p1)" stroke-width="2.5">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+        </div>
+        <div class="text-xs font-semibold flex items-center gap-1.5 mt-0.5" style="color: var(--t2);">
+          <span class="w-2 h-2 rounded-full inline-block" style="background: var(--ok);"></span>
+          <span>{{ memberCount() }} Roommates · {{ groupAddress() }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header Actions (Notifications, Profile Badge, Log Expense) -->
+    <div class="flex items-center gap-2.5 sm:gap-3">
+      
+      <!-- Notifications Bell -->
+      <div (click)="showToast('🔔 3 new notifications')"
+           class="relative cursor-pointer select-none"
+           title="Notifications">
+        <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center border shadow-sm transition active:scale-95"
+             style="background: var(--card); border-color: var(--border);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </div>
         @if (unreadCount() > 0) {
-          <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold
-                       rounded-full w-5 h-5 flex items-center justify-center">
-            {{ unreadCount() > 9 ? '9+' : unreadCount() }}
-          </span>
+          <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2"
+                style="background: var(--err); border-color: var(--bg);"></span>
         }
+      </div>
+
+      <!-- User Profile Badge -->
+      <div (click)="goProfile()"
+           class="flex items-center gap-2 rounded-2xl p-1.5 pr-3 sm:pr-4 cursor-pointer border shadow-sm transition active:scale-95 select-none"
+           style="background: var(--card); border-color: var(--border);">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs text-white"
+             style="background: var(--btn);">
+          {{ me()?.fullName?.charAt(0) || 'D' }}K
+        </div>
+        <div class="hidden sm:block">
+          <div class="text-xs font-black leading-none" style="color: var(--text);">
+            {{ me()?.fullName?.split(' ')[0] || 'Dileep' }}
+          </div>
+          <span class="text-[9px] font-black px-1.5 py-0.5 rounded uppercase mt-0.5 inline-block"
+                style="background: color-mix(in srgb, var(--p1) 12%, transparent); color: var(--p1);">
+            Admin
+          </span>
+        </div>
+      </div>
+
+      <!-- Log Expense Primary Action Button -->
+      <button type="button"
+              (click)="openExpenseModal()"
+              class="btn py-2.5 sm:py-3 px-4 sm:px-5 text-xs sm:text-sm font-black shadow-md">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        <span>Log Expense</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       3 KPI CARDS (PROTOTYPE)
+  ═══════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 mb-7">
+    
+    <!-- KPI 1: POOL FUND -->
+    <div class="card p-5 sm:p-6 rounded-3xl relative overflow-hidden"
+         style="background: var(--kpi1); border-color: color-mix(in srgb, var(--p1) 25%, transparent);">
+      <div class="flex justify-between items-center mb-3.5">
+        <span class="sl mb-0">POOL FUND</span>
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
+             style="background: color-mix(in srgb, var(--p1) 14%, transparent);">
+          🛒
+        </div>
+      </div>
+      <div class="text-2xl sm:text-3xl font-black tracking-tight mb-1" style="color: var(--text);">
+        ₹{{ poolBalance() | number:'1.0-0' }}
+      </div>
+      <div class="text-xs font-semibold mb-3.5" style="color: var(--t2);">
+        of ₹{{ poolTarget() | number:'1.0-0' }} monthly budget
+      </div>
+      
+      <!-- Progress Bar -->
+      <div class="pt mb-2">
+        <div class="pf" style="width: 72.5%;"></div>
+      </div>
+      <div class="flex justify-between text-[11px] font-extrabold">
+        <span style="color: var(--p1);">72.5% remaining</span>
+        <span style="color: var(--t3);">12 days left</span>
+      </div>
+    </div>
+
+    <!-- KPI 2: FIXED BILLS -->
+    <div class="card p-5 sm:p-6 rounded-3xl"
+         style="background: var(--kpi2); border-color: color-mix(in srgb, var(--warn) 25%, transparent);">
+      <div class="flex justify-between items-center mb-3.5">
+        <span class="sl mb-0">FIXED BILLS</span>
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
+             style="background: color-mix(in srgb, var(--warn) 14%, transparent);">
+          📅
+        </div>
+      </div>
+      <div class="text-2xl sm:text-3xl font-black tracking-tight mb-1" style="color: var(--warn);">
+        {{ pendingBillsCount() }} Pending
+      </div>
+      <div class="text-xs font-semibold mb-3" style="color: var(--t2);">
+        of 4 recurring bills this month
+      </div>
+
+      <!-- Pending Avatars -->
+      <div class="flex items-center -space-x-1.5 mb-1.5">
+        <div class="w-7 h-7 rounded-full text-white text-[10px] font-black flex items-center justify-center border-2 border-white"
+             style="background: var(--err);">
+          RK
+        </div>
+        <div class="w-7 h-7 rounded-full text-white text-[10px] font-black flex items-center justify-center border-2 border-white"
+             style="background: var(--warn);">
+          AM
+        </div>
+      </div>
+      <div class="text-[11px] font-bold" style="color: var(--t3);">
+        Rahul &amp; Amit have pending bills
+      </div>
+    </div>
+
+    <!-- KPI 3: NET IOU -->
+    <div class="card p-5 sm:p-6 rounded-3xl relative overflow-hidden"
+         style="background: var(--kpi3); border-color: color-mix(in srgb, var(--ok) 25%, transparent);">
+      <div class="absolute -top-5 -right-5 w-24 h-24 rounded-full pointer-events-none"
+           style="background: color-mix(in srgb, var(--ok) 14%, transparent);"></div>
+      
+      <div class="flex justify-between items-center mb-3.5 relative z-10">
+        <span class="sl mb-0">NET IOU</span>
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
+             style="background: color-mix(in srgb, var(--ok) 14%, transparent);">
+          🤝
+        </div>
+      </div>
+      <div class="text-2xl sm:text-3xl font-black tracking-tight mb-1 relative z-10" style="color: var(--ok);">
+        +₹{{ netIouOwed() | number:'1.0-0' }}
+      </div>
+      <div class="text-xs font-extrabold mb-4 relative z-10" style="color: color-mix(in srgb, var(--ok) 85%, transparent);">
+        You are owed this amount
+      </div>
+
+      <button type="button"
+              (click)="openSettleModal('Rahul', 'rahul@phonepe', 450)"
+              class="btng w-full py-2.5 text-xs font-black relative z-10 shadow-sm">
+        Settle Debts →
       </button>
     </div>
-    <p class="mt-3 text-emerald-100 text-sm font-medium">{{ data()?.groupName }}</p>
-  </header>
 
-  @if (data()?.actionItems?.length) {
-    <section class="px-4 -mt-5 space-y-2">
-      @for (a of data()!.actionItems; track a.message) {
-        <button [routerLink]="[a.link]"
-                class="w-full bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3 text-left border-l-4
-                       {{ a.type === 'pool_low' ? 'border-red-500' : 'border-amber-400' }}">
-          <span class="text-2xl">{{ a.type === 'iou_owe' ? '💸' : a.type === 'iou_owed' ? '📥' :
-                                     a.type === 'bill_due' ? '📋' : a.type === 'pool_contribute' ? '💰' : '⚠️' }}</span>
-          <span class="flex-1 text-sm font-medium text-slate-700">{{ a.message }}</span>
-          <span class="text-slate-300">›</span>
-        </button>
-      }
-    </section>
-  } @else {
-    <section class="px-4 -mt-5">
-      <div class="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3 border-l-4 border-emerald-500">
-        <span class="text-2xl">🎉</span>
-        <span class="text-sm font-medium text-slate-700">All caught up! Nothing needs your attention.</span>
-      </div>
-    </section>
-  }
+  </div>
 
-  <section class="px-4 mt-4 space-y-3">
-    @for (b of bucketCards(); track b.title) {
-      <button [routerLink]="b.link"
-              class="w-full bg-white rounded-2xl shadow-sm p-4 flex items-center gap-4 text-left active:scale-[0.98] transition">
-        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl {{ b.bg }}">{{ b.icon }}</div>
-        <div class="flex-1 min-w-0">
-          <p class="text-xs text-slate-400 font-medium">{{ b.title }}</p>
-          <p class="text-xl font-bold {{ b.amountClass }}">₹{{ abs(b.amount) | number:'1.2-2' }}</p>
-          <p class="text-xs text-slate-500 truncate">{{ b.subtitle }}</p>
+  <!-- ═══════════════════════════════════════════
+       BUCKET NAVIGATION TABS
+  ═══════════════════════════════════════════ -->
+  <div class="flex gap-1.5 p-1 rounded-2xl mb-6 overflow-x-auto border"
+       style="background: var(--bg2); border-color: var(--border);">
+    <button type="button"
+            (click)="setBucket('daily')"
+            class="btab flex-1"
+            [class.on]="activeBucket() === 'daily'">
+      🛒 Daily Pool Fund
+    </button>
+    <button type="button"
+            (click)="setBucket('bills')"
+            class="btab flex-1"
+            [class.on]="activeBucket() === 'bills'">
+      📅 Fixed Recurring Bills
+    </button>
+    <button type="button"
+            (click)="setBucket('iou')"
+            class="btab flex-1"
+            [class.on]="activeBucket() === 'iou'">
+      🤝 Group Split &amp; IOUs
+    </button>
+  </div>
+
+  <!-- ───────────────────────────────────────────
+       BUCKET 1: DAILY POOL FUND (BREAKDOWN & RECEIPTS)
+  ─────────────────────────────────────────── -->
+  @if (activeBucket() === 'daily') {
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 fade-up">
+      
+      <!-- Card: Expense Breakdown & Monthly Contributions -->
+      <div class="card">
+        <div class="sl">Category Expense Breakdown</div>
+        
+        <div class="space-y-3 mb-6">
+          <!-- Groceries -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm"
+                   style="background: color-mix(in srgb, var(--ok) 14%, transparent);">
+                🥕
+              </div>
+              <div>
+                <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Groceries</div>
+                <div class="text-[10px] font-medium" style="color: var(--t3);">18 items logged</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹4,200</div>
+              <div class="h-1.5 w-20 rounded-full overflow-hidden mt-1" style="background: var(--bg3);">
+                <div class="h-full rounded-full" style="width: 58%; background: var(--ok);"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="div"></div>
+
+          <!-- Dairy -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm"
+                   style="background: color-mix(in srgb, var(--p1) 14%, transparent);">
+                🥛
+              </div>
+              <div>
+                <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Dairy Products</div>
+                <div class="text-[10px] font-medium" style="color: var(--t3);">Daily delivery</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹2,100</div>
+              <div class="h-1.5 w-20 rounded-full overflow-hidden mt-1" style="background: var(--bg3);">
+                <div class="h-full rounded-full" style="width: 29%; background: var(--p1);"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="div"></div>
+
+          <!-- Supplies -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm"
+                   style="background: color-mix(in srgb, var(--err) 14%, transparent);">
+                🧴
+              </div>
+              <div>
+                <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Household Supplies</div>
+                <div class="text-[10px] font-medium" style="color: var(--t3);">Cleaning &amp; hygiene</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹1,200</div>
+              <div class="h-1.5 w-20 rounded-full overflow-hidden mt-1" style="background: var(--bg3);">
+                <div class="h-full rounded-full" style="width: 17%; background: var(--err);"></div>
+              </div>
+            </div>
+          </div>
         </div>
-        <span class="text-xs font-semibold px-2 py-1 rounded-full {{ b.badgeClass }}">{{ b.badge }}</span>
-      </button>
-    }
-  </section>
 
-  <section class="px-4 mt-5">
-    <h2 class="text-sm font-semibold text-slate-600 mb-2">Flatmates</h2>
-    <div class="flex gap-3 overflow-x-auto pb-1">
-      @for (m of data()?.members ?? []; track m.id; let i = $index) {
-        <div class="shrink-0 flex flex-col items-center w-16">
-          <div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg
-                      {{ avatarColors(i) }} relative">
-            {{ m.name.charAt(0) }}
-            @if (m.isAdmin) {
-              <span class="absolute -bottom-1 -right-1 bg-amber-400 rounded-full w-5 h-5
-                           flex items-center justify-center text-[10px]">👑</span>
+        <!-- Monthly Pool Contributions -->
+        <div>
+          <div class="sl">Monthly Flat Contributions</div>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between py-1">
+              <div class="flex items-center gap-2">
+                <div class="chk on">
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5"><path d="M2 6l3 3 5-5"/></svg>
+                </div>
+                <span class="text-xs font-bold" style="color: var(--text);">Dileep Kumar</span>
+              </div>
+              <span class="text-xs font-black" style="color: var(--ok);">₹2,000 ✓</span>
+            </div>
+
+            <div class="flex items-center justify-between py-1">
+              <div class="flex items-center gap-2">
+                <div class="chk on">
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5"><path d="M2 6l3 3 5-5"/></svg>
+                </div>
+                <span class="text-xs font-bold" style="color: var(--text);">Rahul Sharma</span>
+              </div>
+              <span class="text-xs font-black" style="color: var(--ok);">₹2,000 ✓</span>
+            </div>
+
+            <div class="flex items-center justify-between py-1">
+              <div class="flex items-center gap-2">
+                <div class="chk on">
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5"><path d="M2 6l3 3 5-5"/></svg>
+                </div>
+                <span class="text-xs font-bold" style="color: var(--text);">Priya Nair</span>
+              </div>
+              <span class="text-xs font-black" style="color: var(--ok);">₹2,000 ✓</span>
+            </div>
+
+            <div class="flex items-center justify-between py-1">
+              <div class="flex items-center gap-2">
+                <div class="chk"></div>
+                <span class="text-xs font-bold" style="color: var(--t2);">Amit Patel</span>
+              </div>
+              <span class="pp">Pending</span>
+            </div>
+
+            <div class="flex items-center justify-between py-1">
+              <div class="flex items-center gap-2">
+                <div class="chk"></div>
+                <span class="text-xs font-bold" style="color: var(--t2);">Sneha Reddy</span>
+              </div>
+              <span class="pp">Pending</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Card: Itemized Receipts (Collapsible Accordions) -->
+      <div class="card">
+        <div class="sl">Recent Receipts — Tap to Expand Items</div>
+
+        <div class="space-y-3">
+          
+          <!-- Receipt 1: Supermarket Run -->
+          <div>
+            <div (click)="toggleReceipt('r1')"
+                 class="p-3.5 rounded-2xl cursor-pointer border transition flex items-center justify-between select-none"
+                 style="background: var(--bg2); border-color: var(--border);">
+              <div class="flex items-center gap-3">
+                <div class="text-xl">🛒</div>
+                <div>
+                  <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Supermarket Run</div>
+                  <div class="text-[11px] font-medium" style="color: var(--t3);">Sep 8 · Paid by Dileep</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹650</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5"
+                     class="transition-transform duration-200"
+                     [style.transform]="isReceiptExpanded('r1') ? 'rotate(90deg)' : 'rotate(0deg)'">
+                  <path d="m9 18 6-6-6-6"/>
+                </svg>
+              </div>
+            </div>
+
+            @if (isReceiptExpanded('r1')) {
+              <div class="p-3.5 rounded-b-2xl border border-t-0 space-y-2 fade-up"
+                   style="background: var(--card2); border-color: var(--border);">
+                <div class="flex justify-between text-xs pb-1.5 border-b" style="border-color: var(--border);">
+                  <span style="color: var(--t2);">🥛 Milk (2L)</span>
+                  <span class="font-bold" style="color: var(--text);">₹120</span>
+                </div>
+                <div class="flex justify-between text-xs pb-1.5 border-b" style="border-color: var(--border);">
+                  <span style="color: var(--t2);">🥕 Vegetables</span>
+                  <span class="font-bold" style="color: var(--text);">₹300</span>
+                </div>
+                <div class="flex justify-between text-xs pb-1.5" style="border-color: var(--border);">
+                  <span style="color: var(--t2);">🧴 Detergent</span>
+                  <span class="font-bold" style="color: var(--text);">₹230</span>
+                </div>
+                <div class="flex justify-between text-xs pt-2 border-t border-dashed font-black"
+                     style="border-color: var(--border);">
+                  <span style="color: var(--p1);">Item Total</span>
+                  <span style="color: var(--ok);">₹650 ✓</span>
+                </div>
+              </div>
             }
           </div>
-          <span class="text-[11px] text-slate-600 mt-1 truncate w-full text-center">{{ m.name.split(' ')[0] }}</span>
-        </div>
-      }
-    </div>
-  </section>
 
-  <section class="px-4 mt-5 pb-8">
-    <h2 class="text-sm font-semibold text-slate-600 mb-2">Recent activity</h2>
-    <div class="bg-white rounded-2xl shadow-sm divide-y divide-slate-100">
-      @for (a of data()?.recentActivity ?? []; track a.at) {
-        <div class="flex items-center gap-3 p-3">
-          <span class="text-lg">{{ a.bucket === 'iou' ? '🤝' : a.bucket === 'bills' ? '📋' : '🛒' }}</span>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm truncate"><span class="font-semibold">{{ a.actor }}</span>
-               <span class="text-slate-600"> {{ a.text }}</span></p>
-            <p class="text-xs text-slate-400">{{ a.at | date:'EEE, dd MMM · hh:mm a' }}</p>
+          <!-- Receipt 2: D-Mart Bulk Buy -->
+          <div>
+            <div (click)="toggleReceipt('r2')"
+                 class="p-3.5 rounded-2xl cursor-pointer border transition flex items-center justify-between select-none"
+                 style="background: var(--bg2); border-color: var(--border);">
+              <div class="flex items-center gap-3">
+                <div class="text-xl">🛍️</div>
+                <div>
+                  <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">D-Mart Bulk Buy</div>
+                  <div class="text-[11px] font-medium" style="color: var(--t3);">Sep 6 · Paid by Rahul</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹1,240</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5"
+                     class="transition-transform duration-200"
+                     [style.transform]="isReceiptExpanded('r2') ? 'rotate(90deg)' : 'rotate(0deg)'">
+                  <path d="m9 18 6-6-6-6"/>
+                </svg>
+              </div>
+            </div>
+
+            @if (isReceiptExpanded('r2')) {
+              <div class="p-3.5 rounded-b-2xl border border-t-0 space-y-2 fade-up"
+                   style="background: var(--card2); border-color: var(--border);">
+                <div class="flex justify-between text-xs pb-1.5 border-b" style="border-color: var(--border);">
+                  <span style="color: var(--t2);">🛢️ Refined Oil</span>
+                  <span class="font-bold" style="color: var(--text);">₹280</span>
+                </div>
+                <div class="flex justify-between text-xs pb-1.5 border-b" style="border-color: var(--border);">
+                  <span style="color: var(--t2);">🫙 Pulses &amp; Rice</span>
+                  <span class="font-bold" style="color: var(--text);">₹560</span>
+                </div>
+                <div class="flex justify-between text-xs pb-1.5" style="border-color: var(--border);">
+                  <span style="color: var(--t2);">🍫 Snacks &amp; Tea</span>
+                  <span class="font-bold" style="color: var(--text);">₹400</span>
+                </div>
+                <div class="flex justify-between text-xs pt-2 border-t border-dashed font-black"
+                     style="border-color: var(--border);">
+                  <span style="color: var(--p1);">Item Total</span>
+                  <span style="color: var(--ok);">₹1,240 ✓</span>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Receipt 3: Dairy Delight -->
+          <div>
+            <div (click)="toggleReceipt('r3')"
+                 class="p-3.5 rounded-2xl cursor-pointer border transition flex items-center justify-between select-none"
+                 style="background: var(--bg2); border-color: var(--border);">
+              <div class="flex items-center gap-3">
+                <div class="text-xl">🥛</div>
+                <div>
+                  <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Dairy Delight</div>
+                  <div class="text-[11px] font-medium" style="color: var(--t3);">Sep 9 · Auto-deducted</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹340</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5"
+                     class="transition-transform duration-200"
+                     [style.transform]="isReceiptExpanded('r3') ? 'rotate(90deg)' : 'rotate(0deg)'">
+                  <path d="m9 18 6-6-6-6"/>
+                </svg>
+              </div>
+            </div>
+
+            @if (isReceiptExpanded('r3')) {
+              <div class="p-3.5 rounded-b-2xl border border-t-0 space-y-2 fade-up"
+                   style="background: var(--card2); border-color: var(--border);">
+                <div class="flex justify-between text-xs pb-1.5 border-b" style="border-color: var(--border);">
+                  <span style="color: var(--t2);">🥛 Fresh Milk 30d</span>
+                  <span class="font-bold" style="color: var(--text);">₹210</span>
+                </div>
+                <div class="flex justify-between text-xs pb-1.5" style="border-color: var(--border);">
+                  <span style="color: var(--t2);">🧀 Paneer 500g</span>
+                  <span class="font-bold" style="color: var(--text);">₹130</span>
+                </div>
+                <div class="flex justify-between text-xs pt-2 border-t border-dashed font-black"
+                     style="border-color: var(--border);">
+                  <span style="color: var(--p1);">Item Total</span>
+                  <span style="color: var(--ok);">₹340 ✓</span>
+                </div>
+              </div>
+            }
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  }
+
+  <!-- ───────────────────────────────────────────
+       BUCKET 2: FIXED RECURRING BILLS
+  ─────────────────────────────────────────── -->
+  @if (activeBucket() === 'bills') {
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 fade-up">
+      
+      <!-- Bill 1: Room Rent -->
+      <div class="billc">
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <div class="text-2xl mb-1">🏠</div>
+            <div class="text-base font-extrabold" style="color: var(--text);">Room Rent</div>
+            <div class="text-xs font-semibold" style="color: var(--t3);">Due on 1st of month</div>
+          </div>
+          <div class="text-right">
+            <div class="text-2xl font-black" style="color: var(--p1);">₹35,000</div>
+            <div class="text-xs font-bold" style="color: var(--t3);">₹5,000 / head</div>
           </div>
         </div>
-      } @empty {
-        <p class="p-4 text-sm text-slate-400 text-center">No activity yet — start by adding an expense!</p>
-      }
+
+        <div class="sl mb-2">Roommate Status</div>
+        <div class="space-y-1.5 mb-4">
+          <div class="flex justify-between items-center text-xs">
+            <span style="color: var(--t2);">Dileep</span>
+            <span class="pk">PAID</span>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span style="color: var(--t2);">Rahul</span>
+            <span class="pk">PAID</span>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span style="color: var(--t2);">Priya</span>
+            <span class="pk">PAID</span>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span style="color: var(--t2);">Amit</span>
+            <span class="pp">PENDING</span>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span style="color: var(--t2);">Sneha</span>
+            <span class="pp">PENDING</span>
+          </div>
+        </div>
+
+        <button type="button"
+                (click)="showToast('📨 Reminder sent to Amit & Sneha')"
+                class="btn py-2.5 text-xs font-black">
+          Send Reminder
+        </button>
+      </div>
+
+      <!-- Bill 2: High-Speed Wi-Fi -->
+      <div class="billc">
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <div class="text-2xl mb-1">📶</div>
+            <div class="text-base font-extrabold" style="color: var(--text);">High-Speed Wi-Fi</div>
+            <div class="text-xs font-bold" style="color: var(--ok);">✓ All 7 paid</div>
+          </div>
+          <div class="text-right">
+            <div class="text-2xl font-black" style="color: var(--ok);">₹1,200</div>
+            <div class="text-xs font-bold" style="color: var(--t3);">₹171 / head</div>
+          </div>
+        </div>
+
+        <div class="pt mb-3">
+          <div class="pf" style="width: 100%;"></div>
+        </div>
+
+        <div class="sl mb-2">Roommates (100% Collected)</div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="flex justify-between"><span style="color: var(--t2);">Dileep</span><span class="pk">PAID</span></div>
+          <div class="flex justify-between"><span style="color: var(--t2);">Rahul</span><span class="pk">PAID</span></div>
+          <div class="flex justify-between"><span style="color: var(--t2);">Priya</span><span class="pk">PAID</span></div>
+          <div class="flex justify-between"><span style="color: var(--t2);">Amit</span><span class="pk">PAID</span></div>
+        </div>
+      </div>
+
+      <!-- Bill 3: Electricity Bill -->
+      <div class="billc">
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <div class="text-2xl mb-1">⚡</div>
+            <div class="text-base font-extrabold" style="color: var(--text);">Electricity Bill</div>
+            <div class="text-xs font-bold" style="color: var(--warn);">Due in 3 days</div>
+          </div>
+          <div class="text-right">
+            <div class="text-2xl font-black" style="color: var(--warn);">₹4,500</div>
+            <div class="text-xs font-bold" style="color: var(--t3);">₹643 / head</div>
+          </div>
+        </div>
+
+        <div class="pt mb-2">
+          <div style="height: 100%; border-radius: 4px; width: 57%; background: var(--warn);"></div>
+        </div>
+        <div class="text-xs font-bold mb-3" style="color: var(--t3);">4 of 7 paid</div>
+
+        <div class="space-y-1.5 mb-4 text-xs">
+          <div class="flex justify-between items-center"><span style="color: var(--t2);">Dileep</span><span class="pk">PAID</span></div>
+          <div class="flex justify-between items-center"><span style="color: var(--t2);">Rahul</span><span class="pp">PENDING</span></div>
+        </div>
+
+        <button type="button"
+                (click)="showToast('⚡ Nudge sent to pending roommates')"
+                class="btn py-2.5 text-xs font-black"
+                style="background: var(--grad2);">
+          Nudge Pending
+        </button>
+      </div>
+
+      <!-- Bill 4: Maid Service -->
+      <div class="billc">
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <div class="text-2xl mb-1">🧹</div>
+            <div class="text-base font-extrabold" style="color: var(--text);">Maid Service</div>
+            <div class="text-xs font-semibold" style="color: var(--t3);">Paid on 5th</div>
+          </div>
+          <div class="text-right">
+            <div class="text-2xl font-black" style="color: var(--text);">₹8,000</div>
+            <div class="text-xs font-bold" style="color: var(--t3);">₹1,143 / head</div>
+          </div>
+        </div>
+
+        <div class="pt mb-2">
+          <div class="pf" style="width: 85%;"></div>
+        </div>
+        <div class="text-xs font-bold mb-3" style="color: var(--t3);">6 of 7 paid</div>
+
+        <div class="space-y-1.5 text-xs">
+          <div class="flex justify-between items-center"><span style="color: var(--t2);">Dileep</span><span class="pk">PAID</span></div>
+          <div class="flex justify-between items-center"><span style="color: var(--t2);">Vikram</span><span class="pp">PENDING</span></div>
+        </div>
+      </div>
+
     </div>
-  </section>
+  }
+
+  <!-- ───────────────────────────────────────────
+       BUCKET 3: GROUP SPLIT & IOUS
+  ─────────────────────────────────────────── -->
+  @if (activeBucket() === 'iou') {
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 fade-up">
+      
+      <!-- Column 1: They Owe You -->
+      <div>
+        <div class="sl">💚 They Owe You</div>
+        <div class="space-y-3.5">
+          
+          <!-- Rahul -->
+          <div class="dcard">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="av w-9 h-9 text-xs font-black text-white" style="background: var(--err);">RK</div>
+                <div>
+                  <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Rahul Sharma</div>
+                  <div class="text-[11px] font-medium" style="color: var(--t3);">Supermarket split · Sep 8</div>
+                </div>
+              </div>
+              <div class="text-lg font-black" style="color: var(--ok);">₹450</div>
+            </div>
+            <div class="flex gap-2">
+              <button type="button"
+                      (click)="openSettleModal('Rahul', 'rahul@phonepe', 450)"
+                      class="btng flex-1 py-2 font-black">
+                💳 Settle via UPI
+              </button>
+              <button type="button"
+                      (click)="showToast('🔔 Reminder sent to Rahul')"
+                      class="btns text-xs py-1.5 px-3">
+                Remind
+              </button>
+            </div>
+          </div>
+
+          <!-- Priya -->
+          <div class="dcard">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="av w-9 h-9 text-xs font-black text-white" style="background: var(--p2);">PR</div>
+                <div>
+                  <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Priya Nair</div>
+                  <div class="text-[11px] font-medium" style="color: var(--t3);">Dinner split · Sep 7</div>
+                </div>
+              </div>
+              <div class="text-lg font-black" style="color: var(--ok);">₹800</div>
+            </div>
+            <div class="flex gap-2">
+              <button type="button"
+                      (click)="openSettleModal('Priya', 'priya@gpay', 800)"
+                      class="btng flex-1 py-2 font-black">
+                💳 Settle via UPI
+              </button>
+              <button type="button"
+                      (click)="showToast('🔔 Reminder sent to Priya')"
+                      class="btns text-xs py-1.5 px-3">
+                Remind
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Column 2: You Owe Them & Net Balance -->
+      <div class="space-y-4">
+        <div>
+          <div class="sl">❤️ You Owe Them</div>
+          
+          <div class="dcard" style="border-color: color-mix(in srgb, var(--err) 25%, transparent);">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="av w-9 h-9 text-xs font-black text-white" style="background: var(--warn);">AM</div>
+                <div>
+                  <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Amit Patel</div>
+                  <div class="text-[11px] font-medium" style="color: var(--t3);">Cab fare · Sep 6</div>
+                </div>
+              </div>
+              <div class="text-lg font-black" style="color: var(--err);">₹200</div>
+            </div>
+            <div class="flex gap-2">
+              <button type="button"
+                      (click)="showToast('📲 Opening UPI to pay Amit...')"
+                      class="btnr flex-1 py-2 font-black">
+                💸 Pay Now
+              </button>
+              <button type="button"
+                      (click)="showToast('Cab fare split details: ₹600 total across 3 roommates')"
+                      class="btns text-xs py-1.5 px-3">
+                Details
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Net Position Summary Card -->
+        <div class="card"
+             style="background: color-mix(in srgb, var(--ok) 6%, var(--card)); border-color: color-mix(in srgb, var(--ok) 25%, transparent);">
+          <div class="sl">Net Debt Position</div>
+          
+          <div class="flex justify-between items-center text-xs mb-2">
+            <span style="color: var(--t2);">Total owed to you</span>
+            <span class="font-bold" style="color: var(--ok);">+₹1,850</span>
+          </div>
+
+          <div class="flex justify-between items-center text-xs mb-2">
+            <span style="color: var(--t2);">Total you owe</span>
+            <span class="font-bold" style="color: var(--err);">−₹200</span>
+          </div>
+
+          <div class="div"></div>
+
+          <div class="flex justify-between items-center pt-1">
+            <span class="text-xs font-extrabold" style="color: var(--text);">Net balance</span>
+            <span class="text-xl font-black" style="color: var(--ok);">+₹1,650</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  }
+
 </div>
+
+<!-- ═══════════════════════════════════════════
+     MODAL 1: LOG NEW EXPENSE (SCREEN 3 PROTOTYPE)
+═══════════════════════════════════════════ -->
+@if (showExpenseModal()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-up"
+       (click)="closeExpenseModal()">
+    
+    <div class="w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl relative max-h-[90vh] flex flex-col"
+         style="background: var(--card); border: 1.5px solid var(--border);"
+         (click)="$event.stopPropagation()">
+      
+      <!-- Modal Header Banner -->
+      <div class="p-6 flex items-center justify-between text-white"
+           style="background: var(--btn);">
+        <div>
+          <h2 class="text-xl font-black">Log New Expense</h2>
+          <p class="text-xs text-white/70 mt-0.5">{{ groupName() }} · Shared Living</p>
+        </div>
+        <button type="button"
+                (click)="closeExpenseModal()"
+                class="w-8 h-8 rounded-full flex items-center justify-center text-white/80 hover:text-white bg-white/15 border border-white/25 cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-6 overflow-y-auto space-y-4">
+        
+        <!-- Who Paid? Toggle -->
+        <div>
+          <label class="sl block">WHO PAID?</label>
+          <div class="grid grid-cols-2 gap-3">
+            <div (click)="expensePayer.set('pool')"
+                 class="p-3.5 rounded-2xl cursor-pointer border transition"
+                 [style.background]="expensePayer() === 'pool' ? 'color-mix(in srgb, var(--p1) 10%, transparent)' : 'var(--bg2)'"
+                 [style.borderColor]="expensePayer() === 'pool' ? 'var(--p1)' : 'var(--border)'">
+              <div class="text-base mb-1">🏦</div>
+              <div class="text-xs font-bold" [style.color]="expensePayer() === 'pool' ? 'var(--p1)' : 'var(--text)'">Central Pool</div>
+              <div class="text-[10px]" style="color: var(--t3);">₹{{ poolBalance() }} available</div>
+            </div>
+
+            <div (click)="expensePayer.set('me')"
+                 class="p-3.5 rounded-2xl cursor-pointer border transition"
+                 [style.background]="expensePayer() === 'me' ? 'color-mix(in srgb, var(--p1) 10%, transparent)' : 'var(--bg2)'"
+                 [style.borderColor]="expensePayer() === 'me' ? 'var(--p1)' : 'var(--border)'">
+              <div class="text-base mb-1">👤</div>
+              <div class="text-xs font-bold" [style.color]="expensePayer() === 'me' ? 'var(--p1)' : 'var(--text)'">Paid by Me</div>
+              <div class="text-[10px]" style="color: var(--t3);">Reimburse / IOU</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bucket Selector -->
+        <div>
+          <label class="sl block">BUCKET</label>
+          <div class="flex gap-2 flex-wrap">
+            <button type="button"
+                    (click)="expenseBucket.set('daily')"
+                    [style.background]="expenseBucket() === 'daily' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'transparent'"
+                    [style.color]="expenseBucket() === 'daily' ? 'var(--p1)' : 'var(--t3)'"
+                    [style.borderColor]="expenseBucket() === 'daily' ? 'var(--p1)' : 'var(--border)'"
+                    class="px-3.5 py-2 rounded-full text-xs font-extrabold border cursor-pointer">
+              🛒 Daily Pool
+            </button>
+            <button type="button"
+                    (click)="expenseBucket.set('bills')"
+                    [style.background]="expenseBucket() === 'bills' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'transparent'"
+                    [style.color]="expenseBucket() === 'bills' ? 'var(--p1)' : 'var(--t3)'"
+                    [style.borderColor]="expenseBucket() === 'bills' ? 'var(--p1)' : 'var(--border)'"
+                    class="px-3.5 py-2 rounded-full text-xs font-extrabold border cursor-pointer">
+              📅 Fixed Bill
+            </button>
+            <button type="button"
+                    (click)="expenseBucket.set('iou')"
+                    [style.background]="expenseBucket() === 'iou' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'transparent'"
+                    [style.color]="expenseBucket() === 'iou' ? 'var(--p1)' : 'var(--t3)'"
+                    [style.borderColor]="expenseBucket() === 'iou' ? 'var(--p1)' : 'var(--border)'"
+                    class="px-3.5 py-2 rounded-full text-xs font-extrabold border cursor-pointer">
+              🤝 Group Split
+            </button>
+          </div>
+        </div>
+
+        <!-- Expense Name & Category Grid -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="sl block">EXPENSE NAME</label>
+            <input class="inp"
+                   type="text"
+                   [(ngModel)]="expenseName"
+                   placeholder="e.g. Supermarket Run" />
+          </div>
+          <div>
+            <label class="sl block">CATEGORY</label>
+            <select class="inp" [(ngModel)]="expenseCategory">
+              <option>🥕 Groceries</option>
+              <option>🥛 Dairy</option>
+              <option>⚡ Utilities</option>
+              <option>🍕 Food</option>
+              <option>🚕 Transport</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Total Spend Input -->
+        <div>
+          <label class="sl block">TOTAL SPEND (₹)</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-2xl font-black" style="color: var(--p1);">₹</span>
+            <input class="inp font-black text-2xl"
+                   style="padding-left: 36px;"
+                   type="number"
+                   [(ngModel)]="expenseTotal"
+                   placeholder="850" />
+          </div>
+        </div>
+
+        <!-- Itemized Receipt Box -->
+        <div class="rounded-2xl border overflow-hidden"
+             style="background: var(--bg2); border-color: var(--border);">
+          <div class="p-3 px-4 border-b flex justify-between items-center" style="border-color: var(--border);">
+            <span class="text-xs font-extrabold" style="color: var(--text);">📋 Itemized Receipt</span>
+            <span class="text-[10px] font-bold" style="color: var(--t3);">Live calculated</span>
+          </div>
+
+          <div class="p-2 space-y-1.5">
+            @for (row of expenseRows; track row.id) {
+              <div class="flex items-center gap-2 p-1.5 rounded-xl transition hover:bg-white/60">
+                <div class="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-black shrink-0"
+                     style="background: color-mix(in srgb, var(--p1) 14%, transparent); color: var(--p1);">
+                  {{ row.id < 10 ? '0' + row.id : row.id }}
+                </div>
+                <input class="inp py-1.5 px-2.5 text-xs flex-1"
+                       type="text"
+                       [(ngModel)]="row.name"
+                       placeholder="Item name" />
+                <div class="relative w-24 shrink-0">
+                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-black" style="color: var(--p1);">₹</span>
+                  <input class="inp py-1.5 pl-6 pr-2 text-xs font-black"
+                         type="number"
+                         [(ngModel)]="row.price"
+                         placeholder="0" />
+                </div>
+                <button type="button"
+                        (click)="removeRow(row.id)"
+                        class="w-6 h-6 rounded-md flex items-center justify-center text-xs font-black cursor-pointer border"
+                        style="color: var(--err); border-color: color-mix(in srgb, var(--err) 25%, transparent);">
+                  ✕
+                </button>
+              </div>
+            }
+          </div>
+
+          <div class="p-2 pt-0 pb-3">
+            <button type="button"
+                    (click)="addRow()"
+                    class="w-full py-2 rounded-xl text-xs font-black border border-dashed cursor-pointer transition"
+                    style="border-color: var(--border); color: var(--p1);">
+              + Add Sub-item
+            </button>
+          </div>
+        </div>
+
+        <!-- Receipt Balance Validation Banner -->
+        @if (expenseRows.length > 0) {
+          @if (isReceiptBalanced) {
+            <div class="vok text-xs font-extrabold flex items-center gap-2">
+              <span>✅ Balanced! Items ₹{{ itemsSum }} = Total Spend ✓</span>
+            </div>
+          } @else {
+            <div class="verr text-xs font-extrabold flex items-center gap-2">
+              <span>⚠️ Mismatch: Items ₹{{ itemsSum }} vs Total ₹{{ expenseTotal }} (Diff: ₹{{ receiptMismatchDiff }})</span>
+            </div>
+          }
+        }
+
+        <!-- Split With Roommates -->
+        <div>
+          <label class="sl block">SPLIT WITH</label>
+          <div class="flex gap-3">
+            @for (p of splitWith(); track p.id) {
+              <div (click)="toggleSplitParticipant(p.id)"
+                   class="text-center cursor-pointer select-none">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center text-xs font-black text-white mx-auto border-2 transition"
+                     [style.borderColor]="p.selected ? 'var(--ok)' : 'var(--border)'"
+                     [style.background]="p.id === '1' ? 'var(--err)' : p.id === '2' ? 'var(--p2)' : 'var(--warn)'">
+                  {{ p.initials }}
+                </div>
+                <div class="text-[9px] font-black mt-1" [style.color]="p.selected ? 'var(--ok)' : 'var(--t3)'">
+                  {{ p.name }}
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Receipt Photo Dropzone -->
+        <div class="dropz" (click)="showToast('📷 Camera/Upload opened')">
+          <div class="text-2xl mb-1">📷</div>
+          <div class="text-xs font-bold" style="color: var(--t2);">Drop receipt photo here</div>
+          <div class="text-[10px]" style="color: var(--t3);">Click to upload · JPG, PNG, PDF</div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 sm:p-6 border-t flex gap-3" style="border-color: var(--border);">
+        <button type="button"
+                (click)="closeExpenseModal()"
+                class="btns flex-1 text-xs">
+          Cancel
+        </button>
+        <button type="button"
+                (click)="submitExpense()"
+                class="btn flex-2 text-xs sm:text-sm font-black">
+          Log Expense to Pool
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════
+     MODAL 2: QR SETTLEMENT MODAL
+═══════════════════════════════════════════ -->
+@if (settleModal()) {
+  <div class="qrmod on" (click)="closeSettleModal()">
+    <div class="card max-w-xs w-full p-6 text-center shadow-2xl relative fade-up"
+         style="border-color: var(--border2);"
+         (click)="$event.stopPropagation()">
+      
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-4">
+        <span class="text-sm font-black" style="color: var(--text);">
+          Settle with {{ settleModal()!.name }}
+        </span>
+        <button type="button"
+                (click)="closeSettleModal()"
+                class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black cursor-pointer border"
+                style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
+          ✕
+        </button>
+      </div>
+
+      <!-- QR Canvas Box -->
+      <div class="p-3 rounded-2xl border mb-3 flex justify-center"
+           style="background: #F9FAFB; border-color: #E5E7EB;">
+        <canvas #settleQrCanvas width="160" height="160" class="rounded-lg shadow-sm"></canvas>
+      </div>
+
+      <div class="font-mono text-xs font-black mb-1" style="color: var(--p1);">
+        {{ settleModal()!.upiId }}
+      </div>
+      <div class="text-2xl font-black mb-4" style="color: var(--ok);">
+        ₹{{ settleModal()!.amount }}
+      </div>
+
+      <button type="button"
+              (click)="showToast('📲 Opening UPI app...'); closeSettleModal()"
+              class="btng w-full py-3 text-xs font-black">
+        Open in UPI App →
+      </button>
+
+      <div class="text-[10px] mt-2 font-medium" style="color: var(--t3);">
+        Or scan with any UPI app (GPay, PhonePe, Paytm)
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- Toast Feedback Popup -->
+@if (toastMessage()) {
+  <div class="toast flex items-center gap-2">
+    <div style="font-size: 13px; font-weight: 800; color: var(--text);">
+      {{ toastMessage() }}
+    </div>
+  </div>
+}
