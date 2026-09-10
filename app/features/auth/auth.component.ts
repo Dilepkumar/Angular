@@ -31,8 +31,8 @@ export class AuthComponent implements OnInit {
   showMobileHeroDemo = signal(false);
 
   // ── Login State ──
-  emailLogin = 'dileep@roomledger.app';
-  phoneLogin = '9876543210';
+  emailLogin = '';
+  phoneLogin = '';
   loginPassword = '';
   showLoginPw = false;
   loginTouched = signal(false);

@@ -54,11 +54,11 @@
            style="background: var(--card); border-color: var(--border);">
         <div class="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs text-white"
              style="background: var(--btn);">
-          {{ me()?.fullName?.charAt(0) || 'D' }}K
+          {{ me()?.fullName?.charAt(0) }}
         </div>
         <div class="hidden sm:block">
           <div class="text-xs font-black leading-none" style="color: var(--text);">
-            {{ me()?.fullName?.split(' ')[0] || 'Dileep' }}
+            {{ me()?.fullName?.split(' ')[0] }}
           </div>
           <span class="text-[9px] font-black px-1.5 py-0.5 rounded uppercase mt-0.5 inline-block"
                 style="background: color-mix(in srgb, var(--p1) 12%, transparent); color: var(--p1);">
@@ -86,10 +86,15 @@
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 mb-7">
     
     <!-- KPI 1: POOL FUND -->
-    <div class="card p-5 sm:p-6 rounded-3xl relative overflow-hidden"
-         style="background: var(--kpi1); border-color: color-mix(in srgb, var(--p1) 25%, transparent);">
+    <div (click)="goToPool()"
+         class="card p-5 sm:p-6 rounded-3xl relative overflow-hidden cursor-pointer transition hover:scale-[1.01] active:scale-[0.99] group select-none"
+         style="background: var(--kpi1); border-color: color-mix(in srgb, var(--p1) 25%, transparent);"
+         title="Open Pool Page">
       <div class="flex justify-between items-center mb-3.5">
-        <span class="sl mb-0">POOL FUND</span>
+        <span class="sl mb-0 flex items-center gap-1 group-hover:text-teal-600 transition">
+          <span>POOL FUND</span>
+          <span class="text-[10px]">→</span>
+        </span>
         <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
              style="background: color-mix(in srgb, var(--p1) 14%, transparent);">
           🛒
@@ -108,15 +113,20 @@
       </div>
       <div class="flex justify-between text-[11px] font-extrabold">
         <span style="color: var(--p1);">72.5% remaining</span>
-        <span style="color: var(--t3);">12 days left</span>
+        <span style="color: var(--t3);">Open Pool →</span>
       </div>
     </div>
 
     <!-- KPI 2: FIXED BILLS -->
-    <div class="card p-5 sm:p-6 rounded-3xl"
-         style="background: var(--kpi2); border-color: color-mix(in srgb, var(--warn) 25%, transparent);">
+    <div (click)="goToBills()"
+         class="card p-5 sm:p-6 rounded-3xl cursor-pointer transition hover:scale-[1.01] active:scale-[0.99] group select-none"
+         style="background: var(--kpi2); border-color: color-mix(in srgb, var(--warn) 25%, transparent);"
+         title="Open Recurring Bills Page">
       <div class="flex justify-between items-center mb-3.5">
-        <span class="sl mb-0">FIXED BILLS</span>
+        <span class="sl mb-0 flex items-center gap-1 group-hover:text-amber-600 transition">
+          <span>FIXED BILLS</span>
+          <span class="text-[10px]">→</span>
+        </span>
         <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
              style="background: color-mix(in srgb, var(--warn) 14%, transparent);">
           📅
@@ -140,19 +150,25 @@
           AM
         </div>
       </div>
-      <div class="text-[11px] font-bold" style="color: var(--t3);">
-        Rahul &amp; Amit have pending bills
+      <div class="flex justify-between text-[11px] font-bold" style="color: var(--t3);">
+        <span>Rahul &amp; Amit pending</span>
+        <span style="color: var(--warn);">Manage Bills →</span>
       </div>
     </div>
 
     <!-- KPI 3: NET IOU -->
-    <div class="card p-5 sm:p-6 rounded-3xl relative overflow-hidden"
-         style="background: var(--kpi3); border-color: color-mix(in srgb, var(--ok) 25%, transparent);">
+    <div (click)="goToIou()"
+         class="card p-5 sm:p-6 rounded-3xl relative overflow-hidden cursor-pointer transition hover:scale-[1.01] active:scale-[0.99] group select-none"
+         style="background: var(--kpi3); border-color: color-mix(in srgb, var(--ok) 25%, transparent);"
+         title="Open IOU Settle Page">
       <div class="absolute -top-5 -right-5 w-24 h-24 rounded-full pointer-events-none"
            style="background: color-mix(in srgb, var(--ok) 14%, transparent);"></div>
       
       <div class="flex justify-between items-center mb-3.5 relative z-10">
-        <span class="sl mb-0">NET IOU</span>
+        <span class="sl mb-0 flex items-center gap-1 group-hover:text-emerald-600 transition">
+          <span>NET IOU</span>
+          <span class="text-[10px]">→</span>
+        </span>
         <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
              style="background: color-mix(in srgb, var(--ok) 14%, transparent);">
           🤝
@@ -166,9 +182,9 @@
       </div>
 
       <button type="button"
-              (click)="openSettleModal('Rahul', 'rahul@phonepe', 450)"
+              (click)="$event.stopPropagation(); goToIou()"
               class="btng w-full py-2.5 text-xs font-black relative z-10 shadow-sm">
-        Settle Debts →
+        Settle Debts Page →
       </button>
     </div>
 

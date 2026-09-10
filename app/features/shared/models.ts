@@ -4,6 +4,8 @@ export interface User {
   email: string;
   name?: string;
   fullName?: string;
+  phone?: string;
+  avatarUrl?: string;
 }
 
 export interface AuthResult {

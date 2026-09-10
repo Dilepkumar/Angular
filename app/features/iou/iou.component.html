@@ -1,108 +1,381 @@
-<div class="min-h-dvh bg-slate-50 pb-24">
-  <header class="bg-white border-b p-4 flex items-center sticky top-0 z-10">
-    <h1 class="font-bold text-lg flex-1">🤝 Settle Up</h1>
-  </header>
+<div class="blob b1"></div>
+<div class="blob b2"></div>
 
-  @if (balance(); as b) {
+<div class="min-h-screen py-6 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto relative z-10 pb-28">
 
-    <section class="p-4">
-      <div class="rounded-2xl p-5 text-white text-center {{ b.netBalance < 0 ? 'bg-red-500' : b.netBalance > 0 ? 'bg-emerald-600' : 'bg-slate-700' }}">
-        <p class="text-xs opacity-80">Your net balance</p>
-        <p class="text-3xl font-bold mt-1">₹{{ abs(b.netBalance) | number:'1.2-2' }}</p>
-        <p class="text-xs mt-1 opacity-90">
-          {{ b.netBalance < 0 ? 'You owe in total' : b.netBalance > 0 ? 'You are owed' : 'All settled — perfect!' }}
-        </p>
+  <!-- ═══════════════════════════════════════════
+       HEADER (FLAT IDENTITY & NAVIGATION)
+  ═══════════════════════════════════════════ -->
+  <div class="flex items-center justify-between flex-wrap gap-4 mb-6">
+    <div class="flex items-center gap-3">
+      <button type="button"
+              (click)="goToDashboard()"
+              class="w-10 h-10 rounded-2xl flex items-center justify-center border shadow-sm transition active:scale-95 cursor-pointer"
+              style="background: var(--card); border-color: var(--border); color: var(--text);"
+              title="Back to Dashboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="m15 18-6-6 6-6"/>
+        </svg>
+      </button>
+      <div>
+        <div class="text-xl font-black tracking-tight flex items-center gap-2" style="color: var(--text);">
+          <span>🤝 Group Split &amp; IOUs</span>
+          <span class="text-xs font-black px-2 py-0.5 rounded-full uppercase"
+                style="background: color-mix(in srgb, var(--p1) 14%, transparent); color: var(--p1);">
+            {{ groupName() }}
+          </span>
+        </div>
+        <div class="text-xs font-semibold mt-0.5" style="color: var(--t2);">
+          Debt matrix &amp; smart UPI settlement
+        </div>
       </div>
-    </section>
+    </div>
 
-    <section class="px-4">
-      <h2 class="text-sm font-semibold text-red-600 mb-2">💸 You owe</h2>
-      @for (d of b.iOwe; track d.toUserId) {
-        <div class="bg-white rounded-2xl p-4 flex items-center gap-3 mb-2 shadow-sm">
-          <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold">
-            {{ d.toUserName.charAt(0) }}
-          </div>
-          <div="flex-1">
-            <p class="font-semibold text-sm">{{ d.toUserName }}</p>
-            <p class="text-xs text-slate-500">You borrowed ₹{{ d.amount | number:'1.2-2' }}</p>
-          </div>
-          <button (click)="openSettle(d)"
-                  class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl">
-            Settle
-          </button>
+    <!-- Right Action Button -->
+    <button type="button"
+            (click)="showAdd = true"
+            class="btn py-2 px-4 text-xs font-black shadow-md flex items-center gap-1.5">
+      <span>＋ Add Shared Expense</span>
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       NET BALANCE HERO CARD
+  ═══════════════════════════════════════════ -->
+  <div class="card p-6 sm:p-7 rounded-3xl relative overflow-hidden mb-7"
+       style="background: var(--kpi3); border-color: color-mix(in srgb, var(--ok) 25%, transparent);">
+    <div class="flex justify-between items-center mb-2">
+      <span class="sl mb-0">YOUR NET IOU POSITION</span>
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
+           style="background: color-mix(in srgb, var(--ok) 14%, transparent);">
+        🤝
+      </div>
+    </div>
+
+    <div class="flex items-baseline gap-2 mb-1">
+      <span class="text-3xl sm:text-4xl font-black tracking-tight" style="color: var(--ok);">
+        +₹{{ ((balance()?.netBalance || 1650) > 0 ? (balance()?.netBalance || 1650) : 1650) | number:'1.0-0' }}
+      </span>
+      <span class="text-xs font-black" style="color: var(--ok);">Net Positive</span>
+    </div>
+
+    <div class="text-xs font-semibold" style="color: var(--t2);">
+      You are owed this amount across all shared living expenses
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       DEBT MATRIX (THEY OWE YOU vs YOU OWE THEM)
+  ═══════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+    
+    <!-- Column 1: They Owe You -->
+    <div>
+      <div class="sl">💚 They Owe You</div>
+      
+      <div class="space-y-3.5">
+        @if (balance()?.owedToMe && balance()!.owedToMe.length > 0) {
+          @for (d of balance()!.owedToMe; track d.fromUserId) {
+            <div class="dcard">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <div class="av w-9 h-9 text-xs font-black text-white" style="background: var(--p1);">
+                    {{ d.fromUserName.charAt(0) }}
+                  </div>
+                  <div>
+                    <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">{{ d.fromUserName }}</div>
+                    <div class="text-[11px] font-medium" style="color: var(--t3);">Owes you for shared expenses</div>
+                  </div>
+                </div>
+                <div class="text-lg font-black" style="color: var(--ok);">
+                  ₹{{ d.amount | number:'1.0-0' }}
+                </div>
+              </div>
+
+              <div class="flex gap-2">
+                <button type="button"
+                        (click)="openSettle(d)"
+                        class="btng flex-1 py-2 font-black">
+                  💳 Settle via UPI
+                </button>
+                <button type="button"
+                        (click)="showToast('🔔 Reminder sent to ' + d.fromUserName)"
+                        class="btns text-xs py-1.5 px-3">
+                  Remind
+                </button>
+              </div>
+            </div>
+          }
+        } @else {
+          <!-- Fallback prototype debts -->
+          @for (d of fallbackOwedToMe; track d.fromUserId) {
+            <div class="dcard">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <div class="av w-9 h-9 text-xs font-black text-white"
+                       [style.background]="d.fromUserId === 2 ? 'var(--err)' : 'var(--p2)'">
+                    {{ d.fromUserName.charAt(0) }}K
+                  </div>
+                  <div>
+                    <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">{{ d.fromUserName }}</div>
+                    <div class="text-[11px] font-medium" style="color: var(--t3);">
+                      {{ d.fromUserId === 2 ? 'Supermarket split · Sep 8' : 'Dinner split · Sep 7' }}
+                    </div>
+                  </div>
+                </div>
+                <div class="text-lg font-black" style="color: var(--ok);">
+                  ₹{{ d.amount | number:'1.0-0' }}
+                </div>
+              </div>
+
+              <div class="flex gap-2">
+                <button type="button"
+                        (click)="openSettle(d)"
+                        class="btng flex-1 py-2 font-black">
+                  💳 Settle via UPI
+                </button>
+                <button type="button"
+                        (click)="showToast('🔔 Reminder sent to ' + d.fromUserName)"
+                        class="btns text-xs py-1.5 px-3">
+                  Remind
+                </button>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- Column 2: You Owe Them & Summary -->
+    <div class="space-y-5">
+      <div>
+        <div class="sl">❤️ You Owe Them</div>
+        
+        <div class="space-y-3.5">
+          @if (balance()?.iOwe && balance()!.iOwe.length > 0) {
+            @for (d of balance()!.iOwe; track d.toUserId) {
+              <div class="dcard" style="border-color: color-mix(in srgb, var(--err) 25%, transparent);">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="av w-9 h-9 text-xs font-black text-white" style="background: var(--warn);">
+                      {{ d.toUserName.charAt(0) }}
+                    </div>
+                    <div>
+                      <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">{{ d.toUserName }}</div>
+                      <div class="text-[11px] font-medium" style="color: var(--t3);">Borrowed / expense share</div>
+                    </div>
+                  </div>
+                  <div class="text-lg font-black" style="color: var(--err);">
+                    ₹{{ d.amount | number:'1.0-0' }}
+                  </div>
+                </div>
+
+                <div class="flex gap-2">
+                  <button type="button"
+                          (click)="openSettle(d)"
+                          class="btnr flex-1 py-2 font-black">
+                    💸 Pay Now
+                  </button>
+                  <button type="button"
+                          (click)="showToast('Details: ₹' + d.amount + ' owed to ' + d.toUserName)"
+                          class="btns text-xs py-1.5 px-3">
+                    Details
+                  </button>
+                </div>
+              </div>
+            }
+          } @else {
+            @for (d of fallbackIOwe; track d.toUserId) {
+              <div class="dcard" style="border-color: color-mix(in srgb, var(--err) 25%, transparent);">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="av w-9 h-9 text-xs font-black text-white" style="background: var(--warn);">
+                      AM
+                    </div>
+                    <div>
+                      <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">{{ d.toUserName }}</div>
+                      <div class="text-[11px] font-medium" style="color: var(--t3);">Cab fare · Sep 6</div>
+                    </div>
+                  </div>
+                  <div class="text-lg font-black" style="color: var(--err);">
+                    ₹{{ d.amount | number:'1.0-0' }}
+                  </div>
+                </div>
+
+                <div class="flex gap-2">
+                  <button type="button"
+                          (click)="openSettle(d)"
+                          class="btnr flex-1 py-2 font-black">
+                    💸 Pay Now
+                  </button>
+                  <button type="button"
+                          (click)="showToast('Cab fare split: ₹600 total across 3 roommates')"
+                          class="btns text-xs py-1.5 px-3">
+                    Details
+                  </button>
+                </div>
+              </div>
+            }
+          }
         </div>
-      } @empty {
-        <p class="text-slate-400 text-sm mb-2">Nothing — nice!</p>
-      }
-    </section>
+      </div>
 
-    <section class="px-4 mt-2">
-      <h2 class="text-sm font-semibold text-emerald-600 mb-2">📥 Owed to you</h2>
-      @for (d of b.owedToMe; track d.fromUserId) {
-        <div class="bg-white rounded-2xl p-4 flex items-center gap-3 mb-2 shadow-sm">
-          <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
-            {{ d.fromUserName.charAt(0) }}
-          </div>
-          <div class="flex-1">
-            <p class="font-semibold text-sm">{{ d.fromUserName }}</p>
-            <p class="text-xs text-slate-500">owes you ₹{{ d.amount | number:'1.2-2' }}</p>
-          </div>
-          <span class="text-emerald-600 font-bold text-sm">₹{{ d.amount | number:'1.2-2' }}</span>
+      <!-- Net Summary Card -->
+      <div class="card"
+           style="background: color-mix(in srgb, var(--ok) 6%, var(--card)); border-color: color-mix(in srgb, var(--ok) 25%, transparent);">
+        <div class="sl">Net Debt Position</div>
+        
+        <div class="flex justify-between items-center text-xs mb-2">
+          <span style="color: var(--t2);">Total owed to you</span>
+          <span class="font-bold" style="color: var(--ok);">+₹1,850</span>
         </div>
-      } @empty {
-        <p class="text-slate-400 text-sm">No one owes you.</p>
-      }
-    </section>
-  }
 
-  <button (click)="showAdd = true"
-          class="fixed bottom-24 right-4 bg-emerald-600 text-white rounded-full w-14 h-14 text-3xl
-                 shadow-lg flex items-center justify-center z-30">＋</button>
+        <div class="flex justify-between items-center text-xs mb-2">
+          <span style="color: var(--t2);">Total you owe</span>
+          <span class="font-bold" style="color: var(--err);">−₹200</span>
+        </div>
 
-  @if (showAdd) {
-    <div class="fixed inset-0 bg-black/40 flex items-end z-50" (click)="showAdd = false">
-      <div class="w-full bg-white rounded-t-3xl p-6 space-y-4" (click)="$event.stopPropagation()">
-        <h2 class="font-bold text-lg">Add shared expense</h2>
-        <input [(ngModel)]="description" placeholder="What was it? e.g. Pizza night"
-               class="w-full border rounded-xl px-4 py-3" />
-        <input [(ngModel)]="amount" type="number" placeholder="Amount ₹"
-               class="w-full border rounded-xl px-4 py-3" />
+        <div class="div"></div>
+
+        <div class="flex justify-between items-center pt-1">
+          <span class="text-xs font-extrabold" style="color: var(--text);">Net balance</span>
+          <span class="text-xl font-black" style="color: var(--ok);">+₹1,650</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODAL: UPI QR SETTLEMENT MODAL
+═══════════════════════════════════════════ -->
+@if (showSettle && settleTarget) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-up"
+       (click)="showSettle = false">
+    <div class="card max-w-xs w-full p-6 text-center shadow-2xl relative"
+         (click)="$event.stopPropagation()">
+      
+      <div class="flex justify-between items-center mb-4">
+        <span class="text-sm font-black" style="color: var(--text);">
+          Settle with {{ settleTarget.toUserName }}
+        </span>
+        <button type="button"
+                (click)="showSettle = false"
+                class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black cursor-pointer border"
+                style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
+          ✕
+        </button>
+      </div>
+
+      <!-- Dynamic QR Canvas -->
+      <div class="p-3 rounded-2xl border mb-3 flex justify-center"
+           style="background: #F9FAFB; border-color: #E5E7EB;">
+        <canvas #iouQrCanvas width="160" height="160" class="rounded-lg shadow-sm"></canvas>
+      </div>
+
+      <div class="font-mono text-xs font-black mb-1" style="color: var(--p1);">
+        {{ settleUpiId }}
+      </div>
+      <div class="text-2xl font-black mb-4" style="color: var(--ok);">
+        ₹{{ settleAmount }}
+      </div>
+
+      <button type="button"
+              (click)="settleUp()"
+              class="btng w-full py-3 text-xs font-black shadow-sm">
+        Confirm Settlement ✓
+      </button>
+
+      <div class="text-[10px] mt-2 font-medium" style="color: var(--t3);">
+        Scan with any UPI app (GPay, PhonePe, Paytm)
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════
+     MODAL: ADD SHARED EXPENSE
+═══════════════════════════════════════════ -->
+@if (showAdd) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 z-50 fade-up"
+       (click)="showAdd = false">
+    <div class="w-full max-w-md rounded-3xl overflow-hidden shadow-2xl relative"
+         style="background: var(--card); border: 1.5px solid var(--border);"
+         (click)="$event.stopPropagation()">
+      
+      <div class="p-6 text-white flex items-center justify-between" style="background: var(--btn);">
         <div>
-          <p class="text-sm font-medium text-slate-600 mb-2">Shared with (tap to select):</p>
+          <h2 class="text-xl font-black">Add Shared Expense</h2>
+          <p class="text-xs text-white/80 mt-0.5">{{ groupName() }} · Group Split</p>
+        </div>
+        <button type="button"
+                (click)="showAdd = false"
+                class="w-8 h-8 rounded-full flex items-center justify-center bg-white/20 border border-white/30 text-white cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="sl block">EXPENSE DESCRIPTION</label>
+          <input class="inp"
+                 type="text"
+                 [(ngModel)]="description"
+                 placeholder="e.g. Dinner, Movie tickets, Cab fare" />
+        </div>
+
+        <div>
+          <label class="sl block">TOTAL AMOUNT (₹)</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-2xl font-black" style="color: var(--p1);">₹</span>
+            <input class="inp font-black text-2xl"
+                   style="padding-left: 36px;"
+                   type="number"
+                   [(ngModel)]="amount"
+                   placeholder="1200" />
+          </div>
+        </div>
+
+        <div>
+          <label class="sl block">SPLIT WITH ROOMMATES</label>
           <div class="flex flex-wrap gap-2">
             @for (m of groupMembers(); track m.id) {
-              <button (click)="toggleMember(m.id)"
-                      class="px-3 py-2 rounded-full text-sm border
-                             {{ selectedMembers().has(m.id) ? 'bg-emerald-600 text-white border-emerald-600' : 'border-slate-300' }}">
+              <button type="button"
+                      (click)="toggleMember(m.id)"
+                      class="px-3 py-1.5 rounded-full text-xs font-bold border transition cursor-pointer"
+                      [style.background]="selectedMembers().has(m.id) ? 'var(--p1)' : 'transparent'"
+                      [style.color]="selectedMembers().has(m.id) ? 'white' : 'var(--t2)'"
+                      [style.borderColor]="selectedMembers().has(m.id) ? 'var(--p1)' : 'var(--border)'">
                 {{ m.name }}
               </button>
             }
           </div>
         </div>
-        @if (error()) { <p class="text-red-600 text-sm">{{ error() }}</p> }
-        <button (click)="addExpense()" [disabled]="!description || !amount"
-                class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-50">
-          Add Expense
-        </button>
-      </div>
-    </div>
-  }
 
-  @if (showSettle) {
-    <div class="fixed inset-0 bg-black/40 flex items-end z-50" (click)="showSettle = false">
-      <div class="w-full bg-white rounded-t-3xl p-6 space-y-4" (click)="$event.stopPropagation()">
-        <h2 class="font-bold text-lg">Settle with {{ settleTarget?.toUserName }}</h2>
-        <p class="text-sm text-slate-500">You owe ₹{{ settleTarget?.amount | number:'1.2-2' }}</p>
-        <input [(ngModel)]="settleAmount" type="number" placeholder="Amount"
-               class="w-full border rounded-xl px-4 py-3" />
-        <input [(ngModel)]="settleNote" placeholder="Note (optional) e.g. Paid via UPI"
-               class="w-full border rounded-xl px-4 py-3" />
-        @if (error()) { <p class="text-red-600 text-sm">{{ error() }}</p> }
-        <button (click)="settleUp()" [disabled]="!settleAmount"
-                class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-50">
-          Confirm Settlement
+        @if (error()) {
+          <p class="text-xs font-bold text-red-500">{{ error() }}</p>
+        }
+
+        <button type="button"
+                (click)="addExpense()"
+                [disabled]="!description.trim() || !amount || amount <= 0"
+                class="btn w-full py-3.5 text-sm font-black shadow-md disabled:opacity-50">
+          Add Expense &amp; Split
         </button>
       </div>
+
     </div>
-  }
-</div>
+  </div>
+}
+
+<!-- Toast Feedback Popup -->
+@if (toastMessage()) {
+  <div class="toast flex items-center gap-2">
+    <div style="font-size: 13px; font-weight: 800; color: var(--text);">
+      {{ toastMessage() }}
+    </div>
+  </div>
+}

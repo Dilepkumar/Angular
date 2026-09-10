@@ -115,21 +115,21 @@ body::before {
 }
 
 /* ══ FLOATING MICRO-ANIMATIONS ══ */
-@keyframes fa {
+@keyframes float-a {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
 }
-@keyframes fb {
+@keyframes float-b {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-7px); }
 }
-@keyframes fc {
+@keyframes float-c {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-12px); }
 }
-.fa { animation: fa 4s ease-in-out infinite; }
-.fb { animation: fb 5s ease-in-out infinite 1.5s; }
-.fc { animation: fc 3.5s ease-in-out infinite 0.8s; }
+.float-a { animation: float-a 4s ease-in-out infinite; }
+.float-b { animation: float-b 5s ease-in-out infinite 1.5s; }
+.float-c { animation: float-c 3.5s ease-in-out infinite 0.8s; }
 
 @keyframes fU {
   from { opacity: 0; transform: translateY(8px); }

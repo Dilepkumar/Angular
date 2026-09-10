@@ -1,5 +1,5 @@
-import { Component, OnInit, AfterViewInit, inject, signal, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, AfterViewInit, inject, signal, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
@@ -9,7 +9,7 @@ import { GENDERS, GENDER_ICONS } from '../shared/constants';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DecimalPipe],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss']
 })
@@ -17,25 +17,28 @@ export class ProfileComponent implements OnInit, AfterViewInit {
   private api = inject(ApiService);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   @ViewChild('qrCanvas') qrCanvasRef!: ElementRef<HTMLCanvasElement>;
 
-  // User details
-  fullName = '';
-  nickname = '';
-  email = '';
-  phone = '';
-  dob = '';
-  gender = '';
+  // User details as Signals for instant, reactive Zoneless binding
+  fullName = signal('');
+  nickname = signal('');
+  email = signal('');
+  phone = signal('');
+  dob = signal('');
+  gender = signal('');
   today = new Date().toISOString().slice(0, 10);
-  upiId = 'dileep@okhdfcbank';
+  upiId = signal('');
 
-  // Stats & Membership
-  roomName = 'Apartment 402';
-  roomAddress = 'HSR Layout, Bangalore';
-  roomRole = 'Room Admin';
-  memberCount = 7;
-  owedToYou = 1850;
+  // Stats & Membership Signals
+  roomName = signal('');
+  roomAddress = signal('');
+  roomRole = signal('');
+  memberCount = signal(0);
+  owedToYou = signal(0);
+  inviteCode = signal('');
+  groupId = signal<number | null>(null);
 
   // Notification Toggles
   pushEnabled = signal(true);
@@ -43,7 +46,7 @@ export class ProfileComponent implements OnInit, AfterViewInit {
   emailDigestEnabled = signal(false);
 
   avatarUrl = signal<string | null>(null);
-  initials = 'DK';
+  initials = signal('');
   genders = GENDERS;
   genderIcons = GENDER_ICONS;
 
@@ -60,6 +63,10 @@ export class ProfileComponent implements OnInit, AfterViewInit {
   pwError = signal<string | null>(null);
 
   ngOnInit(): void {
+    // 1. Immediately seed from logged-in user so the page is never blank on arrival
+    this.seedFromCurrentUser();
+
+    // 2. Fetch fresh dynamic data from the backend
     this.loadProfile();
   }
 
@@ -67,67 +74,131 @@ export class ProfileComponent implements OnInit, AfterViewInit {
     setTimeout(() => this.drawQrCode(), 100);
   }
 
+  private seedFromCurrentUser(): void {
+    const localUser = this.auth.user();
+    if (localUser) {
+      const name = localUser.fullName || '';
+      const email = localUser.email || '';
+      const phone = (localUser as any).phone || '';
+      this.fullName.set(name);
+      this.email.set(email);
+      this.phone.set(phone);
+      this.initials.set(this.getInitials(name));
+      this.nickname.set(this.getNickname(name));
+      this.upiId.set(this.getUpiId(email, name));
+      if (localUser.avatarUrl) {
+        this.avatarUrl.set(localUser.avatarUrl);
+      }
+    }
+  }
+
   loadProfile(): void {
     this.loading.set(true);
-    this.api.get<any>('profile').subscribe({
+    const savedGroupId = localStorage.getItem('rl_group_id');
+    const endpoint = savedGroupId ? `profile?groupId=${savedGroupId}` : 'profile';
+
+    this.api.get<any>(endpoint).subscribe({
       next: (p) => {
-        this.fullName = p.fullName ?? '';
-        this.email = p.email ?? '';
-        this.phone = p.phone ?? '';
-        this.dob = p.dateOfBirth ? p.dateOfBirth.split('T')[0] : '';
-        this.gender = p.gender ?? '';
+        const name = p.fullName ?? this.fullName();
+        const mail = p.email ?? this.email();
+        const ph = p.phone ?? this.phone();
+
+        this.fullName.set(name);
+        this.email.set(mail);
+        this.phone.set(ph);
+        this.dob.set(p.dateOfBirth ? p.dateOfBirth.split('T')[0] : '');
+        this.gender.set(p.gender ?? '');
         this.avatarUrl.set(p.avatarUrl ?? null);
-        
-        // Generate nickname/initials
-        const parts = (p.fullName || '').trim().split(' ');
-        this.nickname = parts.length > 1 ? parts.map((w: string) => w[0]).join('').toUpperCase() : parts[0] || 'DK';
-        this.initials = (p.fullName ?? 'DK').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
-        
-        // Default UPI ID based on user email or name
-        if (!this.upiId || this.upiId === 'dileep@okhdfcbank') {
-          const userPrefix = this.email ? this.email.split('@')[0] : 'user';
-          this.upiId = `${userPrefix}@okhdfcbank`;
+
+        // Room and stats
+        this.roomName.set(p.roomName ?? 'No Flat Joined');
+        this.roomAddress.set(p.roomAddress ?? '');
+        this.roomRole.set(p.roomRole ?? 'Member');
+        this.memberCount.set(p.memberCount ?? 0);
+        this.owedToYou.set(p.owedToYou ?? 0);
+        this.inviteCode.set(p.inviteCode ?? '');
+        this.groupId.set(p.groupId ?? (savedGroupId ? Number(savedGroupId) : null));
+
+        if (p.groupId && !savedGroupId) {
+          localStorage.setItem('rl_group_id', String(p.groupId));
         }
 
+        // Dynamic nickname, initials & UPI ID
+        this.nickname.set(p.nickname || this.getNickname(name));
+        this.initials.set(this.getInitials(name));
+        this.upiId.set(p.upiId || this.getUpiId(mail, name));
+
         this.loading.set(false);
-        setTimeout(() => this.drawQrCode(), 80);
+        this.cdr.detectChanges();
+        setTimeout(() => this.drawQrCode(), 50);
       },
       error: () => {
-        // Fallback to local stored user if offline
-        const localUser = this.auth.user();
-        if (localUser) {
-          this.fullName = localUser.fullName || 'Dileep Kumar';
-          this.email = localUser.email || 'dileep@roomledger.app';
-          this.phone = (localUser as any).phone || '9876543210';
-          this.initials = this.fullName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
-        }
         this.loading.set(false);
-        setTimeout(() => this.drawQrCode(), 80);
+        this.cdr.detectChanges();
+        setTimeout(() => this.drawQrCode(), 50);
       }
     });
   }
 
+  private getInitials(name: string): string {
+    if (!name?.trim()) return 'DK';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length > 1) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  }
+
+  private getNickname(name: string): string {
+    if (!name?.trim()) return 'user';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length > 1) {
+      return parts.map(w => w[0]).join('').toUpperCase();
+    }
+    return parts[0].toLowerCase();
+  }
+
+  private getUpiId(email: string, name: string): string {
+    if (email) {
+      return `${email.split('@')[0]}@okhdfcbank`;
+    }
+    if (name) {
+      return `${name.toLowerCase().replace(/\s+/g, '')}@okhdfcbank`;
+    }
+    return 'user@okhdfcbank';
+  }
+
+  onUpiIdChange(val: string): void {
+    this.upiId.set(val);
+    this.drawQrCode();
+  }
+
   saveProfile(): void {
-    if (this.fullName.trim().length < 2) {
+    const currentName = this.fullName().trim();
+    if (currentName.length < 2) {
       this.showToast('⚠️ Full name must be at least 2 characters');
       return;
     }
 
     this.saving.set(true);
     this.api.put<{ message: string }>('profile', {
-      fullName: this.fullName.trim(),
-      dateOfBirth: this.dob || null,
-      gender: this.gender || null
+      fullName: currentName,
+      dateOfBirth: this.dob() || null,
+      gender: this.gender() || null,
+      phone: this.phone().trim() || null
     }).subscribe({
       next: (res) => {
         this.saving.set(false);
         this.showToast('✅ Profile saved successfully!');
-        this.auth.user.update(u => u ? { ...u, fullName: this.fullName.trim() } : u);
-        this.initials = this.fullName.trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        this.auth.user.update(u => u ? { ...u, fullName: currentName } : u);
+        this.initials.set(this.getInitials(currentName));
+        this.nickname.set(this.getNickname(currentName));
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         this.saving.set(false);
         this.showToast(err.error?.message ?? '⚠️ Update failed');
+        this.cdr.detectChanges();
       }
     });
   }
@@ -149,37 +220,49 @@ export class ProfileComponent implements OnInit, AfterViewInit {
         this.avatarUrl.set(res.avatarUrl + '?t=' + Date.now());
         this.saving.set(false);
         this.showToast('✅ Profile photo updated!');
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         this.saving.set(false);
         this.showToast(err.error?.message ?? '⚠️ Photo upload failed');
+        this.cdr.detectChanges();
       }
     });
   }
 
   copyUpiId(): void {
+    const upi = this.upiId();
+    if (!upi) {
+      this.showToast('⚠️ No UPI ID available to copy');
+      return;
+    }
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(this.upiId).then(() => {
+      navigator.clipboard.writeText(upi).then(() => {
         this.showToast('📋 UPI ID copied to clipboard!');
       });
     } else {
-      this.showToast('📋 UPI ID: ' + this.upiId);
+      this.showToast('📋 UPI ID: ' + upi);
     }
   }
 
   shareInvite(): void {
-    const inviteUrl = 'https://roomledger.app/join/APT402';
+    const code = this.inviteCode();
+    if (!code) {
+      this.showToast('⚠️ No active invite code for this room');
+      return;
+    }
+    const inviteUrl = `${window.location.origin}/join/${code}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(inviteUrl).then(() => {
-        this.showToast('🔗 Invite copied: roomledger.app/join/APT402');
+        this.showToast(`🔗 Invite copied: ${inviteUrl}`);
       });
     } else {
-      this.showToast('🔗 Invite: ' + inviteUrl);
+      this.showToast(`🔗 Invite: ${inviteUrl}`);
     }
   }
 
   leaveRoom(): void {
-    this.showToast('⚠️ Leaving room requires admin handover');
+    this.router.navigate(['/groups']);
   }
 
   changePassword(): void {
@@ -205,10 +288,12 @@ export class ProfileComponent implements OnInit, AfterViewInit {
         this.newPassword = '';
         this.confirmPassword = '';
         this.showPwSection.set(false);
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         this.changingPw.set(false);
         this.pwError.set(err.error?.message ?? 'Password change failed');
+        this.cdr.detectChanges();
       }
     });
   }
@@ -216,7 +301,7 @@ export class ProfileComponent implements OnInit, AfterViewInit {
   drawQrCode(): void {
     const cv = this.qrCanvasRef?.nativeElement;
     if (!cv) return;
-    const text = this.upiId || 'dileep@okhdfcbank';
+    const text = this.upiId() || 'upi://pay';
     const ctx = cv.getContext('2d');
     if (!ctx) return;
 
@@ -250,10 +335,10 @@ export class ProfileComponent implements OnInit, AfterViewInit {
           dk = (r === 0 || r === 6 || c === 0 || c === 6) || (r >= 2 && r <= 4 && c >= 2 && c <= 4);
         } else if (tr) {
           const lr = r, lc = c - (m - 7);
-          dk = (lr === 0 || lr === 6 || lc === 0 || lc === 6) || (lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4);
+          dk = (lr === 0 || lr === 6 || lc === 0 || lc === 6) || (lr >= 2 && r <= 4 && lc >= 2 && lc <= 4);
         } else if (bl) {
           const lr = r - (m - 7), lc = c;
-          dk = (lr === 0 || lr === 6 || lc === 0 || lc === 6) || (lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4);
+          dk = (lr === 0 || lr === 6 || lc === 0 || lc === 6) || (lr >= 2 && r <= 4 && lc >= 2 && lc <= 4);
         } else {
           dk = r === 6 || c === 6 ? (r + c) % 2 === 0 : (rnd(r, c) & 1) === 1;
         }
@@ -278,7 +363,11 @@ export class ProfileComponent implements OnInit, AfterViewInit {
 
   showToast(msg: string): void {
     this.toastMessage.set(msg);
-    setTimeout(() => this.toastMessage.set(null), 3200);
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.toastMessage.set(null);
+      this.cdr.detectChanges();
+    }, 3200);
   }
 
   goBack(): void {

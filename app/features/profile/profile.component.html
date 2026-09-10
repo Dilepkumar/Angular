@@ -25,9 +25,10 @@
 
       <button type="button"
               (click)="logout()"
-              class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold text-white/90 cursor-pointer border transition hover:bg-white/20"
+              class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold text-white/90 cursor-pointer border transition hover:bg-white/20"
               style="background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.25);">
-        🚪 Log Out
+        <i class="fa-solid fa-arrow-right-from-bracket" style="color: rgb(99, 230, 190);"></i>
+        <span>Log Out</span>
       </button>
     </div>
 
@@ -44,7 +45,7 @@
         } @else {
           <div class="w-full h-full rounded-full flex items-center justify-center text-3xl font-black text-white shadow-md"
                style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px); border: 3.5px solid rgba(255, 255, 255, 0.35);">
-            {{ initials }}
+            {{ initials() || 'DK' }}
           </div>
         }
 
@@ -66,28 +67,32 @@
       <div class="flex-1 min-w-[200px]">
         <div class="flex items-center gap-2.5 flex-wrap mb-1">
           <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-            {{ fullName || 'Dileep Kumar' }}
+            {{ fullName() || 'Your Profile' }}
           </h1>
-          <span class="text-[11px] font-black text-white px-2.5 py-0.5 rounded-lg border select-none"
-                style="background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.35);">
-            {{ roomRole }}
-          </span>
+          @if (roomRole()) {
+            <span class="text-[11px] font-black text-white px-2.5 py-0.5 rounded-lg border select-none"
+                  style="background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.35);">
+              {{ roomRole() }}
+            </span>
+          }
         </div>
 
         <div class="text-xs text-white/70 font-medium mb-3">
-          &#64;{{ nickname }} · {{ roomName }}, {{ roomAddress }}
+          @if (nickname()) { &#64;{{ nickname() }} }
+          @if (roomName()) { · {{ roomName() }} }
+          @if (roomAddress()) { , {{ roomAddress() }} }
         </div>
 
         <!-- Quick Stats -->
         <div class="flex items-center gap-5 sm:gap-6 pt-1">
           <div>
-            <div class="text-xl sm:text-2xl font-black text-white">₹{{ owedToYou }}</div>
+            <div class="text-xl sm:text-2xl font-black text-white">₹{{ owedToYou() | number:'1.0-2' }}</div>
             <div class="text-[9px] text-white/60 font-extrabold uppercase tracking-widest mt-0.5">OWED TO YOU</div>
           </div>
           <div class="w-px h-7" style="background: rgba(255, 255, 255, 0.25);"></div>
           <div>
-            <div class="text-xl sm:text-2xl font-black text-white">{{ memberCount }}</div>
-            <div class="text-[9px] text-white/60 font-extrabold uppercase tracking-widest mt-0.5">ROOMMATES</div>
+            <div class="text-xl sm:text-2xl font-black text-white">{{ memberCount() }}</div>
+            <div class="text-[9px] text-white/60 font-extrabold uppercase tracking-widest mt-0.5">{{ memberCount() === 1 ? 'ROOMMATE' : 'ROOMMATES' }}</div>
           </div>
         </div>
       </div>
@@ -118,8 +123,9 @@
             <input class="inp"
                    type="text"
                    name="fullName"
-                   [(ngModel)]="fullName"
-                   placeholder="Dileep Kumar" />
+                   [ngModel]="fullName()"
+                   (ngModelChange)="fullName.set($event)"
+                   placeholder="Enter your full name" />
           </div>
 
           <!-- Nickname -->
@@ -130,8 +136,9 @@
             <input class="inp"
                    type="text"
                    name="nickname"
-                   [(ngModel)]="nickname"
-                   placeholder="DK" />
+                   [ngModel]="nickname()"
+                   (ngModelChange)="nickname.set($event)"
+                   placeholder="Enter nickname or alias" />
           </div>
 
           <!-- Email with Verified Badge -->
@@ -143,7 +150,8 @@
               <input class="inp"
                      style="padding-right: 88px;"
                      type="email"
-                     [value]="email"
+                     [value]="email()"
+                     placeholder="your.email@example.com"
                      disabled />
               <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: 800; background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); border: 1.5px solid color-mix(in srgb, var(--ok) 28%, transparent); border-radius: 6px; padding: 2px 7px;">
                 ✓ Verified
@@ -163,8 +171,10 @@
               <input class="inp"
                      style="flex: 1;"
                      type="tel"
-                     [value]="phone"
-                     disabled />
+                     name="phone"
+                     [ngModel]="phone()"
+                     (ngModelChange)="phone.set($event)"
+                     placeholder="Enter 10-digit mobile number" />
             </div>
           </div>
 
@@ -176,7 +186,8 @@
             <input class="inp"
                    type="date"
                    name="dob"
-                   [(ngModel)]="dob"
+                   [ngModel]="dob()"
+                   (ngModelChange)="dob.set($event)"
                    [max]="today" />
           </div>
 
@@ -188,10 +199,10 @@
             <div class="grid grid-cols-3 gap-2">
               @for (g of genders; track g) {
                 <button type="button"
-                        (click)="gender = g"
-                        [style.background]="gender === g ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'var(--bg2)'"
-                        [style.borderColor]="gender === g ? 'var(--p1)' : 'var(--border)'"
-                        [style.color]="gender === g ? 'var(--p1)' : 'var(--t2)'"
+                        (click)="gender.set(g)"
+                        [style.background]="(gender().toLowerCase()) === (g.toLowerCase()) ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'var(--bg2)'"
+                        [style.borderColor]="(gender().toLowerCase()) === (g.toLowerCase()) ? 'var(--p1)' : 'var(--border)'"
+                        [style.color]="(gender().toLowerCase()) === (g.toLowerCase()) ? 'var(--p1)' : 'var(--t2)'"
                         style="padding: 9px 8px; border: 1.5px solid; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px;">
                   <span>{{ genderIcons[g] }}</span>
                   <span>{{ g }}</span>
@@ -322,7 +333,7 @@
     ───────────────────────────────────────── -->
     <div class="flex flex-col gap-5">
       
-      <!-- Card 4: UPI / VPA Settings Card (Matching Prototype) -->
+      <!-- Card 4: UPI / VPA Settings Card -->
       <div class="card" style="border-color: var(--border2);">
         <div class="sl">UPI / VPA Settings</div>
 
@@ -336,9 +347,9 @@
                    style="padding-right: 70px;"
                    type="text"
                    name="upiId"
-                   [(ngModel)]="upiId"
-                   (ngModelChange)="drawQrCode()"
-                   placeholder="dileep@okhdfcbank" />
+                   [ngModel]="upiId()"
+                   (ngModelChange)="onUpiIdChange($event)"
+                   placeholder="username@okhdfcbank" />
             <button type="button"
                     (click)="copyUpiId()"
                     style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--btn); border: none; color: #fff; border-radius: 8px; padding: 5px 11px; font-size: 11px; font-weight: 800; cursor: pointer; font-family: var(--font);">
@@ -357,7 +368,7 @@
           <canvas #qrCanvas width="130" height="130" class="rounded-lg shadow-sm"></canvas>
           
           <div class="font-mono text-xs font-extrabold" style="color: #1F2937;">
-            {{ upiId }}
+            {{ upiId() || 'username@okhdfcbank' }}
           </div>
           <div class="text-[10px] font-medium" style="color: #9CA3AF;">
             Scan with any UPI app to settle instantly
@@ -424,12 +435,16 @@
             🏠
           </div>
           <div class="flex-1">
-            <div class="text-sm font-extrabold" style="color: var(--text);">{{ roomName }}</div>
-            <div class="text-xs font-medium" style="color: var(--t3);">{{ roomAddress }} · {{ memberCount }} members</div>
+            <div class="text-sm font-extrabold" style="color: var(--text);">{{ roomName() || 'No Flat Joined' }}</div>
+            <div class="text-xs font-medium" style="color: var(--t3);">
+              @if (roomAddress()) { {{ roomAddress() }} · } {{ memberCount() }} {{ memberCount() === 1 ? 'member' : 'members' }}
+            </div>
           </div>
-          <span style="padding: 3px 10px; border-radius: 7px; font-size: 10px; font-weight: 800; background: color-mix(in srgb, var(--p1) 12%, transparent); color: var(--p1); border: 1.5px solid color-mix(in srgb, var(--p1) 25%, transparent);">
-            {{ roomRole }}
-          </span>
+          @if (roomRole()) {
+            <span style="padding: 3px 10px; border-radius: 7px; font-size: 10px; font-weight: 800; background: color-mix(in srgb, var(--p1) 12%, transparent); color: var(--p1); border: 1.5px solid color-mix(in srgb, var(--p1) 25%, transparent);">
+              {{ roomRole() }}
+            </span>
+          }
         </div>
 
         <div class="flex gap-2">
@@ -441,7 +456,7 @@
           <button type="button"
                   (click)="leaveRoom()"
                   style="flex: 1; padding: 9px 12px; background: color-mix(in srgb, var(--err) 8%, transparent); color: var(--err); border: 1.5px solid color-mix(in srgb, var(--err) 25%, transparent); border-radius: 12px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s;">
-            Leave Room
+            Switch Flat
           </button>
         </div>
       </div>
@@ -449,9 +464,10 @@
       <!-- Card 6: Quick Actions / Logout -->
       <button type="button"
               (click)="logout()"
-              class="w-full p-3.5 rounded-2xl font-black text-xs sm:text-sm cursor-pointer transition border"
+              class="w-full p-3.5 rounded-2xl font-black text-xs sm:text-sm cursor-pointer transition border flex items-center justify-center gap-2"
               style="background: color-mix(in srgb, var(--err) 8%, transparent); color: var(--err); border-color: color-mix(in srgb, var(--err) 25%, transparent);">
-        🚪 Log Out of RoomLedger
+        <i class="fa-solid fa-arrow-right-from-bracket" style="color: rgb(231 76 60);"></i>
+        <span>Log Out of RoomLedger</span>
       </button>
 
     </div>
