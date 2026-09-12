@@ -10,6 +10,7 @@ import { environment } from '../../../environments/environment';
 export interface PoolTransactionItem {
   id?: number;
   itemName: string;
+  quantity?: number;
   amount: number;
   expenseCategoryId?: number | null;
 }
@@ -79,6 +80,7 @@ export interface PoolBalance {
 interface ReceiptRow {
   id: number;
   name: string;
+  qty: number | null;
   price: number | null;
 }
 
@@ -149,7 +151,7 @@ export class PoolComponent implements OnInit {
 
   expenseName = '';
   expenseDate = new Date().toISOString().slice(0, 10);
-  expenseCategory = '🥕 Groceries';
+  expenseCategory = '';
   customCategory = '';
   categories = [
     '🥕 Groceries',
@@ -215,7 +217,7 @@ export class PoolComponent implements OnInit {
   initExpenseForm(): void {
     if (this.expenseRows.length === 0) {
       this.rowCounter = 1;
-      this.expenseRows = [{ id: 1, name: '', price: null }];
+      this.expenseRows = [{ id: 1, name: '', qty: 1, price: null }];
     }
   }
 
@@ -350,7 +352,7 @@ export class PoolComponent implements OnInit {
   // ═══════════════════════════════════════════
   addRow(): void {
     this.rowCounter++;
-    this.expenseRows.push({ id: this.rowCounter, name: '', price: null });
+    this.expenseRows.push({ id: this.rowCounter, name: '', qty: 1, price: null });
   }
 
   removeRow(id: number): void {
@@ -429,6 +431,11 @@ export class PoolComponent implements OnInit {
       return;
     }
 
+    if (!this.expenseCategory || !this.expenseCategory.trim()) {
+      this.showToast('⚠️ Please select an expense category');
+      return;
+    }
+
     if (!this.expenseTotal || this.expenseTotal <= 0) {
       this.showToast('⚠️ Total spend must be greater than zero');
       return;
@@ -454,6 +461,7 @@ export class PoolComponent implements OnInit {
 
     const items = validItems.map(r => ({
       itemName: r.name.trim(),
+      quantity: r.qty && r.qty > 0 ? r.qty : 1,
       amount: r.price!,
       categoryId: null
     }));
@@ -489,14 +497,14 @@ export class PoolComponent implements OnInit {
         this.expenseName = '';
         this.expenseTotal = null;
         this.expenseDate = new Date().toISOString().slice(0, 10);
-        this.expenseCategory = '🥕 Groceries';
+        this.expenseCategory = '';
         this.customCategory = '';
         this.expensePayer.set('pool');
         if (this.me?.id) this.paidByMemberId.set(this.me.id);
         this.receiptUrl = null;
         this.receiptPreview.set(null);
         this.rowCounter = 1;
-        this.expenseRows = [{ id: 1, name: '', price: null }];
+        this.expenseRows = [{ id: 1, name: '', qty: 1, price: null }];
         this.splitWith.update(list => list.map(m => ({ ...m, selected: true })));
         
         // Automatically hide the form after expense added

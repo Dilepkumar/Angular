@@ -55,7 +55,7 @@ export class AuthService {
   }
 
   forgotPassword(email: string) {
-    return this.api.post<{ message: string; devOtp?: string }>('auth/forgot-password', { email });
+    return this.api.post<{ message: string }>('auth/forgot-password', { email });
   }
 
   resetPassword(email: string, code: string, newPassword: string) {

@@ -36,6 +36,7 @@ export class GroupPickerComponent implements OnInit {
   
   // Form models
   newGroupName = '';
+  newGroupAddress = '';
   newGroupTarget: number | null = 20000;
   inviteCode = '';
 
@@ -87,6 +88,8 @@ export class GroupPickerComponent implements OnInit {
   closeModal(): void {
     this.modalMode.set(null);
     this.error.set(null);
+    this.newGroupName = '';
+    this.newGroupAddress = '';
   }
 
   createGroup(): void {
@@ -100,7 +103,8 @@ export class GroupPickerComponent implements OnInit {
 
     this.api.post<{ id: number; inviteCode?: string }>('groups', {
       groupName: this.newGroupName.trim(),
-      monthlyPoolTarget: this.newGroupTarget ?? 0
+      monthlyPoolTarget: this.newGroupTarget ?? 0,
+      address: this.newGroupAddress.trim() || undefined
     }).subscribe({
       next: (res) => {
         this.submitting.set(false);

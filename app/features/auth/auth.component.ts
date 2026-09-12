@@ -42,7 +42,7 @@ export class AuthComponent implements OnInit {
   regPhone = '';
   regEmail = '';
   regPassword = '';
-  regRoomCode = 'APT402';
+  regRoomCode = '';
   showRegPw = false;
   regTouched = signal(false);
 

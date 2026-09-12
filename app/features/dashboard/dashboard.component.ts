@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, inject, signal, ViewChild, ElementRef, AfterViewInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { environment } from '../../../environments/environment';
 
 interface ReceiptRow {
   id: number;
@@ -15,6 +16,48 @@ interface SettleModalData {
   name: string;
   upiId: string;
   amount: number;
+}
+
+export interface DashboardCategory {
+  categoryId: number | null;
+  categoryName: string;
+  icon: string;
+  totalAmount: number;
+  itemCount: number;
+  percentage: number;
+}
+
+export interface DashboardExpenseItem {
+  itemName: string;
+  quantity?: number;
+  amount: number;
+}
+
+export interface DashboardExpense {
+  id: number;
+  description: string;
+  totalAmount: number;
+  expenseDate: string;
+  paidByName: string;
+  payerType: string;
+  receiptUrl: string | null;
+  items: DashboardExpenseItem[];
+}
+
+export interface DashboardUpcomingBill {
+  billName: string;
+  shareAmount: number;
+  dueDay: number;
+  isPaid: boolean;
+}
+
+export interface DashboardIouDebt {
+  debtorId: number;
+  debtorName: string;
+  creditorId: number;
+  creditorName: string;
+  amount: number;
+  creditorUpiId: string;
 }
 
 @Component({
@@ -38,42 +81,59 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   // Active Bucket Tab: 'daily' | 'bills' | 'iou'
   activeBucket = signal<'daily' | 'bills' | 'iou'>('daily');
 
-  // KPI Data (Dynamic with smart fallbacks matching prototype)
-  poolBalance = signal(14500);
-  poolTarget = signal(20000);
-  pendingBillsCount = signal(2);
-  netIouOwed = signal(1850);
-  unreadCount = signal(3);
+  // KPI Data
+  poolBalance = signal(0);
+  poolTarget = signal(0);
+  poolSpentThisMonth = signal(0);
+  poolRemainingPercentage = signal(100);
+  pendingBillsCount = signal(0);
+  unpaidBillTotal = signal(0);
+  netIouOwed = signal(0);
+  unreadCount = signal(0);
 
   // Group Details
-  groupName = signal('Apartment 402');
-  groupAddress = signal('HSR Layout, Bangalore');
-  memberCount = signal(7);
+  groupName = signal('My Flat');
+  groupAddress = signal('');
+  memberCount = signal(1);
+
+  // Dynamic Collections
+  categoryBreakdown = signal<DashboardCategory[]>([]);
+  recentExpenses = signal<DashboardExpense[]>([]);
+  upcomingBills = signal<DashboardUpcomingBill[]>([]);
+  iouDebts = signal<DashboardIouDebt[]>([]);
+
+  // Filtered Debts
+  theyOweMe = computed(() => {
+    const myId = this.me()?.id;
+    return this.iouDebts().filter(d => d.creditorId === myId);
+  });
+
+  iOweThem = computed(() => {
+    const myId = this.me()?.id;
+    return this.iouDebts().filter(d => d.debtorId === myId);
+  });
+
+  otherDebts = computed(() => {
+    const myId = this.me()?.id;
+    return this.iouDebts().filter(d => d.creditorId !== myId && d.debtorId !== myId);
+  });
+
+  totalTheyOweMe = computed(() => {
+    return this.theyOweMe().reduce((sum, d) => sum + (d.amount || 0), 0);
+  });
+
+  totalIOweThem = computed(() => {
+    return this.iOweThem().reduce((sum, d) => sum + (d.amount || 0), 0);
+  });
 
   // Expanded receipt IDs
   expandedReceipts = signal<Set<string>>(new Set());
 
+  // Receipt image modal preview
+  selectedReceiptImage = signal<string | null>(null);
+
   // Toast feedback
   toastMessage = signal<string | null>(null);
-
-  // ── Log Expense Modal State ──
-  showExpenseModal = signal(false);
-  expensePayer = signal<'pool' | 'me'>('pool');
-  expenseBucket = signal<'daily' | 'bills' | 'iou'>('daily');
-  expenseName = 'Supermarket Run';
-  expenseCategory = '🥕 Groceries';
-  expenseTotal = 850;
-  expenseRows: ReceiptRow[] = [
-    { id: 1, name: 'Milk', price: 200 },
-    { id: 2, name: 'Vegetables', price: 350 },
-    { id: 3, name: 'Detergent', price: 300 }
-  ];
-  rowCounter = 3;
-  splitWith = signal<{ id: string; name: string; initials: string; selected: boolean }[]>([
-    { id: '1', name: 'Rahul', initials: 'RK', selected: true },
-    { id: '2', name: 'Priya', initials: 'PR', selected: true },
-    { id: '3', name: 'Amit', initials: 'AM', selected: false }
-  ]);
 
   // ── UPI Settle Modal State ──
   settleModal = signal<SettleModalData | null>(null);
@@ -90,14 +150,33 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     this.api.get<any>(`groups/${this.groupId}/dashboard`).subscribe({
       next: (d) => {
         if (d) {
+          if (d.groupName) this.groupName.set(d.groupName);
+          if (d.groupAddress !== undefined) this.groupAddress.set(d.groupAddress);
+          if (d.memberCount !== undefined) this.memberCount.set(d.memberCount);
+
           if (d.poolBalance !== undefined) this.poolBalance.set(d.poolBalance);
+          if (d.monthlyPoolTarget !== undefined) this.poolTarget.set(d.monthlyPoolTarget);
+          if (d.poolSpentThisMonth !== undefined) this.poolSpentThisMonth.set(d.poolSpentThisMonth);
+          if (d.poolRemainingPercentage !== undefined) this.poolRemainingPercentage.set(d.poolRemainingPercentage);
+
+          if (d.pendingBillsCount !== undefined) this.pendingBillsCount.set(d.pendingBillsCount);
+          if (d.unpaidBillTotal !== undefined) this.unpaidBillTotal.set(d.unpaidBillTotal);
+
+          // Net IOU = credit - debt
+          const net = (d.outstandingIouCredit ?? 0) - (d.outstandingIouDebt ?? 0);
+          this.netIouOwed.set(net);
+
           if (d.unreadNotifications !== undefined) this.unreadCount.set(d.unreadNotifications);
-          if (d.outstandingIouCredit !== undefined && d.outstandingIouCredit > 0) {
-            this.netIouOwed.set(d.outstandingIouCredit);
-          }
+
+          this.categoryBreakdown.set(d.categoryBreakdown ?? []);
+          this.recentExpenses.set(d.recentExpenses ?? []);
+          this.upcomingBills.set(d.upcomingBills ?? []);
+          this.iouDebts.set(d.iouDebts ?? []);
         }
       },
-      error: () => {}
+      error: (err) => {
+        console.error('Failed to load dashboard data', err);
+      }
     });
   }
 
@@ -105,23 +184,23 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     this.activeBucket.set(bucket);
   }
 
-  toggleReceipt(id: string): void {
+  toggleReceipt(id: string | number): void {
+    const key = String(id);
     const current = new Set(this.expandedReceipts());
-    if (current.has(id)) {
-      current.delete(id);
+    if (current.has(key)) {
+      current.delete(key);
     } else {
-      current.add(id);
+      current.add(key);
     }
     this.expandedReceipts.set(current);
   }
 
-  isReceiptExpanded(id: string): boolean {
-    return this.expandedReceipts().has(id);
+  isReceiptExpanded(id: string | number): boolean {
+    return this.expandedReceipts().has(String(id));
   }
 
   // ── Page Navigation & Expense Flow ──
   openExpenseModal(): void {
-    // Navigate directly to Pool Page with action=expense as requested
     this.goToPool('expense');
   }
 
@@ -141,48 +220,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/g', this.groupId, 'iou']);
   }
 
-  closeExpenseModal(): void {
-    this.showExpenseModal.set(false);
-  }
-
-  addRow(): void {
-    this.rowCounter++;
-    this.expenseRows.push({ id: this.rowCounter, name: '', price: null });
-  }
-
-  removeRow(id: number): void {
-    this.expenseRows = this.expenseRows.filter(r => r.id !== id);
-  }
-
-  get itemsSum(): number {
-    return this.expenseRows.reduce((acc, r) => acc + (r.price || 0), 0);
-  }
-
-  get isReceiptBalanced(): boolean {
-    return Math.abs(this.expenseTotal - this.itemsSum) < 0.01;
-  }
-
-  get receiptMismatchDiff(): number {
-    return Math.abs(this.expenseTotal - this.itemsSum);
-  }
-
-  toggleSplitParticipant(id: string): void {
-    this.splitWith.update(list =>
-      list.map(p => p.id === id ? { ...p, selected: !p.selected } : p)
-    );
-  }
-
-  submitExpense(): void {
-    if (this.expenseRows.length && !this.isReceiptBalanced) {
-      this.showToast('⚠️ Please balance receipt items with total spend first');
-      return;
-    }
-
-    this.showToast(`✅ ₹${this.expenseTotal} logged to Daily Pool!`);
-    this.poolBalance.update(b => Math.max(0, b - this.expenseTotal));
-    this.closeExpenseModal();
-  }
-
   // ── UPI Settle Methods ──
   openSettleModal(name: string, upiId: string, amount: number): void {
     this.settleModal.set({ name, upiId, amount });
@@ -191,6 +228,58 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   closeSettleModal(): void {
     this.settleModal.set(null);
+  }
+
+  viewReceipt(url?: string | null): void {
+    if (!url) return;
+    this.selectedReceiptImage.set(this.getFullUrl(url));
+  }
+
+  closeReceiptModal(): void {
+    this.selectedReceiptImage.set(null);
+  }
+
+  getFullUrl(path?: string | null): string {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const base = environment.apiUrl.replace(/\/api\/?$/, '');
+    return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
+  }
+
+  getCategoryIcon(catName: string): string {
+    if (!catName) return '📦';
+    const lower = catName.toLowerCase();
+    if (lower.includes('groc')) return '🥕';
+    if (lower.includes('dair') || lower.includes('milk')) return '🥛';
+    if (lower.includes('util') || lower.includes('bill') || lower.includes('elect')) return '⚡';
+    if (lower.includes('clean') || lower.includes('house') || lower.includes('suppl')) return '🧴';
+    if (lower.includes('food') || lower.includes('snack') || lower.includes('rest')) return '🍕';
+    if (lower.includes('maint') || lower.includes('repair')) return '🔧';
+    if (lower.includes('trav') || lower.includes('trans') || lower.includes('cab')) return '🚕';
+    return '📦';
+  }
+
+  getCategoryColor(catName: string): string {
+    if (!catName) return 'var(--p2)';
+    const lower = catName.toLowerCase();
+    if (lower.includes('groc')) return 'var(--ok)';
+    if (lower.includes('dair') || lower.includes('milk')) return 'var(--p1)';
+    if (lower.includes('util') || lower.includes('elect')) return 'var(--warn)';
+    if (lower.includes('clean') || lower.includes('suppl')) return 'var(--err)';
+    if (lower.includes('food')) return '#f97316';
+    return 'var(--p2)';
+  }
+
+  getBillIcon(billName: string): string {
+    if (!billName) return '📅';
+    const lower = billName.toLowerCase();
+    if (lower.includes('rent')) return '🏠';
+    if (lower.includes('wifi') || lower.includes('net') || lower.includes('broad')) return '📶';
+    if (lower.includes('elec') || lower.includes('power') || lower.includes('light')) return '⚡';
+    if (lower.includes('maid') || lower.includes('clean')) return '🧹';
+    if (lower.includes('water')) return '💧';
+    if (lower.includes('gas')) return '🔥';
+    return '📅';
   }
 
   drawSettleQr(text: string): void {
@@ -265,5 +354,14 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   switchFlat(): void {
     this.router.navigate(['/']);
+  }
+
+  getInitials(name?: string): string {
+    if (!name || !name.trim()) return 'DK';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length > 1) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   }
 }

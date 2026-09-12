@@ -15,7 +15,6 @@ export class ForgotPasswordComponent {
   email = ''; code = ''; newPassword = '';
   loading = signal(false);
   error = signal<string | null>(null);
-  devOtp = signal<string | null>(null);
 
   private emailValid(): boolean {
     return /^[\w.+-]+@[\w-]+\.[\w.-]{2,}$/.test(this.email.trim());
@@ -24,11 +23,10 @@ export class ForgotPasswordComponent {
   sendOtp() {
     if (!this.emailValid()) { this.error.set('Enter a valid email'); return; }
     this.loading.set(true); this.error.set(null);
-    this.api.post<{ message: string; devOtp?: string }>('auth/forgot-password', { email: this.email.trim().toLowerCase() })
+    this.api.post<{ message: string }>('auth/forgot-password', { email: this.email.trim().toLowerCase() })
       .subscribe({
-        next: r => {
+        next: () => {
           this.loading.set(false);
-          this.devOtp.set(r.devOtp ?? null);   // dev only — shows OTP banner
           this.step.set(2);
         },
         error: e => { this.loading.set(false); this.error.set(e.error?.message ?? 'Something went wrong'); }

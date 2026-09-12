@@ -4,7 +4,7 @@
 <div class="min-h-screen py-6 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto relative z-10 pb-28">
 
   <!-- ═══════════════════════════════════════════
-       TOP HEADER (SCREEN 2 PROTOTYPE)
+       TOP HEADER
   ═══════════════════════════════════════════ -->
   <div class="flex items-center justify-between flex-wrap gap-4 mb-7">
     
@@ -23,7 +23,7 @@
         </div>
         <div class="text-xs font-semibold flex items-center gap-1.5 mt-0.5" style="color: var(--t2);">
           <span class="w-2 h-2 rounded-full inline-block" style="background: var(--ok);"></span>
-          <span>{{ memberCount() }} Roommates · {{ groupAddress() }}</span>
+          <span>{{ memberCount() }} Roommates · {{ groupAddress() || 'Room Address' }}</span>
         </div>
       </div>
     </div>
@@ -62,7 +62,7 @@
           </div>
           <span class="text-[9px] font-black px-1.5 py-0.5 rounded uppercase mt-0.5 inline-block"
                 style="background: color-mix(in srgb, var(--p1) 12%, transparent); color: var(--p1);">
-            Admin
+            Member
           </span>
         </div>
       </div>
@@ -81,7 +81,7 @@
   </div>
 
   <!-- ═══════════════════════════════════════════
-       3 KPI CARDS (PROTOTYPE)
+       3 KPI CARDS
   ═══════════════════════════════════════════ -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 mb-7">
     
@@ -109,10 +109,10 @@
       
       <!-- Progress Bar -->
       <div class="pt mb-2">
-        <div class="pf" style="width: 72.5%;"></div>
+        <div class="pf" [style.width.%]="poolRemainingPercentage()"></div>
       </div>
       <div class="flex justify-between text-[11px] font-extrabold">
-        <span style="color: var(--p1);">72.5% remaining</span>
+        <span style="color: var(--p1);">{{ poolRemainingPercentage() | number:'1.0-1' }}% remaining</span>
         <span style="color: var(--t3);">Open Pool →</span>
       </div>
     </div>
@@ -136,22 +136,24 @@
         {{ pendingBillsCount() }} Pending
       </div>
       <div class="text-xs font-semibold mb-3" style="color: var(--t2);">
-        of 4 recurring bills this month
+        @if (unpaidBillTotal() > 0) {
+          ₹{{ unpaidBillTotal() | number:'1.0-0' }} unpaid this month
+        } @else {
+          All recurring bills up-to-date
+        }
       </div>
 
-      <!-- Pending Avatars -->
-      <div class="flex items-center -space-x-1.5 mb-1.5">
-        <div class="w-7 h-7 rounded-full text-white text-[10px] font-black flex items-center justify-center border-2 border-white"
-             style="background: var(--err);">
-          RK
-        </div>
-        <div class="w-7 h-7 rounded-full text-white text-[10px] font-black flex items-center justify-center border-2 border-white"
-             style="background: var(--warn);">
-          AM
-        </div>
+      <div class="flex items-center gap-1.5 mb-1.5 flex-wrap">
+        @for (b of upcomingBills().slice(0, 3); track b.billName) {
+          <span class="text-[10px] font-black px-2 py-0.5 rounded-full"
+                [style.background]="b.isPaid ? 'color-mix(in srgb, var(--ok) 15%, transparent)' : 'color-mix(in srgb, var(--warn) 15%, transparent)'"
+                [style.color]="b.isPaid ? 'var(--ok)' : 'var(--warn)'">
+            {{ b.billName }} ({{ b.isPaid ? 'Paid' : 'Due ' + b.dueDay + 'th' }})
+          </span>
+        }
       </div>
       <div class="flex justify-between text-[11px] font-bold" style="color: var(--t3);">
-        <span>Rahul &amp; Amit pending</span>
+        <span>{{ upcomingBills().length }} bills tracked</span>
         <span style="color: var(--warn);">Manage Bills →</span>
       </div>
     </div>
@@ -174,11 +176,13 @@
           🤝
         </div>
       </div>
-      <div class="text-2xl sm:text-3xl font-black tracking-tight mb-1 relative z-10" style="color: var(--ok);">
-        +₹{{ netIouOwed() | number:'1.0-0' }}
+      <div class="text-2xl sm:text-3xl font-black tracking-tight mb-1 relative z-10"
+           [style.color]="netIouOwed() >= 0 ? 'var(--ok)' : 'var(--err)'">
+        {{ netIouOwed() >= 0 ? '+' : '−' }}₹{{ (netIouOwed() >= 0 ? netIouOwed() : -netIouOwed()) | number:'1.0-0' }}
       </div>
-      <div class="text-xs font-extrabold mb-4 relative z-10" style="color: color-mix(in srgb, var(--ok) 85%, transparent);">
-        You are owed this amount
+      <div class="text-xs font-extrabold mb-4 relative z-10"
+           [style.color]="netIouOwed() >= 0 ? 'color-mix(in srgb, var(--ok) 85%, transparent)' : 'color-mix(in srgb, var(--err) 85%, transparent)'">
+        {{ netIouOwed() >= 0 ? 'You are owed this amount' : 'You owe this amount to roommates' }}
       </div>
 
       <button type="button"
@@ -221,270 +225,157 @@
   @if (activeBucket() === 'daily') {
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5 fade-up">
       
-      <!-- Card: Expense Breakdown & Monthly Contributions -->
+      <!-- Card: Category Expense Breakdown -->
       <div class="card">
-        <div class="sl">Category Expense Breakdown</div>
+        <div class="flex justify-between items-center mb-3">
+          <div class="sl mb-0">Category Expense Breakdown</div>
+          <span class="text-xs font-extrabold" style="color: var(--p1);">₹{{ poolSpentThisMonth() | number:'1.0-0' }} spent</span>
+        </div>
         
         <div class="space-y-3 mb-6">
-          <!-- Groceries -->
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm"
-                   style="background: color-mix(in srgb, var(--ok) 14%, transparent);">
-                🥕
+          @for (cat of categoryBreakdown(); track cat.categoryId ?? cat.categoryName) {
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm"
+                     [style.background]="getCategoryColor(cat.categoryName) + '22'">
+                  {{ cat.icon || getCategoryIcon(cat.categoryName) }}
+                </div>
+                <div>
+                  <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">{{ cat.categoryName }}</div>
+                  <div class="text-[10px] font-medium" style="color: var(--t3);">{{ cat.itemCount }} {{ cat.itemCount === 1 ? 'item' : 'items' }} logged</div>
+                </div>
               </div>
-              <div>
-                <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Groceries</div>
-                <div class="text-[10px] font-medium" style="color: var(--t3);">18 items logged</div>
-              </div>
-            </div>
-            <div class="text-right">
-              <div class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹4,200</div>
-              <div class="h-1.5 w-20 rounded-full overflow-hidden mt-1" style="background: var(--bg3);">
-                <div class="h-full rounded-full" style="width: 58%; background: var(--ok);"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="div"></div>
-
-          <!-- Dairy -->
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm"
-                   style="background: color-mix(in srgb, var(--p1) 14%, transparent);">
-                🥛
-              </div>
-              <div>
-                <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Dairy Products</div>
-                <div class="text-[10px] font-medium" style="color: var(--t3);">Daily delivery</div>
+              <div class="text-right">
+                <div class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹{{ cat.totalAmount | number:'1.0-0' }}</div>
+                <div class="h-1.5 w-20 rounded-full overflow-hidden mt-1" style="background: var(--bg3);">
+                  <div class="h-full rounded-full" [style.width.%]="cat.percentage" [style.background]="getCategoryColor(cat.categoryName)"></div>
+                </div>
               </div>
             </div>
-            <div class="text-right">
-              <div class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹2,100</div>
-              <div class="h-1.5 w-20 rounded-full overflow-hidden mt-1" style="background: var(--bg3);">
-                <div class="h-full rounded-full" style="width: 29%; background: var(--p1);"></div>
-              </div>
+            @if (!$last) {
+              <div class="div"></div>
+            }
+          } @empty {
+            <div class="p-8 rounded-2xl border text-center text-xs font-semibold"
+                 style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
+              🛒 No category expenses recorded this month yet.
             </div>
-          </div>
-
-          <div class="div"></div>
-
-          <!-- Supplies -->
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm"
-                   style="background: color-mix(in srgb, var(--err) 14%, transparent);">
-                🧴
-              </div>
-              <div>
-                <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Household Supplies</div>
-                <div class="text-[10px] font-medium" style="color: var(--t3);">Cleaning &amp; hygiene</div>
-              </div>
-            </div>
-            <div class="text-right">
-              <div class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹1,200</div>
-              <div class="h-1.5 w-20 rounded-full overflow-hidden mt-1" style="background: var(--bg3);">
-                <div class="h-full rounded-full" style="width: 17%; background: var(--err);"></div>
-              </div>
-            </div>
-          </div>
+          }
         </div>
 
-        <!-- Monthly Pool Contributions -->
-        <div>
-          <div class="sl">Monthly Flat Contributions</div>
-          <div class="space-y-2">
-            <div class="flex items-center justify-between py-1">
-              <div class="flex items-center gap-2">
-                <div class="chk on">
-                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5"><path d="M2 6l3 3 5-5"/></svg>
-                </div>
-                <span class="text-xs font-bold" style="color: var(--text);">Dileep Kumar</span>
-              </div>
-              <span class="text-xs font-black" style="color: var(--ok);">₹2,000 ✓</span>
-            </div>
-
-            <div class="flex items-center justify-between py-1">
-              <div class="flex items-center gap-2">
-                <div class="chk on">
-                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5"><path d="M2 6l3 3 5-5"/></svg>
-                </div>
-                <span class="text-xs font-bold" style="color: var(--text);">Rahul Sharma</span>
-              </div>
-              <span class="text-xs font-black" style="color: var(--ok);">₹2,000 ✓</span>
-            </div>
-
-            <div class="flex items-center justify-between py-1">
-              <div class="flex items-center gap-2">
-                <div class="chk on">
-                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5"><path d="M2 6l3 3 5-5"/></svg>
-                </div>
-                <span class="text-xs font-bold" style="color: var(--text);">Priya Nair</span>
-              </div>
-              <span class="text-xs font-black" style="color: var(--ok);">₹2,000 ✓</span>
-            </div>
-
-            <div class="flex items-center justify-between py-1">
-              <div class="flex items-center gap-2">
-                <div class="chk"></div>
-                <span class="text-xs font-bold" style="color: var(--t2);">Amit Patel</span>
-              </div>
-              <span class="pp">Pending</span>
-            </div>
-
-            <div class="flex items-center justify-between py-1">
-              <div class="flex items-center gap-2">
-                <div class="chk"></div>
-                <span class="text-xs font-bold" style="color: var(--t2);">Sneha Reddy</span>
-              </div>
-              <span class="pp">Pending</span>
-            </div>
-          </div>
-        </div>
-
+        <button type="button"
+                (click)="goToPool()"
+                class="btns w-full py-2.5 text-xs font-black flex items-center justify-center gap-1.5">
+          <span>View Full Pool Ledger &amp; Breakdown →</span>
+        </button>
       </div>
 
       <!-- Card: Itemized Receipts (Collapsible Accordions) -->
       <div class="card">
-        <div class="sl">Recent Receipts — Tap to Expand Items</div>
+        <div class="flex justify-between items-center mb-3">
+          <div class="sl mb-0">Recent Receipts — Tap to Expand Items</div>
+          <button type="button"
+                  (click)="goToPool()"
+                  class="text-[10px] font-black text-teal-600 hover:underline cursor-pointer">
+            View All →
+          </button>
+        </div>
 
         <div class="space-y-3">
-          
-          <!-- Receipt 1: Supermarket Run -->
-          <div>
-            <div (click)="toggleReceipt('r1')"
-                 class="p-3.5 rounded-2xl cursor-pointer border transition flex items-center justify-between select-none"
-                 style="background: var(--bg2); border-color: var(--border);">
-              <div class="flex items-center gap-3">
-                <div class="text-xl">🛒</div>
-                <div>
-                  <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Supermarket Run</div>
-                  <div class="text-[11px] font-medium" style="color: var(--t3);">Sep 8 · Paid by Dileep</div>
+          @for (exp of recentExpenses(); track exp.id) {
+            <div>
+              <div (click)="toggleReceipt(exp.id)"
+                   class="p-3.5 rounded-2xl cursor-pointer border transition flex items-center justify-between select-none hover:shadow-xs"
+                   style="background: var(--bg2); border-color: var(--border);">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="text-xl shrink-0">🛒</div>
+                  <div class="min-w-0">
+                    <div class="text-xs sm:text-[13px] font-bold truncate" style="color: var(--text);">
+                      {{ exp.description }}
+                    </div>
+                    <div class="text-[11px] font-medium" style="color: var(--t3);">
+                      {{ exp.expenseDate }} · Paid by {{ exp.paidByName || 'Flatmate' }}
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  @if (exp.receiptUrl) {
+                    <button type="button"
+                            (click)="$event.stopPropagation(); viewReceipt(exp.receiptUrl)"
+                            class="text-[10px] font-black px-2 py-0.5 rounded-lg border flex items-center gap-1 cursor-pointer hover:scale-105 transition"
+                            style="background: color-mix(in srgb, var(--p1) 15%, var(--card)); border-color: var(--p1); color: var(--p1);"
+                            title="View Attached Receipt">
+                      <span>📸</span>
+                      <span>Photo</span>
+                    </button>
+                  }
+                  <span class="text-xs sm:text-[13px] font-black" style="color: var(--text);">
+                    ₹{{ exp.totalAmount | number:'1.0-0' }}
+                  </span>
+                  @if ((exp.items && exp.items.length > 0) || exp.receiptUrl) {
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5"
+                         class="transition-transform duration-200"
+                         [style.transform]="isReceiptExpanded(exp.id) ? 'rotate(90deg)' : 'rotate(0deg)'">
+                      <path d="m9 18 6-6-6-6"/>
+                    </svg>
+                  }
                 </div>
               </div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹650</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5"
-                     class="transition-transform duration-200"
-                     [style.transform]="isReceiptExpanded('r1') ? 'rotate(90deg)' : 'rotate(0deg)'">
-                  <path d="m9 18 6-6-6-6"/>
-                </svg>
-              </div>
+
+              @if (isReceiptExpanded(exp.id)) {
+                <div class="p-3.5 rounded-b-2xl border border-t-0 space-y-2 fade-up"
+                     style="background: var(--card2); border-color: var(--border);">
+                  @if (exp.items && exp.items.length > 0) {
+                    @for (item of exp.items; track item.itemName) {
+                      <div class="flex justify-between text-xs pb-1.5 border-b" style="border-color: var(--border);">
+                        <span style="color: var(--t2);">
+                          • {{ item.itemName }}
+                          @if (item.quantity && item.quantity > 1) {
+                            <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded ml-1"
+                                  style="background: color-mix(in srgb, var(--p1) 14%, transparent); color: var(--p1);">
+                              ×{{ item.quantity }}
+                            </span>
+                          }
+                        </span>
+                        <span class="font-bold" style="color: var(--text);">₹{{ item.amount | number:'1.0-0' }}</span>
+                      </div>
+                    }
+                    <div class="flex justify-between text-xs pt-1 border-t border-dashed font-black"
+                         style="border-color: var(--border);">
+                      <span style="color: var(--p1);">Item Total</span>
+                      <span style="color: var(--ok);">₹{{ exp.totalAmount | number:'1.0-0' }} ✓</span>
+                    </div>
+                  } @else {
+                    <div class="text-xs font-semibold py-1" style="color: var(--t3);">
+                      No individual items itemized for this purchase.
+                    </div>
+                  }
+
+                  @if (exp.receiptUrl) {
+                    <div class="pt-2 border-t flex items-center justify-between" style="border-color: var(--border);">
+                      <div class="flex items-center gap-2">
+                        <img [src]="getFullUrl(exp.receiptUrl)"
+                             alt="Receipt"
+                             class="w-10 h-10 rounded-lg object-cover border cursor-pointer hover:scale-105 transition"
+                             (click)="$event.stopPropagation(); viewReceipt(exp.receiptUrl)" />
+                        <span class="text-xs font-bold" style="color: var(--text);">Attached Bill Photo</span>
+                      </div>
+                      <button type="button"
+                              (click)="$event.stopPropagation(); viewReceipt(exp.receiptUrl)"
+                              class="btns text-[10px] py-1 px-2.5 font-extrabold">
+                        View Full 🔍
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
             </div>
-
-            @if (isReceiptExpanded('r1')) {
-              <div class="p-3.5 rounded-b-2xl border border-t-0 space-y-2 fade-up"
-                   style="background: var(--card2); border-color: var(--border);">
-                <div class="flex justify-between text-xs pb-1.5 border-b" style="border-color: var(--border);">
-                  <span style="color: var(--t2);">🥛 Milk (2L)</span>
-                  <span class="font-bold" style="color: var(--text);">₹120</span>
-                </div>
-                <div class="flex justify-between text-xs pb-1.5 border-b" style="border-color: var(--border);">
-                  <span style="color: var(--t2);">🥕 Vegetables</span>
-                  <span class="font-bold" style="color: var(--text);">₹300</span>
-                </div>
-                <div class="flex justify-between text-xs pb-1.5" style="border-color: var(--border);">
-                  <span style="color: var(--t2);">🧴 Detergent</span>
-                  <span class="font-bold" style="color: var(--text);">₹230</span>
-                </div>
-                <div class="flex justify-between text-xs pt-2 border-t border-dashed font-black"
-                     style="border-color: var(--border);">
-                  <span style="color: var(--p1);">Item Total</span>
-                  <span style="color: var(--ok);">₹650 ✓</span>
-                </div>
-              </div>
-            }
-          </div>
-
-          <!-- Receipt 2: D-Mart Bulk Buy -->
-          <div>
-            <div (click)="toggleReceipt('r2')"
-                 class="p-3.5 rounded-2xl cursor-pointer border transition flex items-center justify-between select-none"
-                 style="background: var(--bg2); border-color: var(--border);">
-              <div class="flex items-center gap-3">
-                <div class="text-xl">🛍️</div>
-                <div>
-                  <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">D-Mart Bulk Buy</div>
-                  <div class="text-[11px] font-medium" style="color: var(--t3);">Sep 6 · Paid by Rahul</div>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹1,240</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5"
-                     class="transition-transform duration-200"
-                     [style.transform]="isReceiptExpanded('r2') ? 'rotate(90deg)' : 'rotate(0deg)'">
-                  <path d="m9 18 6-6-6-6"/>
-                </svg>
-              </div>
+          } @empty {
+            <div class="p-8 rounded-2xl border text-center text-xs font-semibold"
+                 style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
+              🧾 No recent receipts or expenses logged yet.
             </div>
-
-            @if (isReceiptExpanded('r2')) {
-              <div class="p-3.5 rounded-b-2xl border border-t-0 space-y-2 fade-up"
-                   style="background: var(--card2); border-color: var(--border);">
-                <div class="flex justify-between text-xs pb-1.5 border-b" style="border-color: var(--border);">
-                  <span style="color: var(--t2);">🛢️ Refined Oil</span>
-                  <span class="font-bold" style="color: var(--text);">₹280</span>
-                </div>
-                <div class="flex justify-between text-xs pb-1.5 border-b" style="border-color: var(--border);">
-                  <span style="color: var(--t2);">🫙 Pulses &amp; Rice</span>
-                  <span class="font-bold" style="color: var(--text);">₹560</span>
-                </div>
-                <div class="flex justify-between text-xs pb-1.5" style="border-color: var(--border);">
-                  <span style="color: var(--t2);">🍫 Snacks &amp; Tea</span>
-                  <span class="font-bold" style="color: var(--text);">₹400</span>
-                </div>
-                <div class="flex justify-between text-xs pt-2 border-t border-dashed font-black"
-                     style="border-color: var(--border);">
-                  <span style="color: var(--p1);">Item Total</span>
-                  <span style="color: var(--ok);">₹1,240 ✓</span>
-                </div>
-              </div>
-            }
-          </div>
-
-          <!-- Receipt 3: Dairy Delight -->
-          <div>
-            <div (click)="toggleReceipt('r3')"
-                 class="p-3.5 rounded-2xl cursor-pointer border transition flex items-center justify-between select-none"
-                 style="background: var(--bg2); border-color: var(--border);">
-              <div class="flex items-center gap-3">
-                <div class="text-xl">🥛</div>
-                <div>
-                  <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Dairy Delight</div>
-                  <div class="text-[11px] font-medium" style="color: var(--t3);">Sep 9 · Auto-deducted</div>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹340</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5"
-                     class="transition-transform duration-200"
-                     [style.transform]="isReceiptExpanded('r3') ? 'rotate(90deg)' : 'rotate(0deg)'">
-                  <path d="m9 18 6-6-6-6"/>
-                </svg>
-              </div>
-            </div>
-
-            @if (isReceiptExpanded('r3')) {
-              <div class="p-3.5 rounded-b-2xl border border-t-0 space-y-2 fade-up"
-                   style="background: var(--card2); border-color: var(--border);">
-                <div class="flex justify-between text-xs pb-1.5 border-b" style="border-color: var(--border);">
-                  <span style="color: var(--t2);">🥛 Fresh Milk 30d</span>
-                  <span class="font-bold" style="color: var(--text);">₹210</span>
-                </div>
-                <div class="flex justify-between text-xs pb-1.5" style="border-color: var(--border);">
-                  <span style="color: var(--t2);">🧀 Paneer 500g</span>
-                  <span class="font-bold" style="color: var(--text);">₹130</span>
-                </div>
-                <div class="flex justify-between text-xs pt-2 border-t border-dashed font-black"
-                     style="border-color: var(--border);">
-                  <span style="color: var(--p1);">Item Total</span>
-                  <span style="color: var(--ok);">₹340 ✓</span>
-                </div>
-              </div>
-            }
-          </div>
-
+          }
         </div>
       </div>
 
@@ -496,136 +387,49 @@
   ─────────────────────────────────────────── -->
   @if (activeBucket() === 'bills') {
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 fade-up">
-      
-      <!-- Bill 1: Room Rent -->
-      <div class="billc">
-        <div class="flex justify-between items-start mb-3">
-          <div>
-            <div class="text-2xl mb-1">🏠</div>
-            <div class="text-base font-extrabold" style="color: var(--text);">Room Rent</div>
-            <div class="text-xs font-semibold" style="color: var(--t3);">Due on 1st of month</div>
+      @for (bill of upcomingBills(); track bill.billName) {
+        <div class="billc">
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <div class="text-2xl mb-1">{{ getBillIcon(bill.billName) }}</div>
+              <div class="text-base font-extrabold" style="color: var(--text);">{{ bill.billName }}</div>
+              <div class="text-xs font-semibold" style="color: var(--t3);">Due on {{ bill.dueDay }}th of month</div>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-black" [style.color]="bill.isPaid ? 'var(--ok)' : 'var(--p1)'">
+                ₹{{ bill.shareAmount | number:'1.0-0' }}
+              </div>
+              <div class="text-xs font-bold" style="color: var(--t3);">per roommate</div>
+            </div>
           </div>
-          <div class="text-right">
-            <div class="text-2xl font-black" style="color: var(--p1);">₹35,000</div>
-            <div class="text-xs font-bold" style="color: var(--t3);">₹5,000 / head</div>
+
+          <div class="flex items-center justify-between p-3 rounded-2xl border mb-3"
+               style="background: var(--bg2); border-color: var(--border);">
+            <span class="text-xs font-bold" style="color: var(--t2);">Payment Status:</span>
+            <span class="text-xs font-black px-2.5 py-0.5 rounded-full"
+                  [style.background]="bill.isPaid ? 'color-mix(in srgb, var(--ok) 15%, transparent)' : 'color-mix(in srgb, var(--warn) 15%, transparent)'"
+                  [style.color]="bill.isPaid ? 'var(--ok)' : 'var(--warn)'">
+              {{ bill.isPaid ? 'PAID ✓' : 'PENDING' }}
+            </span>
           </div>
+
+          <button type="button"
+                  (click)="goToBills()"
+                  class="btn w-full py-2.5 text-xs font-black">
+            Manage in Bills Page →
+          </button>
         </div>
-
-        <div class="sl mb-2">Roommate Status</div>
-        <div class="space-y-1.5 mb-4">
-          <div class="flex justify-between items-center text-xs">
-            <span style="color: var(--t2);">Dileep</span>
-            <span class="pk">PAID</span>
-          </div>
-          <div class="flex justify-between items-center text-xs">
-            <span style="color: var(--t2);">Rahul</span>
-            <span class="pk">PAID</span>
-          </div>
-          <div class="flex justify-between items-center text-xs">
-            <span style="color: var(--t2);">Priya</span>
-            <span class="pk">PAID</span>
-          </div>
-          <div class="flex justify-between items-center text-xs">
-            <span style="color: var(--t2);">Amit</span>
-            <span class="pp">PENDING</span>
-          </div>
-          <div class="flex justify-between items-center text-xs">
-            <span style="color: var(--t2);">Sneha</span>
-            <span class="pp">PENDING</span>
-          </div>
+      } @empty {
+        <div class="col-span-full p-8 rounded-3xl border text-center space-y-2"
+             style="background: var(--card); border-color: var(--border);">
+          <div class="text-3xl">📅</div>
+          <div class="text-sm font-bold" style="color: var(--text);">No Recurring Bills Set Up</div>
+          <p class="text-xs" style="color: var(--t3);">Track rent, Wi-Fi, electricity, and house help subscriptions in one place.</p>
+          <button type="button" (click)="goToBills()" class="btn py-2 px-5 text-xs font-black mt-2">
+            Configure Recurring Bills →
+          </button>
         </div>
-
-        <button type="button"
-                (click)="showToast('📨 Reminder sent to Amit & Sneha')"
-                class="btn py-2.5 text-xs font-black">
-          Send Reminder
-        </button>
-      </div>
-
-      <!-- Bill 2: High-Speed Wi-Fi -->
-      <div class="billc">
-        <div class="flex justify-between items-start mb-3">
-          <div>
-            <div class="text-2xl mb-1">📶</div>
-            <div class="text-base font-extrabold" style="color: var(--text);">High-Speed Wi-Fi</div>
-            <div class="text-xs font-bold" style="color: var(--ok);">✓ All 7 paid</div>
-          </div>
-          <div class="text-right">
-            <div class="text-2xl font-black" style="color: var(--ok);">₹1,200</div>
-            <div class="text-xs font-bold" style="color: var(--t3);">₹171 / head</div>
-          </div>
-        </div>
-
-        <div class="pt mb-3">
-          <div class="pf" style="width: 100%;"></div>
-        </div>
-
-        <div class="sl mb-2">Roommates (100% Collected)</div>
-        <div class="grid grid-cols-2 gap-2 text-xs">
-          <div class="flex justify-between"><span style="color: var(--t2);">Dileep</span><span class="pk">PAID</span></div>
-          <div class="flex justify-between"><span style="color: var(--t2);">Rahul</span><span class="pk">PAID</span></div>
-          <div class="flex justify-between"><span style="color: var(--t2);">Priya</span><span class="pk">PAID</span></div>
-          <div class="flex justify-between"><span style="color: var(--t2);">Amit</span><span class="pk">PAID</span></div>
-        </div>
-      </div>
-
-      <!-- Bill 3: Electricity Bill -->
-      <div class="billc">
-        <div class="flex justify-between items-start mb-3">
-          <div>
-            <div class="text-2xl mb-1">⚡</div>
-            <div class="text-base font-extrabold" style="color: var(--text);">Electricity Bill</div>
-            <div class="text-xs font-bold" style="color: var(--warn);">Due in 3 days</div>
-          </div>
-          <div class="text-right">
-            <div class="text-2xl font-black" style="color: var(--warn);">₹4,500</div>
-            <div class="text-xs font-bold" style="color: var(--t3);">₹643 / head</div>
-          </div>
-        </div>
-
-        <div class="pt mb-2">
-          <div style="height: 100%; border-radius: 4px; width: 57%; background: var(--warn);"></div>
-        </div>
-        <div class="text-xs font-bold mb-3" style="color: var(--t3);">4 of 7 paid</div>
-
-        <div class="space-y-1.5 mb-4 text-xs">
-          <div class="flex justify-between items-center"><span style="color: var(--t2);">Dileep</span><span class="pk">PAID</span></div>
-          <div class="flex justify-between items-center"><span style="color: var(--t2);">Rahul</span><span class="pp">PENDING</span></div>
-        </div>
-
-        <button type="button"
-                (click)="showToast('⚡ Nudge sent to pending roommates')"
-                class="btn py-2.5 text-xs font-black"
-                style="background: var(--grad2);">
-          Nudge Pending
-        </button>
-      </div>
-
-      <!-- Bill 4: Maid Service -->
-      <div class="billc">
-        <div class="flex justify-between items-start mb-3">
-          <div>
-            <div class="text-2xl mb-1">🧹</div>
-            <div class="text-base font-extrabold" style="color: var(--text);">Maid Service</div>
-            <div class="text-xs font-semibold" style="color: var(--t3);">Paid on 5th</div>
-          </div>
-          <div class="text-right">
-            <div class="text-2xl font-black" style="color: var(--text);">₹8,000</div>
-            <div class="text-xs font-bold" style="color: var(--t3);">₹1,143 / head</div>
-          </div>
-        </div>
-
-        <div class="pt mb-2">
-          <div class="pf" style="width: 85%;"></div>
-        </div>
-        <div class="text-xs font-bold mb-3" style="color: var(--t3);">6 of 7 paid</div>
-
-        <div class="space-y-1.5 text-xs">
-          <div class="flex justify-between items-center"><span style="color: var(--t2);">Dileep</span><span class="pk">PAID</span></div>
-          <div class="flex justify-between items-center"><span style="color: var(--t2);">Vikram</span><span class="pp">PENDING</span></div>
-        </div>
-      </div>
-
+      }
     </div>
   }
 
@@ -639,59 +443,39 @@
       <div>
         <div class="sl">💚 They Owe You</div>
         <div class="space-y-3.5">
-          
-          <!-- Rahul -->
-          <div class="dcard">
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-3">
-                <div class="av w-9 h-9 text-xs font-black text-white" style="background: var(--err);">RK</div>
-                <div>
-                  <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Rahul Sharma</div>
-                  <div class="text-[11px] font-medium" style="color: var(--t3);">Supermarket split · Sep 8</div>
+          @for (debt of theyOweMe(); track debt.debtorId) {
+            <div class="dcard">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <div class="av w-9 h-9 text-xs font-black text-white" style="background: var(--err);">
+                    {{ getInitials(debt.debtorName) }}
+                  </div>
+                  <div>
+                    <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">{{ debt.debtorName }}</div>
+                    <div class="text-[11px] font-medium" style="color: var(--t3);">Roommate debt</div>
+                  </div>
                 </div>
+                <div class="text-lg font-black" style="color: var(--ok);">₹{{ debt.amount | number:'1.0-0' }}</div>
               </div>
-              <div class="text-lg font-black" style="color: var(--ok);">₹450</div>
-            </div>
-            <div class="flex gap-2">
-              <button type="button"
-                      (click)="openSettleModal('Rahul', 'rahul@phonepe', 450)"
-                      class="btng flex-1 py-2 font-black">
-                💳 Settle via UPI
-              </button>
-              <button type="button"
-                      (click)="showToast('🔔 Reminder sent to Rahul')"
-                      class="btns text-xs py-1.5 px-3">
-                Remind
-              </button>
-            </div>
-          </div>
-
-          <!-- Priya -->
-          <div class="dcard">
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-3">
-                <div class="av w-9 h-9 text-xs font-black text-white" style="background: var(--p2);">PR</div>
-                <div>
-                  <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Priya Nair</div>
-                  <div class="text-[11px] font-medium" style="color: var(--t3);">Dinner split · Sep 7</div>
-                </div>
+              <div class="flex gap-2">
+                <button type="button"
+                        (click)="openSettleModal(debt.debtorName, debt.creditorUpiId || '', debt.amount)"
+                        class="btng flex-1 py-2 font-black text-xs">
+                  💳 Settle via UPI
+                </button>
+                <button type="button"
+                        (click)="showToast('🔔 Reminder sent to ' + debt.debtorName)"
+                        class="btns text-xs py-1.5 px-3">
+                  Remind
+                </button>
               </div>
-              <div class="text-lg font-black" style="color: var(--ok);">₹800</div>
             </div>
-            <div class="flex gap-2">
-              <button type="button"
-                      (click)="openSettleModal('Priya', 'priya@gpay', 800)"
-                      class="btng flex-1 py-2 font-black">
-                💳 Settle via UPI
-              </button>
-              <button type="button"
-                      (click)="showToast('🔔 Reminder sent to Priya')"
-                      class="btns text-xs py-1.5 px-3">
-                Remind
-              </button>
+          } @empty {
+            <div class="p-6 rounded-2xl border text-center text-xs font-semibold"
+                 style="background: var(--card); border-color: var(--border); color: var(--t3);">
+              🎉 No roommates currently owe you money!
             </div>
-          </div>
-
+          }
         </div>
       </div>
 
@@ -699,30 +483,40 @@
       <div class="space-y-4">
         <div>
           <div class="sl">❤️ You Owe Them</div>
-          
-          <div class="dcard" style="border-color: color-mix(in srgb, var(--err) 25%, transparent);">
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-3">
-                <div class="av w-9 h-9 text-xs font-black text-white" style="background: var(--warn);">AM</div>
-                <div>
-                  <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Amit Patel</div>
-                  <div class="text-[11px] font-medium" style="color: var(--t3);">Cab fare · Sep 6</div>
+          <div class="space-y-3.5">
+            @for (debt of iOweThem(); track debt.creditorId) {
+              <div class="dcard" style="border-color: color-mix(in srgb, var(--err) 25%, transparent);">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="av w-9 h-9 text-xs font-black text-white" style="background: var(--warn);">
+                      {{ getInitials(debt.creditorName) }}
+                    </div>
+                    <div>
+                      <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">{{ debt.creditorName }}</div>
+                      <div class="text-[11px] font-medium" style="color: var(--t3);">Roommate debt</div>
+                    </div>
+                  </div>
+                  <div class="text-lg font-black" style="color: var(--err);">₹{{ debt.amount | number:'1.0-0' }}</div>
+                </div>
+                <div class="flex gap-2">
+                  <button type="button"
+                          (click)="openSettleModal(debt.creditorName, debt.creditorUpiId || '', debt.amount)"
+                          class="btnr flex-1 py-2 font-black text-xs">
+                    💸 Pay via UPI
+                  </button>
+                  <button type="button"
+                          (click)="goToIou()"
+                          class="btns text-xs py-1.5 px-3">
+                    Details
+                  </button>
                 </div>
               </div>
-              <div class="text-lg font-black" style="color: var(--err);">₹200</div>
-            </div>
-            <div class="flex gap-2">
-              <button type="button"
-                      (click)="showToast('📲 Opening UPI to pay Amit...')"
-                      class="btnr flex-1 py-2 font-black">
-                💸 Pay Now
-              </button>
-              <button type="button"
-                      (click)="showToast('Cab fare split details: ₹600 total across 3 roommates')"
-                      class="btns text-xs py-1.5 px-3">
-                Details
-              </button>
-            </div>
+            } @empty {
+              <div class="p-6 rounded-2xl border text-center text-xs font-semibold"
+                   style="background: var(--card); border-color: var(--border); color: var(--t3);">
+                👏 You have zero pending debts to any roommate!
+              </div>
+            }
           </div>
         </div>
 
@@ -733,19 +527,22 @@
           
           <div class="flex justify-between items-center text-xs mb-2">
             <span style="color: var(--t2);">Total owed to you</span>
-            <span class="font-bold" style="color: var(--ok);">+₹1,850</span>
+            <span class="font-bold" style="color: var(--ok);">+₹{{ totalTheyOweMe() | number:'1.0-0' }}</span>
           </div>
 
           <div class="flex justify-between items-center text-xs mb-2">
             <span style="color: var(--t2);">Total you owe</span>
-            <span class="font-bold" style="color: var(--err);">−₹200</span>
+            <span class="font-bold" style="color: var(--err);">−₹{{ totalIOweThem() | number:'1.0-0' }}</span>
           </div>
 
           <div class="div"></div>
 
           <div class="flex justify-between items-center pt-1">
             <span class="text-xs font-extrabold" style="color: var(--text);">Net balance</span>
-            <span class="text-xl font-black" style="color: var(--ok);">+₹1,650</span>
+            <span class="text-xl font-black"
+                  [style.color]="(totalTheyOweMe() - totalIOweThem()) >= 0 ? 'var(--ok)' : 'var(--err)'">
+              {{ (totalTheyOweMe() - totalIOweThem()) >= 0 ? '+' : '−' }}₹{{ ((totalTheyOweMe() - totalIOweThem()) >= 0 ? (totalTheyOweMe() - totalIOweThem()) : (totalIOweThem() - totalTheyOweMe())) | number:'1.0-0' }}
+            </span>
           </div>
         </div>
 
@@ -757,230 +554,7 @@
 </div>
 
 <!-- ═══════════════════════════════════════════
-     MODAL 1: LOG NEW EXPENSE (SCREEN 3 PROTOTYPE)
-═══════════════════════════════════════════ -->
-@if (showExpenseModal()) {
-  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-up"
-       (click)="closeExpenseModal()">
-    
-    <div class="w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl relative max-h-[90vh] flex flex-col"
-         style="background: var(--card); border: 1.5px solid var(--border);"
-         (click)="$event.stopPropagation()">
-      
-      <!-- Modal Header Banner -->
-      <div class="p-6 flex items-center justify-between text-white"
-           style="background: var(--btn);">
-        <div>
-          <h2 class="text-xl font-black">Log New Expense</h2>
-          <p class="text-xs text-white/70 mt-0.5">{{ groupName() }} · Shared Living</p>
-        </div>
-        <button type="button"
-                (click)="closeExpenseModal()"
-                class="w-8 h-8 rounded-full flex items-center justify-center text-white/80 hover:text-white bg-white/15 border border-white/25 cursor-pointer">
-          ✕
-        </button>
-      </div>
-
-      <!-- Modal Body (Scrollable) -->
-      <div class="p-6 overflow-y-auto space-y-4">
-        
-        <!-- Who Paid? Toggle -->
-        <div>
-          <label class="sl block">WHO PAID?</label>
-          <div class="grid grid-cols-2 gap-3">
-            <div (click)="expensePayer.set('pool')"
-                 class="p-3.5 rounded-2xl cursor-pointer border transition"
-                 [style.background]="expensePayer() === 'pool' ? 'color-mix(in srgb, var(--p1) 10%, transparent)' : 'var(--bg2)'"
-                 [style.borderColor]="expensePayer() === 'pool' ? 'var(--p1)' : 'var(--border)'">
-              <div class="text-base mb-1">🏦</div>
-              <div class="text-xs font-bold" [style.color]="expensePayer() === 'pool' ? 'var(--p1)' : 'var(--text)'">Central Pool</div>
-              <div class="text-[10px]" style="color: var(--t3);">₹{{ poolBalance() }} available</div>
-            </div>
-
-            <div (click)="expensePayer.set('me')"
-                 class="p-3.5 rounded-2xl cursor-pointer border transition"
-                 [style.background]="expensePayer() === 'me' ? 'color-mix(in srgb, var(--p1) 10%, transparent)' : 'var(--bg2)'"
-                 [style.borderColor]="expensePayer() === 'me' ? 'var(--p1)' : 'var(--border)'">
-              <div class="text-base mb-1">👤</div>
-              <div class="text-xs font-bold" [style.color]="expensePayer() === 'me' ? 'var(--p1)' : 'var(--text)'">Paid by Me</div>
-              <div class="text-[10px]" style="color: var(--t3);">Reimburse / IOU</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bucket Selector -->
-        <div>
-          <label class="sl block">BUCKET</label>
-          <div class="flex gap-2 flex-wrap">
-            <button type="button"
-                    (click)="expenseBucket.set('daily')"
-                    [style.background]="expenseBucket() === 'daily' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'transparent'"
-                    [style.color]="expenseBucket() === 'daily' ? 'var(--p1)' : 'var(--t3)'"
-                    [style.borderColor]="expenseBucket() === 'daily' ? 'var(--p1)' : 'var(--border)'"
-                    class="px-3.5 py-2 rounded-full text-xs font-extrabold border cursor-pointer">
-              🛒 Daily Pool
-            </button>
-            <button type="button"
-                    (click)="expenseBucket.set('bills')"
-                    [style.background]="expenseBucket() === 'bills' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'transparent'"
-                    [style.color]="expenseBucket() === 'bills' ? 'var(--p1)' : 'var(--t3)'"
-                    [style.borderColor]="expenseBucket() === 'bills' ? 'var(--p1)' : 'var(--border)'"
-                    class="px-3.5 py-2 rounded-full text-xs font-extrabold border cursor-pointer">
-              📅 Fixed Bill
-            </button>
-            <button type="button"
-                    (click)="expenseBucket.set('iou')"
-                    [style.background]="expenseBucket() === 'iou' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'transparent'"
-                    [style.color]="expenseBucket() === 'iou' ? 'var(--p1)' : 'var(--t3)'"
-                    [style.borderColor]="expenseBucket() === 'iou' ? 'var(--p1)' : 'var(--border)'"
-                    class="px-3.5 py-2 rounded-full text-xs font-extrabold border cursor-pointer">
-              🤝 Group Split
-            </button>
-          </div>
-        </div>
-
-        <!-- Expense Name & Category Grid -->
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="sl block">EXPENSE NAME</label>
-            <input class="inp"
-                   type="text"
-                   [(ngModel)]="expenseName"
-                   placeholder="e.g. Supermarket Run" />
-          </div>
-          <div>
-            <label class="sl block">CATEGORY</label>
-            <select class="inp" [(ngModel)]="expenseCategory">
-              <option>🥕 Groceries</option>
-              <option>🥛 Dairy</option>
-              <option>⚡ Utilities</option>
-              <option>🍕 Food</option>
-              <option>🚕 Transport</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Total Spend Input -->
-        <div>
-          <label class="sl block">TOTAL SPEND (₹)</label>
-          <div class="relative">
-            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-2xl font-black" style="color: var(--p1);">₹</span>
-            <input class="inp font-black text-2xl"
-                   style="padding-left: 36px;"
-                   type="number"
-                   [(ngModel)]="expenseTotal"
-                   placeholder="850" />
-          </div>
-        </div>
-
-        <!-- Itemized Receipt Box -->
-        <div class="rounded-2xl border overflow-hidden"
-             style="background: var(--bg2); border-color: var(--border);">
-          <div class="p-3 px-4 border-b flex justify-between items-center" style="border-color: var(--border);">
-            <span class="text-xs font-extrabold" style="color: var(--text);">📋 Itemized Receipt</span>
-            <span class="text-[10px] font-bold" style="color: var(--t3);">Live calculated</span>
-          </div>
-
-          <div class="p-2 space-y-1.5">
-            @for (row of expenseRows; track row.id) {
-              <div class="flex items-center gap-2 p-1.5 rounded-xl transition hover:bg-white/60">
-                <div class="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-black shrink-0"
-                     style="background: color-mix(in srgb, var(--p1) 14%, transparent); color: var(--p1);">
-                  {{ row.id < 10 ? '0' + row.id : row.id }}
-                </div>
-                <input class="inp py-1.5 px-2.5 text-xs flex-1"
-                       type="text"
-                       [(ngModel)]="row.name"
-                       placeholder="Item name" />
-                <div class="relative w-24 shrink-0">
-                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-black" style="color: var(--p1);">₹</span>
-                  <input class="inp py-1.5 pl-6 pr-2 text-xs font-black"
-                         type="number"
-                         [(ngModel)]="row.price"
-                         placeholder="0" />
-                </div>
-                <button type="button"
-                        (click)="removeRow(row.id)"
-                        class="w-6 h-6 rounded-md flex items-center justify-center text-xs font-black cursor-pointer border"
-                        style="color: var(--err); border-color: color-mix(in srgb, var(--err) 25%, transparent);">
-                  ✕
-                </button>
-              </div>
-            }
-          </div>
-
-          <div class="p-2 pt-0 pb-3">
-            <button type="button"
-                    (click)="addRow()"
-                    class="w-full py-2 rounded-xl text-xs font-black border border-dashed cursor-pointer transition"
-                    style="border-color: var(--border); color: var(--p1);">
-              + Add Sub-item
-            </button>
-          </div>
-        </div>
-
-        <!-- Receipt Balance Validation Banner -->
-        @if (expenseRows.length > 0) {
-          @if (isReceiptBalanced) {
-            <div class="vok text-xs font-extrabold flex items-center gap-2">
-              <span>✅ Balanced! Items ₹{{ itemsSum }} = Total Spend ✓</span>
-            </div>
-          } @else {
-            <div class="verr text-xs font-extrabold flex items-center gap-2">
-              <span>⚠️ Mismatch: Items ₹{{ itemsSum }} vs Total ₹{{ expenseTotal }} (Diff: ₹{{ receiptMismatchDiff }})</span>
-            </div>
-          }
-        }
-
-        <!-- Split With Roommates -->
-        <div>
-          <label class="sl block">SPLIT WITH</label>
-          <div class="flex gap-3">
-            @for (p of splitWith(); track p.id) {
-              <div (click)="toggleSplitParticipant(p.id)"
-                   class="text-center cursor-pointer select-none">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center text-xs font-black text-white mx-auto border-2 transition"
-                     [style.borderColor]="p.selected ? 'var(--ok)' : 'var(--border)'"
-                     [style.background]="p.id === '1' ? 'var(--err)' : p.id === '2' ? 'var(--p2)' : 'var(--warn)'">
-                  {{ p.initials }}
-                </div>
-                <div class="text-[9px] font-black mt-1" [style.color]="p.selected ? 'var(--ok)' : 'var(--t3)'">
-                  {{ p.name }}
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-
-        <!-- Receipt Photo Dropzone -->
-        <div class="dropz" (click)="showToast('📷 Camera/Upload opened')">
-          <div class="text-2xl mb-1">📷</div>
-          <div class="text-xs font-bold" style="color: var(--t2);">Drop receipt photo here</div>
-          <div class="text-[10px]" style="color: var(--t3);">Click to upload · JPG, PNG, PDF</div>
-        </div>
-
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="p-4 sm:p-6 border-t flex gap-3" style="border-color: var(--border);">
-        <button type="button"
-                (click)="closeExpenseModal()"
-                class="btns flex-1 text-xs">
-          Cancel
-        </button>
-        <button type="button"
-                (click)="submitExpense()"
-                class="btn flex-2 text-xs sm:text-sm font-black">
-          Log Expense to Pool
-        </button>
-      </div>
-
-    </div>
-  </div>
-}
-
-<!-- ═══════════════════════════════════════════
-     MODAL 2: QR SETTLEMENT MODAL
+     MODAL: QR SETTLEMENT MODAL
 ═══════════════════════════════════════════ -->
 @if (settleModal()) {
   <div class="qrmod on" (click)="closeSettleModal()">
@@ -1024,6 +598,45 @@
         Or scan with any UPI app (GPay, PhonePe, Paytm)
       </div>
 
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════
+     MODAL: RECEIPT / BILL VIEWER LIGHTBOX
+═══════════════════════════════════════════ -->
+@if (selectedReceiptImage()) {
+  <div class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 fade-up"
+       (click)="closeReceiptModal()">
+    <div class="w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl relative border"
+         style="background: var(--card); border-color: var(--border);"
+         (click)="$event.stopPropagation()">
+      <div class="p-4 border-b flex items-center justify-between" style="border-color: var(--border);">
+        <div class="flex items-center gap-2">
+          <span class="text-base">🧾</span>
+          <span class="text-sm font-black" style="color: var(--text);">Receipt / Bill Photo</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <a [href]="selectedReceiptImage()"
+             target="_blank"
+             download="receipt.jpg"
+             class="text-xs font-extrabold px-3 py-1 rounded-xl border cursor-pointer"
+             style="background: var(--bg2); border-color: var(--border); color: var(--p1);">
+            Download ⤓
+          </a>
+          <button type="button"
+                  (click)="closeReceiptModal()"
+                  class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold border cursor-pointer"
+                  style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
+            ✕
+          </button>
+        </div>
+      </div>
+      <div class="p-4 max-h-[75vh] overflow-auto flex items-center justify-center" style="background: #0b1120;">
+        <img [src]="selectedReceiptImage()"
+             alt="Receipt"
+             class="max-w-full max-h-[70vh] object-contain rounded-xl shadow-lg" />
+      </div>
     </div>
   </div>
 }

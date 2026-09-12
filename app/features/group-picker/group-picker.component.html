@@ -235,6 +235,18 @@
           </div>
 
           <div>
+            <label class="sl block">FLAT / ROOM ADDRESS</label>
+            <input class="inp"
+                   type="text"
+                   name="newGroupAddress"
+                   [(ngModel)]="newGroupAddress"
+                   placeholder="e.g. #402, Sunshine Heights, Koramangala" />
+            <p class="text-[10px] font-medium mt-1" style="color: var(--t3);">
+              Street, building or apartment location (displayed on profile).
+            </p>
+          </div>
+
+          <div>
             <label class="sl block">MONTHLY POOL TARGET (₹)</label>
             <div class="relative">
               <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold" style="color: var(--p1);">₹</span>

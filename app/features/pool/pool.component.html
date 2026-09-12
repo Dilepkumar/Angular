@@ -309,6 +309,7 @@
             <div>
               <label class="sl block">CATEGORY</label>
               <select class="inp" [(ngModel)]="expenseCategory">
+                <option value="" disabled selected>-- Select Category --</option>
                 @for (c of categories; track c) {
                   <option [value]="c">{{ c }}</option>
                 }
@@ -420,7 +421,7 @@
                style="background: var(--bg2); border-color: var(--border);">
             <div class="p-3 px-4 border-b flex justify-between items-center" style="border-color: var(--border);">
               <span class="text-xs font-extrabold" style="color: var(--text);">📋 Itemized Receipt Items</span>
-              <span class="text-[10px] font-bold" style="color: var(--t3);">Real line-item tracking</span>
+              <span class="text-[10px] font-bold" style="color: var(--t3);">Item Name · Qty · Amount (₹)</span>
             </div>
 
             <div class="p-2.5 space-y-2">
@@ -430,21 +431,34 @@
                        style="background: color-mix(in srgb, var(--p1) 14%, transparent); color: var(--p1);">
                     {{ row.id < 10 ? '0' + row.id : row.id }}
                   </div>
-                  <input class="inp py-1.5 px-2.5 text-xs flex-1"
+                  <input class="inp py-1.5 px-2.5 text-xs flex-1 min-w-[110px]"
                          type="text"
                          [(ngModel)]="row.name"
                          placeholder="Item name (e.g. Milk)" />
-                  <div class="relative w-28 shrink-0">
+                  <div class="relative w-20 sm:w-24 shrink-0">
+                    <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold" style="color: var(--t3);">Qty</span>
+                    <input class="inp py-1.5 pl-8 pr-2 text-xs font-black text-center"
+                           type="number"
+                           min="1"
+                           step="1"
+                           [(ngModel)]="row.qty"
+                           placeholder="1"
+                           title="Quantity" />
+                  </div>
+                  <div class="relative w-24 sm:w-28 shrink-0">
                     <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-black" style="color: var(--p1);">₹</span>
                     <input class="inp py-1.5 pl-6 pr-2 text-xs font-black"
                            type="number"
                            [(ngModel)]="row.price"
-                           placeholder="0" />
+                           (ngModelChange)="onRowPriceChange()"
+                           placeholder="0"
+                           title="Item Total Amount (₹)" />
                   </div>
                   <button type="button"
                           (click)="removeRow(row.id)"
-                          class="w-6 h-6 rounded-md flex items-center justify-center text-xs font-black cursor-pointer border"
-                          style="color: var(--err); border-color: color-mix(in srgb, var(--err) 25%, transparent);">
+                          class="w-6 h-6 rounded-md flex items-center justify-center text-xs font-black cursor-pointer border shrink-0"
+                          style="color: var(--err); border-color: color-mix(in srgb, var(--err) 25%, transparent);"
+                          title="Remove Item">
                     ✕
                   </button>
                 </div>
@@ -891,7 +905,15 @@
                   @if (t.items && t.items.length > 0) {
                     @for (it of t.items; track it.id || it.itemName) {
                       <div class="flex justify-between text-xs pb-1.5 border-b" style="border-color: var(--border);">
-                        <span style="color: var(--t2);">• {{ it.itemName }}</span>
+                        <span style="color: var(--t2);">
+                          • {{ it.itemName }}
+                          @if (it.quantity && it.quantity > 1) {
+                            <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded ml-1"
+                                  style="background: color-mix(in srgb, var(--p1) 14%, transparent); color: var(--p1);">
+                              ×{{ it.quantity }}
+                            </span>
+                          }
+                        </span>
                         <span class="font-bold" style="color: var(--text);">₹{{ it.amount }}</span>
                       </div>
                     }
