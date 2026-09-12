@@ -33,6 +33,35 @@ export interface PoolTransaction {
   items?: PoolTransactionItem[];
 }
 
+export interface CategoryItemDetail {
+  itemName: string;
+  total: number;
+  count: number;
+}
+
+export interface CategoryBreakdownItem {
+  category: string;
+  total: number;
+  percentage: number;
+  itemCount?: number;
+  items?: CategoryItemDetail[];
+}
+
+export interface OverallItemBreakdown {
+  itemName: string;
+  category: string;
+  total: number;
+  count: number;
+}
+
+export interface OutOfPocketItem {
+  userId: number;
+  userName: string;
+  totalPaid: number;
+  expenseCount: number;
+  status: string;
+}
+
 export interface PoolBalance {
   isAdmin: boolean;
   pendingItems: PendingContribution[] | null;
@@ -41,6 +70,9 @@ export interface PoolBalance {
   totalContributions: number;
   totalSpent: number;
   memberStatuses: MemberStatus[];
+  categoryBreakdown?: CategoryBreakdownItem[];
+  itemBreakdown?: OverallItemBreakdown[];
+  outOfPocketSummary?: OutOfPocketItem[];
   recentTransactions: PoolTransaction[];
 }
 
@@ -80,10 +112,35 @@ export class PoolComponent implements OnInit {
   showRejectFor: PendingContribution | null = null;
   rejectReason = '';
 
-  // ── Transaction Filter Tabs ──
+  // ── Transaction Filter Tabs & Pagination ──
   filters = ['all', 'Contribution', 'Expense'] as const;
   filter = signal<'all' | 'Contribution' | 'Expense'>('all');
-  expandedReceipts = signal<Set<string>>(new Set(['e1', 'r1']));
+  expandedReceipts = signal<Set<string>>(new Set<string>());
+  displayLimit = signal<number>(5);
+
+  // ── Target Explanation Info Toggle ──
+  showTargetInfo = signal<boolean>(false);
+
+  // ── Category vs Item-wise Tracking View ──
+  breakdownView = signal<'category' | 'items'>('category');
+  expandedCategories = signal<Set<string>>(new Set<string>());
+
+  // ── Ledger History Modal ──
+  showHistory = signal<boolean>(false);
+  historyPeriod = signal<'daily' | 'weekly' | 'monthly' | 'custom'>('monthly');
+  historyFromDate = '';
+  historyToDate = '';
+  historyLoading = signal<boolean>(false);
+  historyData = signal<{
+    period: string;
+    fromDate?: string;
+    toDate?: string;
+    totalIn: number;
+    totalOut: number;
+    netChange: number;
+    totalCount: number;
+    transactions: PoolTransaction[];
+  } | null>(null);
 
   // ── Embedded "Log New Expense" State ──
   showExpenseForm = signal(true);
@@ -121,9 +178,11 @@ export class PoolComponent implements OnInit {
 
   // ── Quick Contribute Modal ──
   showContribute = false;
-  contributeAmount: number | null = null;
-  transactionRef = '';
+  contributeMode = signal<'per_person' | 'total_split'>('per_person');
+  contributeAmount: number | null = 500;
+  contributeMessage = '';
   contributing = false;
+  contributeMembers = signal<{ userId: number; name: string; initials: string; selected: boolean }[]>([]);
 
   // ── Admin: Shares & Target ──
   showShares = false;
@@ -136,7 +195,8 @@ export class PoolComponent implements OnInit {
 
   ngOnInit(): void {
     this.groupId = this.route.snapshot.paramMap.get('groupId') || localStorage.getItem('rl_group_id') || '1';
-    
+    this.initExpenseForm();
+
     // Check if query params specified an action
     const action = this.route.snapshot.queryParamMap.get('action');
     if (action === 'expense') {
@@ -152,6 +212,13 @@ export class PoolComponent implements OnInit {
     this.loadGroupInfo();
   }
 
+  initExpenseForm(): void {
+    if (this.expenseRows.length === 0) {
+      this.rowCounter = 1;
+      this.expenseRows = [{ id: 1, name: '', price: null }];
+    }
+  }
+
   get me() {
     return this.auth.user();
   }
@@ -165,7 +232,7 @@ export class PoolComponent implements OnInit {
         this.isAdmin.set(b.isAdmin);
         this.pending.set(b.pendingItems ?? []);
 
-        // Dynamically populate room members in "SHARED AMONG FLAT"
+        // Dynamically populate room members in "SHARED AMONG FLAT" and "Add Money"
         if (b.memberStatuses && b.memberStatuses.length > 0) {
           const currentSelected = new Set(this.splitWith().filter(s => s.selected).map(s => s.id));
           const hasExisting = this.splitWith().length > 0;
@@ -174,6 +241,14 @@ export class PoolComponent implements OnInit {
             name: m.userName,
             initials: this.getInitials(m.userName),
             selected: hasExisting ? currentSelected.has(String(m.userId)) : true
+          })));
+
+          // Populate contributing members
+          this.contributeMembers.set(b.memberStatuses.map(m => ({
+            userId: m.userId,
+            name: m.userName,
+            initials: this.getInitials(m.userName),
+            selected: true
           })));
 
           // Default paidByMemberId to current user if available
@@ -341,6 +416,12 @@ export class PoolComponent implements OnInit {
     return member?.userName || 'Roommate';
   }
 
+  getCleanCategoryName(cat: string): string {
+    if (!cat) return 'Groceries';
+    const cleaned = cat.replace(/^[\p{Emoji}\p{Extended_Pictographic}\s]+/u, '').trim();
+    return cleaned || cat.trim();
+  }
+
   submitExpense(): void {
     const desc = this.expenseName.trim();
     if (!desc) {
@@ -353,31 +434,38 @@ export class PoolComponent implements OnInit {
       return;
     }
 
-    if (this.expenseRows.length > 0 && !this.isReceiptBalanced) {
+    if (this.expenseRows.length === 0) {
+      this.showToast('⚠️ Please add at least one itemized receipt item');
+      return;
+    }
+
+    const validItems = this.expenseRows
+      .filter(r => r.name.trim() && r.price !== null && r.price > 0);
+
+    if (validItems.length === 0) {
+      this.showToast('⚠️ Please enter item name and price for receipt items');
+      return;
+    }
+
+    if (!this.isReceiptBalanced) {
       this.showToast('⚠️ Please balance receipt items with total spend first');
       return;
     }
 
-    const items = this.expenseRows
-      .filter(r => r.price !== null && r.price > 0)
-      .map(r => ({
-        itemName: r.name.trim() || desc,
-        amount: r.price!,
-        categoryId: null
-      }));
-
-    // If no row items were explicitly configured, use single line item
-    const payloadItems = items.length > 0 ? items : [
-      { itemName: desc, amount: this.expenseTotal, categoryId: null }
-    ];
+    const items = validItems.map(r => ({
+      itemName: r.name.trim(),
+      amount: r.price!,
+      categoryId: null
+    }));
 
     const payerType = this.expensePayer();
     const paidByUserId = payerType === 'me' ? (this.paidByMemberId() || this.me?.id || null) : null;
     const selectedMemberIds = this.splitWith().filter(m => m.selected).map(m => m.id);
 
-    const finalCategory = this.expenseCategory === '📦 Other' && this.customCategory.trim()
+    const selectedCat = this.expenseCategory === '📦 Other' && this.customCategory.trim()
       ? this.customCategory.trim()
       : this.expenseCategory;
+    const finalCategory = this.getCleanCategoryName(selectedCat);
 
     const payload = {
       description: desc,
@@ -387,7 +475,7 @@ export class PoolComponent implements OnInit {
       payerType: payerType,
       paidByUserId: paidByUserId,
       sharedMemberIds: selectedMemberIds,
-      items: payloadItems
+      items: items
     };
 
     this.savingExpense = true;
@@ -397,14 +485,22 @@ export class PoolComponent implements OnInit {
         this.showToast(`✅ ${res.message || 'Expense logged to Daily Pool!'}`);
         this.load();
         
-        // Reset expense form
+        // Reset expense form completely
         this.expenseName = '';
         this.expenseTotal = null;
-        this.expenseRows = [];
-        this.rowCounter = 0;
+        this.expenseDate = new Date().toISOString().slice(0, 10);
+        this.expenseCategory = '🥕 Groceries';
+        this.customCategory = '';
+        this.expensePayer.set('pool');
+        if (this.me?.id) this.paidByMemberId.set(this.me.id);
         this.receiptUrl = null;
         this.receiptPreview.set(null);
-        this.customCategory = '';
+        this.rowCounter = 1;
+        this.expenseRows = [{ id: 1, name: '', price: null }];
+        this.splitWith.update(list => list.map(m => ({ ...m, selected: true })));
+        
+        // Automatically hide the form after expense added
+        this.showExpenseForm.set(false);
       },
       error: (e) => {
         this.savingExpense = false;
@@ -418,33 +514,94 @@ export class PoolComponent implements OnInit {
   // ═══════════════════════════════════════════
   openContribute(): void {
     this.showContribute = true;
-    this.contributeAmount = null;
-    this.transactionRef = '';
+    this.contributeAmount = 500;
+    this.contributeMessage = '';
+    this.contributeMode.set('per_person');
+    if (this.balance()?.memberStatuses) {
+      this.contributeMembers.set(this.balance()!.memberStatuses.map(m => ({
+        userId: m.userId,
+        name: m.userName,
+        initials: this.getInitials(m.userName),
+        selected: true
+      })));
+    }
   }
 
   closeContribute(): void {
     this.showContribute = false;
   }
 
+  setContributeMode(mode: 'per_person' | 'total_split'): void {
+    this.contributeMode.set(mode);
+    if (mode === 'per_person' && (!this.contributeAmount || this.contributeAmount > 5000)) {
+      this.contributeAmount = 500;
+    } else if (mode === 'total_split' && (!this.contributeAmount || this.contributeAmount < 1000)) {
+      this.contributeAmount = 5000;
+    }
+  }
+
   setPresetAmount(amt: number): void {
-    this.contributeAmount = (this.contributeAmount || 0) + amt;
+    this.contributeAmount = amt;
+  }
+
+  toggleContributeMember(userId: number): void {
+    this.contributeMembers.update(list =>
+      list.map(m => m.userId === userId ? { ...m, selected: !m.selected } : m)
+    );
+  }
+
+  selectAllContributeMembers(select: boolean): void {
+    this.contributeMembers.update(list => list.map(m => ({ ...m, selected: select })));
+  }
+
+  get selectedContributeCount(): number {
+    return this.contributeMembers().filter(m => m.selected).length;
+  }
+
+  get calculatedTotalContribute(): number {
+    const amt = this.contributeAmount || 0;
+    if (this.contributeMode() === 'per_person') {
+      return amt * this.selectedContributeCount;
+    }
+    return amt;
+  }
+
+  get calculatedPerMemberShare(): number {
+    const amt = this.contributeAmount || 0;
+    const count = this.selectedContributeCount;
+    if (this.contributeMode() === 'total_split') {
+      return count > 0 ? Math.round(amt / count) : 0;
+    }
+    return amt;
   }
 
   submitContribution(): void {
-    if (!this.contributeAmount || this.contributeAmount <= 0) {
+    const amt = this.contributeAmount;
+    if (!amt || amt <= 0) {
       this.showToast('⚠️ Please enter a valid contribution amount');
       return;
     }
 
+    const selectedMembers = this.contributeMembers().filter(m => m.selected);
+    if (selectedMembers.length === 0) {
+      this.showToast('⚠️ Please select at least one contributing roommate');
+      return;
+    }
+
     this.contributing = true;
-    this.api.post<{ message: string }>(`groups/${this.groupId}/pool/contribute`, {
-      amount: this.contributeAmount,
-      transactionRef: this.transactionRef.trim() || null
-    }).subscribe({
+    const payload = {
+      amount: amt,
+      message: this.contributeMessage.trim() || null,
+      transactionRef: this.contributeMessage.trim() || null,
+      memberUserIds: selectedMembers.map(m => m.userId),
+      mode: this.contributeMode()
+    };
+
+    this.api.post<{ message: string }>(`groups/${this.groupId}/pool/contribute`, payload).subscribe({
       next: (res) => {
         this.contributing = false;
         this.showContribute = false;
-        this.showToast(`🎉 ${res.message || 'Contribution recorded successfully!'}`);
+        this.showToast(`🎉 ${res.message || 'Contribution added to pool balance!'}`);
         this.load();
       },
       error: (e) => {
@@ -471,10 +628,110 @@ export class PoolComponent implements OnInit {
     return this.expandedReceipts().has(id);
   }
 
+  setFilter(f: 'all' | 'Contribution' | 'Expense'): void {
+    this.filter.set(f);
+    this.displayLimit.set(5);
+  }
+
   filteredTransactions(): PoolTransaction[] {
     const list = this.balance()?.recentTransactions ?? [];
     const f = this.filter();
     return f === 'all' ? list : list.filter(t => t.type === f);
+  }
+
+  displayedTransactions(): PoolTransaction[] {
+    return this.filteredTransactions().slice(0, this.displayLimit());
+  }
+
+  hasMoreTransactions(): boolean {
+    return this.filteredTransactions().length > this.displayLimit();
+  }
+
+  loadMoreTransactions(): void {
+    this.displayLimit.update(n => n + 5);
+  }
+
+  toggleTargetInfo(): void {
+    this.showTargetInfo.update(v => !v);
+  }
+
+  toggleCategory(catName: string): void {
+    const set = new Set(this.expandedCategories());
+    if (set.has(catName)) {
+      set.delete(catName);
+    } else {
+      set.add(catName);
+    }
+    this.expandedCategories.set(set);
+  }
+
+  isCategoryExpanded(catName: string): boolean {
+    return this.expandedCategories().has(catName);
+  }
+
+  setBreakdownView(view: 'category' | 'items'): void {
+    this.breakdownView.set(view);
+  }
+
+  // ── Category Icon & Color Helpers ──
+  getCategoryIcon(category: string): string {
+    const cat = (category || '').toLowerCase();
+    if (cat.includes('grocer')) return '🥕';
+    if (cat.includes('dairy') || cat.includes('milk')) return '🥛';
+    if (cat.includes('utilit') || cat.includes('bill') || cat.includes('power')) return '⚡';
+    if (cat.includes('clean') || cat.includes('house')) return '🧴';
+    if (cat.includes('food') || cat.includes('snack')) return '🍕';
+    if (cat.includes('maint') || cat.includes('repair')) return '🔧';
+    if (cat.includes('travel') || cat.includes('cab')) return '🚕';
+    return '📦';
+  }
+
+  getCategoryColor(category: string): string {
+    const cat = (category || '').toLowerCase();
+    if (cat.includes('grocer')) return '#10b981';
+    if (cat.includes('dairy') || cat.includes('milk')) return '#06b6d4';
+    if (cat.includes('utilit') || cat.includes('bill')) return '#f59e0b';
+    if (cat.includes('clean') || cat.includes('house')) return '#8b5cf6';
+    if (cat.includes('food') || cat.includes('snack')) return '#f97316';
+    if (cat.includes('maint') || cat.includes('repair')) return '#ec4899';
+    if (cat.includes('travel') || cat.includes('cab')) return '#3b82f6';
+    return '#64748b';
+  }
+
+  // ── Ledger History Methods ──
+  openHistory(): void {
+    this.showHistory.set(true);
+    this.loadHistory();
+  }
+
+  closeHistory(): void {
+    this.showHistory.set(false);
+  }
+
+  setHistoryPeriod(period: 'daily' | 'weekly' | 'monthly' | 'custom'): void {
+    this.historyPeriod.set(period);
+    if (period !== 'custom') {
+      this.loadHistory();
+    }
+  }
+
+  loadHistory(): void {
+    this.historyLoading.set(true);
+    let params = `period=${this.historyPeriod()}`;
+    if (this.historyPeriod() === 'custom') {
+      if (this.historyFromDate) params += `&fromDate=${this.historyFromDate}`;
+      if (this.historyToDate) params += `&toDate=${this.historyToDate}`;
+    }
+    this.api.get<any>(`groups/${this.groupId}/pool/history?${params}`).subscribe({
+      next: (data) => {
+        this.historyData.set(data);
+        this.historyLoading.set(false);
+      },
+      error: (e) => {
+        this.showToast(`❌ ${e.error?.message || 'Failed to load history'}`);
+        this.historyLoading.set(false);
+      }
+    });
   }
 
   // ═══════════════════════════════════════════
@@ -560,7 +817,21 @@ export class PoolComponent implements OnInit {
 
   openTarget(): void {
     this.showTarget = true;
-    this.targetInput = this.balance()?.monthlyTarget ?? 0;
+    this.targetInput = this.balance()?.monthlyTarget ?? 5000;
+  }
+
+  setTargetPreset(amt: number): void {
+    this.targetInput = amt;
+  }
+
+  get targetPerMember(): number {
+    const target = this.targetInput || 0;
+    const count = this.activeMembersCount || 1;
+    return Math.round(target / count);
+  }
+
+  get activeMembersCount(): number {
+    return this.balance()?.memberStatuses?.length || 0;
   }
 
   saveTarget(): void {
