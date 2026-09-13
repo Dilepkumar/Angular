@@ -63,6 +63,12 @@ export interface OutOfPocketItem {
   status: string;
 }
 
+export interface MonthlyBreakdownItem {
+  month: string;
+  total: number;
+  percentage: number;
+}
+
 export interface PoolBalance {
   isAdmin: boolean;
   pendingItems: PendingContribution[] | null;
@@ -73,6 +79,7 @@ export interface PoolBalance {
   memberStatuses: MemberStatus[];
   categoryBreakdown?: CategoryBreakdownItem[];
   itemBreakdown?: OverallItemBreakdown[];
+  monthlyBreakdown?: MonthlyBreakdownItem[];
   outOfPocketSummary?: OutOfPocketItem[];
   recentTransactions: PoolTransaction[];
 }
@@ -81,6 +88,7 @@ interface ReceiptRow {
   id: number;
   name: string;
   qty: number | null;
+  rate: number | null;
   price: number | null;
 }
 
@@ -123,8 +131,8 @@ export class PoolComponent implements OnInit {
   // ── Target Explanation Info Toggle ──
   showTargetInfo = signal<boolean>(false);
 
-  // ── Category vs Item-wise Tracking View ──
-  breakdownView = signal<'category' | 'items'>('category');
+  // ── Category vs Item-wise vs Monthly Tracking View ──
+  breakdownView = signal<'category' | 'items' | 'monthly'>('category');
   expandedCategories = signal<Set<string>>(new Set<string>());
 
   // ── Ledger History Modal ──
@@ -217,7 +225,7 @@ export class PoolComponent implements OnInit {
   initExpenseForm(): void {
     if (this.expenseRows.length === 0) {
       this.rowCounter = 1;
-      this.expenseRows = [{ id: 1, name: '', qty: 1, price: null }];
+      this.expenseRows = [{ id: 1, name: '', qty: 1, rate: null, price: null }];
     }
   }
 
@@ -352,19 +360,35 @@ export class PoolComponent implements OnInit {
   // ═══════════════════════════════════════════
   addRow(): void {
     this.rowCounter++;
-    this.expenseRows.push({ id: this.rowCounter, name: '', qty: 1, price: null });
+    this.expenseRows.push({ id: this.rowCounter, name: '', qty: 1, rate: null, price: null });
   }
 
   removeRow(id: number): void {
     this.expenseRows = this.expenseRows.filter(r => r.id !== id);
     if (this.expenseRows.length > 0) {
-      this.expenseTotal = this.itemsSum;
+      this.expenseTotal = Number(this.itemsSum.toFixed(2));
     }
   }
 
-  onRowPriceChange(): void {
+  onRowQtyChange(row: ReceiptRow): void {
+    const qty = row.qty && row.qty > 0 ? row.qty : 1;
+    if (row.rate !== null && row.rate !== undefined && row.rate > 0) {
+      row.price = Number((qty * row.rate).toFixed(2));
+    } else if (row.price !== null && row.price !== undefined && row.price > 0) {
+      row.rate = Number((row.price / qty).toFixed(2));
+    }
     if (this.expenseRows.length > 0) {
-      this.expenseTotal = this.itemsSum;
+      this.expenseTotal = Number(this.itemsSum.toFixed(2));
+    }
+  }
+
+  onRowPriceChange(row?: ReceiptRow): void {
+    if (row && row.price !== null && row.price !== undefined) {
+      const qty = row.qty && row.qty > 0 ? row.qty : 1;
+      row.rate = Number((row.price / qty).toFixed(2));
+    }
+    if (this.expenseRows.length > 0) {
+      this.expenseTotal = Number(this.itemsSum.toFixed(2));
     }
   }
 
@@ -504,7 +528,7 @@ export class PoolComponent implements OnInit {
         this.receiptUrl = null;
         this.receiptPreview.set(null);
         this.rowCounter = 1;
-        this.expenseRows = [{ id: 1, name: '', qty: 1, price: null }];
+        this.expenseRows = [{ id: 1, name: '', qty: 1, rate: null, price: null }];
         this.splitWith.update(list => list.map(m => ({ ...m, selected: true })));
         
         // Automatically hide the form after expense added
@@ -677,7 +701,7 @@ export class PoolComponent implements OnInit {
     return this.expandedCategories().has(catName);
   }
 
-  setBreakdownView(view: 'category' | 'items'): void {
+  setBreakdownView(view: 'category' | 'items' | 'monthly'): void {
     this.breakdownView.set(view);
   }
 

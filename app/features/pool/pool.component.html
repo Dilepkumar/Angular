@@ -434,7 +434,7 @@
                   <input class="inp py-1.5 px-2.5 text-xs flex-1 min-w-[110px]"
                          type="text"
                          [(ngModel)]="row.name"
-                         placeholder="Item name (e.g. Milk)" />
+                         placeholder="Item (e.g. Milk)" />
                   <div class="relative w-20 sm:w-24 shrink-0">
                     <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold" style="color: var(--t3);">Qty</span>
                     <input class="inp py-1.5 pl-8 pr-2 text-xs font-black text-center"
@@ -442,17 +442,20 @@
                            min="1"
                            step="1"
                            [(ngModel)]="row.qty"
+                           (ngModelChange)="onRowQtyChange(row)"
                            placeholder="1"
                            title="Quantity" />
                   </div>
-                  <div class="relative w-24 sm:w-28 shrink-0">
+                  <div class="relative w-28 sm:w-32 shrink-0">
                     <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-black" style="color: var(--p1);">₹</span>
                     <input class="inp py-1.5 pl-6 pr-2 text-xs font-black"
                            type="number"
+                           min="0"
+                           step="any"
                            [(ngModel)]="row.price"
-                           (ngModelChange)="onRowPriceChange()"
+                           (ngModelChange)="onRowPriceChange(row)"
                            placeholder="0"
-                           title="Item Total Amount (₹)" />
+                           [title]="row.qty && row.qty > 1 && row.rate ? 'Total (₹' + row.rate + ' each)' : 'Item Total Amount (₹)'" />
                   </div>
                   <button type="button"
                           (click)="removeRow(row.id)"
@@ -567,7 +570,7 @@
       <div class="card">
         <div class="flex justify-between items-center mb-3">
           <div class="sl mb-0">Category Expense Breakdown</div>
-          <!-- View Switcher: By Category vs Item-wise -->
+          <!-- View Switcher: By Category vs Item-wise vs Monthly -->
           <div class="flex items-center gap-1">
             <button type="button"
                     (click)="setBreakdownView('category')"
@@ -584,6 +587,14 @@
                     [style.color]="breakdownView() === 'items' ? 'white' : 'var(--t3)'"
                     [style.borderColor]="breakdownView() === 'items' ? 'var(--p1)' : 'var(--border)'">
               Item-wise
+            </button>
+            <button type="button"
+                    (click)="setBreakdownView('monthly')"
+                    class="text-[10px] font-black px-2.5 py-1 rounded-full border transition cursor-pointer"
+                    [style.background]="breakdownView() === 'monthly' ? 'var(--p1)' : 'transparent'"
+                    [style.color]="breakdownView() === 'monthly' ? 'white' : 'var(--t3)'"
+                    [style.borderColor]="breakdownView() === 'monthly' ? 'var(--p1)' : 'var(--border)'">
+              Monthly
             </button>
           </div>
         </div>
@@ -665,7 +676,7 @@
           </div>
         }
 
-        <!-- View 2: Overall Item-wise Tracking View -->
+        <!-- View 2: Overall Item-wise Tracking View with Visual Bars -->
         @if (breakdownView() === 'items') {
           <div class="space-y-2 mb-6 max-h-[380px] overflow-y-auto pr-1">
             @if (balance()?.itemBreakdown && balance()!.itemBreakdown!.length > 0) {
@@ -689,6 +700,13 @@
                   </div>
                   <div class="text-right shrink-0">
                     <div class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹{{ it.total | number:'1.0-0' }}</div>
+                    @if (balance()!.totalSpent > 0) {
+                      <div class="h-1.5 w-16 sm:w-20 rounded-full overflow-hidden mt-1" style="background: var(--bg3);">
+                        <div class="h-full rounded-full"
+                             [style.width.%]="(it.total / balance()!.totalSpent) * 100"
+                             [style.background]="getCategoryColor(it.category)"></div>
+                      </div>
+                    }
                   </div>
                 </div>
               }
@@ -696,6 +714,69 @@
               <div class="p-4 rounded-2xl border text-center text-xs font-semibold"
                    style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
                 🛒 No individual items recorded yet.
+              </div>
+            }
+          </div>
+        }
+
+        <!-- View 3: Monthly Expense Trends Graph -->
+        @if (breakdownView() === 'monthly') {
+          <div class="mb-6">
+            @if (balance()?.monthlyBreakdown && balance()!.monthlyBreakdown!.length > 0) {
+              <!-- Visual Bar Graph for Months -->
+              <div class="p-4 rounded-2xl border mb-3" style="background: var(--bg2); border-color: var(--border);">
+                <div class="text-[11px] font-bold uppercase tracking-wider mb-4 text-center" style="color: var(--t3);">
+                  6-Month Expense Velocity (₹)
+                </div>
+                <div class="flex items-end justify-between gap-2 h-36 pt-4 pb-1 px-1">
+                  @for (m of balance()!.monthlyBreakdown; track m.month) {
+                    <div class="flex-1 flex flex-col items-center h-full justify-end group">
+                      <div class="text-[10px] font-black mb-1 opacity-80 group-hover:opacity-100 transition truncate max-w-full"
+                           style="color: var(--p1);">
+                        ₹{{ m.total > 999 ? (m.total / 1000 | number:'1.1-1') + 'k' : (m.total | number:'1.0-0') }}
+                      </div>
+                      <div class="w-full max-w-[36px] rounded-t-lg transition-all duration-300 relative overflow-hidden"
+                           [style.height.%]="m.percentage > 0 ? (m.percentage < 12 ? 12 : m.percentage) : 6"
+                           [style.background]="'linear-gradient(180deg, var(--p1) 0%, color-mix(in srgb, var(--p1) 40%, transparent) 100%)'">
+                        <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition"></div>
+                      </div>
+                      <div class="text-[10px] font-bold mt-2 truncate max-w-full text-center"
+                           style="color: var(--text);">
+                        {{ m.month }}
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Monthly Summary Breakdown List -->
+              <div class="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+                @for (m of balance()!.monthlyBreakdown; track m.month) {
+                  <div class="flex items-center justify-between p-2.5 rounded-2xl border"
+                       style="background: var(--bg2); border-color: var(--border);">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <div class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shrink-0"
+                           style="background: color-mix(in srgb, var(--p1) 14%, transparent); color: var(--p1);">
+                        🗓️
+                      </div>
+                      <div>
+                        <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">{{ m.month }}</div>
+                        <div class="text-[10px] font-medium" style="color: var(--t3);">{{ m.percentage }}% of half-year spend</div>
+                      </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                      <div class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹{{ m.total | number:'1.0-0' }}</div>
+                      <div class="h-1.5 w-16 sm:w-20 rounded-full overflow-hidden mt-1" style="background: var(--bg3);">
+                        <div class="h-full rounded-full" [style.width.%]="m.percentage" style="background: var(--p1);"></div>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="p-4 rounded-2xl border text-center text-xs font-semibold"
+                   style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
+                🗓️ No monthly historical expenses recorded yet.
               </div>
             }
           </div>
@@ -860,7 +941,7 @@
                       }
                     </div>
                     <div class="text-[11px] font-medium mt-0.5 flex items-center gap-1.5 flex-wrap" style="color: var(--t3);">
-                      <span>{{ t.date }}</span>
+                      <span>{{ t.date | date:'dd MMM yyyy, hh:mm a' }}</span>
                       <span>·</span>
                       <span class="font-semibold" style="color: var(--t2);">{{ t.userName }}</span>
                       @if (t.status === 'Pending') {

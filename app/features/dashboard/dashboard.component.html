@@ -227,41 +227,435 @@
       
       <!-- Card: Category Expense Breakdown -->
       <div class="card">
-        <div class="flex justify-between items-center mb-3">
-          <div class="sl mb-0">Category Expense Breakdown</div>
-          <span class="text-xs font-extrabold" style="color: var(--p1);">₹{{ poolSpentThisMonth() | number:'1.0-0' }} spent</span>
-        </div>
-        
-        <div class="space-y-3 mb-6">
-          @for (cat of categoryBreakdown(); track cat.categoryId ?? cat.categoryName) {
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm"
-                     [style.background]="getCategoryColor(cat.categoryName) + '22'">
-                  {{ cat.icon || getCategoryIcon(cat.categoryName) }}
-                </div>
-                <div>
-                  <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">{{ cat.categoryName }}</div>
-                  <div class="text-[10px] font-medium" style="color: var(--t3);">{{ cat.itemCount }} {{ cat.itemCount === 1 ? 'item' : 'items' }} logged</div>
-                </div>
-              </div>
-              <div class="text-right">
-                <div class="text-xs sm:text-[13px] font-black" style="color: var(--text);">₹{{ cat.totalAmount | number:'1.0-0' }}</div>
-                <div class="h-1.5 w-20 rounded-full overflow-hidden mt-1" style="background: var(--bg3);">
-                  <div class="h-full rounded-full" [style.width.%]="cat.percentage" [style.background]="getCategoryColor(cat.categoryName)"></div>
-                </div>
-              </div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
+          <div>
+            <div class="sl mb-0">Category Expense Breakdown</div>
+            <div class="text-[11px] font-medium" style="color: var(--t3);">
+              Visual spend analytics across categories, items &amp; monthly trends
             </div>
-            @if (!$last) {
-              <div class="div"></div>
+          </div>
+          
+          <!-- 4-Way View Mode Switcher Pills -->
+          <div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            <button type="button"
+                    (click)="setBreakdownView('category')"
+                    class="text-[10px] font-black px-2.5 py-1 rounded-full border transition cursor-pointer shrink-0"
+                    [style.background]="breakdownView() === 'category' ? 'var(--p1)' : 'transparent'"
+                    [style.color]="breakdownView() === 'category' ? 'white' : 'var(--t3)'"
+                    [style.borderColor]="breakdownView() === 'category' ? 'var(--p1)' : 'var(--border)'">
+              📊 Categories
+            </button>
+            <button type="button"
+                    (click)="setBreakdownView('items')"
+                    class="text-[10px] font-black px-2.5 py-1 rounded-full border transition cursor-pointer shrink-0"
+                    [style.background]="breakdownView() === 'items' ? 'var(--p1)' : 'transparent'"
+                    [style.color]="breakdownView() === 'items' ? 'white' : 'var(--t3)'"
+                    [style.borderColor]="breakdownView() === 'items' ? 'var(--p1)' : 'var(--border)'">
+              🛒 Items
+            </button>
+            <button type="button"
+                    (click)="setBreakdownView('monthly_category')"
+                    class="text-[10px] font-black px-2.5 py-1 rounded-full border transition cursor-pointer shrink-0"
+                    [style.background]="breakdownView() === 'monthly_category' ? 'var(--p1)' : 'transparent'"
+                    [style.color]="breakdownView() === 'monthly_category' ? 'white' : 'var(--t3)'"
+                    [style.borderColor]="breakdownView() === 'monthly_category' ? 'var(--p1)' : 'var(--border)'">
+              📅 Monthly Categories
+            </button>
+            <button type="button"
+                    (click)="setBreakdownView('monthly_items')"
+                    class="text-[10px] font-black px-2.5 py-1 rounded-full border transition cursor-pointer shrink-0"
+                    [style.background]="breakdownView() === 'monthly_items' ? 'var(--p1)' : 'transparent'"
+                    [style.color]="breakdownView() === 'monthly_items' ? 'white' : 'var(--t3)'"
+                    [style.borderColor]="breakdownView() === 'monthly_items' ? 'var(--p1)' : 'var(--border)'">
+              🗓️ Monthly Items
+            </button>
+          </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════ -->
+        <!-- VIEW 1: CATEGORY GRAPH (DONUT CHART & CATEGORY BARS)     -->
+        <!-- ════════════════════════════════════════════════════════ -->
+        @if (breakdownView() === 'category') {
+          <div class="space-y-4 mb-5 fade-up">
+            @if (categoryBreakdown().length > 0) {
+              <!-- Donut Distribution Chart -->
+              <div class="p-4 rounded-2xl border flex flex-col items-center justify-center relative"
+                   style="background: var(--bg2); border-color: var(--border);">
+                <div class="text-[11px] font-bold uppercase tracking-wider mb-3 text-center" style="color: var(--t3);">
+                  Current Month Category Share
+                </div>
+                <div class="relative w-36 h-36 rounded-full flex items-center justify-center shadow-inner transition-transform hover:scale-105 duration-300"
+                     [style.background]="categoryConicGradient()">
+                  <!-- Center cutout displaying total amount -->
+                  <div class="w-24 h-24 rounded-full flex flex-col items-center justify-center shadow-md p-1 text-center"
+                       style="background: var(--card);">
+                    <span class="text-[10px] font-bold uppercase" style="color: var(--t3);">Total Spend</span>
+                    <span class="text-sm font-black truncate max-w-[80px]" style="color: var(--text);">
+                      ₹{{ poolSpentThisMonth() | number:'1.0-0' }}
+                    </span>
+                    <span class="text-[9px] font-semibold text-teal-600">
+                      {{ categoryBreakdown().length }} {{ categoryBreakdown().length === 1 ? 'category' : 'categories' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Category Details with Dynamic Progress Bars -->
+              <div class="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+                @for (cat of categoryBreakdown(); track cat.categoryId ?? cat.categoryName) {
+                  <div class="p-2.5 rounded-2xl border transition hover:shadow-xs"
+                       style="background: var(--bg2); border-color: var(--border);">
+                    <div class="flex items-center justify-between mb-1.5">
+                      <div class="flex items-center gap-2 min-w-0">
+                        <div class="w-7 h-7 rounded-xl flex items-center justify-center text-xs shrink-0"
+                             [style.background]="getCategoryColor(cat.categoryName) + '22'">
+                          {{ cat.icon || getCategoryIcon(cat.categoryName) }}
+                        </div>
+                        <div class="min-w-0">
+                          <span class="text-xs sm:text-[13px] font-bold truncate block" style="color: var(--text);">
+                            {{ cat.categoryName }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="text-right shrink-0">
+                        <span class="text-xs sm:text-[13px] font-black" style="color: var(--text);">
+                          ₹{{ cat.totalAmount | number:'1.0-0' }}
+                        </span>
+                        <span class="text-[10px] font-bold ml-1.5 px-1.5 py-0.5 rounded-md"
+                              [style.background]="getCategoryColor(cat.categoryName) + '22'"
+                              [style.color]="getCategoryColor(cat.categoryName)">
+                          {{ cat.percentage }}%
+                        </span>
+                      </div>
+                    </div>
+                    <!-- Horizontal Progress Bar -->
+                    <div class="h-2 w-full rounded-full overflow-hidden" style="background: var(--bg3);">
+                      <div class="h-full rounded-full transition-all duration-500"
+                           [style.width.%]="cat.percentage"
+                           [style.background]="getCategoryColor(cat.categoryName)"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] mt-1" style="color: var(--t3);">
+                      <span>{{ cat.itemCount }} {{ cat.itemCount === 1 ? 'item purchase' : 'items purchased' }}</span>
+                      <span>₹{{ (cat.totalAmount / (cat.itemCount || 1)) | number:'1.0-0' }} avg / item</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="p-8 rounded-2xl border text-center text-xs font-semibold"
+                   style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
+                🛒 No category expenses recorded this month yet.
+              </div>
             }
-          } @empty {
-            <div class="p-8 rounded-2xl border text-center text-xs font-semibold"
-                 style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
-              🛒 No category expenses recorded this month yet.
-            </div>
-          }
-        </div>
+          </div>
+        }
+
+        <!-- ════════════════════════════════════════════════════════ -->
+        <!-- VIEW 2: ITEM GRAPH (COMPARATIVE BARS & QUANTITIES)       -->
+        <!-- ════════════════════════════════════════════════════════ -->
+        @if (breakdownView() === 'items') {
+          <div class="space-y-3 mb-5 fade-up">
+            @if (itemBreakdown().length > 0) {
+              <div class="text-[11px] font-bold uppercase tracking-wider mb-1" style="color: var(--t3);">
+                Top Expense Items (Current Month)
+              </div>
+              <div class="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+                @for (it of itemBreakdown(); track it.itemName; let idx = $index) {
+                  <div class="p-2.5 rounded-2xl border transition hover:shadow-xs"
+                       style="background: var(--bg2); border-color: var(--border);">
+                    <div class="flex items-center justify-between mb-1.5">
+                      <div class="flex items-center gap-2 min-w-0">
+                        <!-- Rank Badge -->
+                        <div class="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black shrink-0"
+                             [style.background]="idx === 0 ? '#f59e0b' : (idx === 1 ? '#94a3b8' : (idx === 2 ? '#b45309' : 'color-mix(in srgb, var(--p1) 20%, transparent)'))"
+                             [style.color]="idx < 3 ? '#ffffff' : 'var(--p1)'">
+                          #{{ idx + 1 }}
+                        </div>
+                        <div class="min-w-0">
+                          <div class="text-xs sm:text-[13px] font-bold truncate" style="color: var(--text);">
+                            {{ it.itemName }}
+                          </div>
+                          <div class="text-[10px] font-medium flex items-center gap-1.5" style="color: var(--t3);">
+                            <span class="px-1.5 py-0.2 rounded text-[9px] font-bold"
+                                  [style.background]="getCategoryColor(it.categoryName) + '22'"
+                                  [style.color]="getCategoryColor(it.categoryName)">
+                              {{ it.categoryName }}
+                            </span>
+                            @if (it.count > 1) {
+                              <span>· {{ it.count }} purchases</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                      <div class="text-right shrink-0">
+                        <div class="text-xs sm:text-[13px] font-black" style="color: var(--text);">
+                          ₹{{ it.totalAmount | number:'1.0-0' }}
+                        </div>
+                        <div class="text-[10px] font-semibold" style="color: var(--t3);">
+                          {{ it.percentage }}% of items
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Visual Comparative Bar scaled to highest item -->
+                    <div class="h-2 w-full rounded-full overflow-hidden" style="background: var(--bg3);">
+                      <div class="h-full rounded-full transition-all duration-500"
+                           [style.width.%]="(it.totalAmount / getMaxItemSpend()) * 100"
+                           [style.background]="getCategoryColor(it.categoryName)"></div>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="p-8 rounded-2xl border text-center text-xs font-semibold"
+                   style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
+                🛒 No itemized expenses recorded yet this month.
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ════════════════════════════════════════════════════════ -->
+        <!-- VIEW 3: MONTHLY GRAPH FOR CATEGORIES                     -->
+        <!-- ════════════════════════════════════════════════════════ -->
+        @if (breakdownView() === 'monthly_category') {
+          <div class="space-y-4 mb-5 fade-up">
+            @if (monthlyCategories().length > 0) {
+              <!-- Multi-Month Stacked Column Graph -->
+              <div class="p-4 rounded-2xl border" style="background: var(--bg2); border-color: var(--border);">
+                <div class="text-[11px] font-bold uppercase tracking-wider mb-4 text-center" style="color: var(--t3);">
+                  6-Month Category Spend Trajectory (₹)
+                </div>
+                <div class="flex items-end justify-between gap-2 h-40 pt-4 pb-1 px-1">
+                  @for (m of monthlyCategories(); track m.monthKey; let idx = $index) {
+                    <div (click)="selectCategoryMonth(idx)"
+                         class="flex-1 flex flex-col items-center h-full justify-end cursor-pointer group select-none">
+                      <!-- Monthly Total Label -->
+                      <div class="text-[10px] font-black mb-1 transition truncate max-w-full"
+                           [style.color]="selectedCategoryMonthIndex() === idx ? 'var(--p1)' : 'var(--t3)'">
+                        ₹{{ m.totalAmount > 999 ? (m.totalAmount / 1000 | number:'1.1-1') + 'k' : (m.totalAmount | number:'1.0-0') }}
+                      </div>
+                      <!-- Stacked Column Bar -->
+                      <div class="w-full max-w-[38px] rounded-t-xl transition-all duration-300 relative overflow-hidden flex flex-col-reverse border"
+                           [style.height.%]="m.totalAmount > 0 ? (m.totalAmount / (monthlyCategories()[5]?.totalAmount || 1) * 75 + 15) : 6"
+                           [style.borderColor]="selectedCategoryMonthIndex() === idx ? 'var(--p1)' : 'transparent'"
+                           style="background: var(--bg3);">
+                        @for (cat of m.categories; track cat.categoryName) {
+                          <div class="w-full transition-all duration-300 hover:opacity-80"
+                               [style.height.%]="cat.percentage"
+                               [style.background]="getCategoryColor(cat.categoryName)"
+                               [title]="cat.categoryName + ': ₹' + cat.totalAmount"></div>
+                        }
+                      </div>
+                      <!-- Month Label -->
+                      <div class="text-[10px] font-bold mt-2 truncate max-w-full text-center"
+                           [style.color]="selectedCategoryMonthIndex() === idx ? 'var(--p1)' : 'var(--text)'">
+                        {{ m.month.split(' ')[0] }}
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Interactive Month Selector Buttons -->
+              <div>
+                <div class="text-[11px] font-bold uppercase tracking-wider mb-2" style="color: var(--t3);">
+                  Select Month to Inspect Categories:
+                </div>
+                <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  @for (m of monthlyCategories(); track m.monthKey; let idx = $index) {
+                    <button type="button"
+                            (click)="selectCategoryMonth(idx)"
+                            class="text-[10px] font-black px-3 py-1.5 rounded-xl border transition cursor-pointer shrink-0"
+                            [style.background]="selectedCategoryMonthIndex() === idx ? 'var(--p1)' : 'var(--bg2)'"
+                            [style.color]="selectedCategoryMonthIndex() === idx ? '#ffffff' : 'var(--text)'"
+                            [style.borderColor]="selectedCategoryMonthIndex() === idx ? 'var(--p1)' : 'var(--border)'">
+                      {{ m.month }} · ₹{{ m.totalAmount | number:'1.0-0' }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Selected Month Category Breakdown Drilldown -->
+              @if (selectedCategoryMonth()) {
+                <div class="p-3.5 rounded-2xl border space-y-2.5"
+                     style="background: var(--bg2); border-color: var(--border);">
+                  <div class="flex justify-between items-center border-b pb-2" style="border-color: var(--border);">
+                    <span class="text-xs font-black" style="color: var(--text);">
+                      📂 {{ selectedCategoryMonth()!.month }} Categories
+                    </span>
+                    <span class="text-xs font-extrabold" style="color: var(--p1);">
+                      ₹{{ selectedCategoryMonth()!.totalAmount | number:'1.0-0' }} total
+                    </span>
+                  </div>
+
+                  @if (selectedCategoryMonth()!.categories.length > 0) {
+                    <div class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                      @for (cat of selectedCategoryMonth()!.categories; track cat.categoryName) {
+                        <div class="p-2 rounded-xl border flex items-center justify-between"
+                             style="background: var(--card); border-color: var(--border);">
+                          <div class="flex items-center gap-2 min-w-0">
+                            <span class="text-sm shrink-0">{{ cat.icon || getCategoryIcon(cat.categoryName) }}</span>
+                            <div class="min-w-0">
+                              <span class="text-xs font-bold truncate block" style="color: var(--text);">
+                                {{ cat.categoryName }}
+                              </span>
+                              <div class="h-1.5 w-24 rounded-full overflow-hidden mt-1" style="background: var(--bg3);">
+                                <div class="h-full rounded-full"
+                                     [style.width.%]="cat.percentage"
+                                     [style.background]="getCategoryColor(cat.categoryName)"></div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="text-right shrink-0">
+                            <div class="text-xs font-black" style="color: var(--text);">
+                              ₹{{ cat.totalAmount | number:'1.0-0' }}
+                            </div>
+                            <span class="text-[10px] font-bold" [style.color]="getCategoryColor(cat.categoryName)">
+                              {{ cat.percentage }}%
+                            </span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <div class="text-center py-4 text-xs font-semibold" style="color: var(--t3);">
+                      No category expenses recorded in {{ selectedCategoryMonth()!.month }}.
+                    </div>
+                  }
+                </div>
+              }
+            } @else {
+              <div class="p-8 rounded-2xl border text-center text-xs font-semibold"
+                   style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
+                🗓️ No monthly historical expenses recorded yet.
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ════════════════════════════════════════════════════════ -->
+        <!-- VIEW 4: MONTHLY GRAPH FOR ITEMS                          -->
+        <!-- ════════════════════════════════════════════════════════ -->
+        @if (breakdownView() === 'monthly_items') {
+          <div class="space-y-4 mb-5 fade-up">
+            @if (monthlyItems().length > 0) {
+              <!-- 6-Month Item Spend Velocity Columns -->
+              <div class="p-4 rounded-2xl border" style="background: var(--bg2); border-color: var(--border);">
+                <div class="text-[11px] font-bold uppercase tracking-wider mb-4 text-center" style="color: var(--t3);">
+                  6-Month Item Expenditure Velocity (₹)
+                </div>
+                <div class="flex items-end justify-between gap-2 h-36 pt-4 pb-1 px-1">
+                  @for (m of monthlyItems(); track m.monthKey; let idx = $index) {
+                    <div (click)="selectItemMonth(idx)"
+                         class="flex-1 flex flex-col items-center h-full justify-end cursor-pointer group select-none">
+                      <div class="text-[10px] font-black mb-1 transition truncate max-w-full"
+                           [style.color]="selectedItemMonthIndex() === idx ? 'var(--p1)' : 'var(--t3)'">
+                        ₹{{ m.totalAmount > 999 ? (m.totalAmount / 1000 | number:'1.1-1') + 'k' : (m.totalAmount | number:'1.0-0') }}
+                      </div>
+                      <div class="w-full max-w-[36px] rounded-t-lg transition-all duration-300 relative overflow-hidden"
+                           [style.height.%]="m.totalAmount > 0 ? (m.totalAmount / (monthlyItems()[5]?.totalAmount || 1) * 75 + 15) : 6"
+                           [style.background]="selectedItemMonthIndex() === idx ? 'var(--p1)' : 'linear-gradient(180deg, var(--p1) 0%, color-mix(in srgb, var(--p1) 35%, transparent) 100%)'">
+                      </div>
+                      <div class="text-[10px] font-bold mt-2 truncate max-w-full text-center"
+                           [style.color]="selectedItemMonthIndex() === idx ? 'var(--p1)' : 'var(--text)'">
+                        {{ m.month.split(' ')[0] }}
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Interactive Month Selector Buttons -->
+              <div>
+                <div class="text-[11px] font-bold uppercase tracking-wider mb-2" style="color: var(--t3);">
+                  Select Month to View Item Breakdown:
+                </div>
+                <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  @for (m of monthlyItems(); track m.monthKey; let idx = $index) {
+                    <button type="button"
+                            (click)="selectItemMonth(idx)"
+                            class="text-[10px] font-black px-3 py-1.5 rounded-xl border transition cursor-pointer shrink-0"
+                            [style.background]="selectedItemMonthIndex() === idx ? 'var(--p1)' : 'var(--bg2)'"
+                            [style.color]="selectedItemMonthIndex() === idx ? '#ffffff' : 'var(--text)'"
+                            [style.borderColor]="selectedItemMonthIndex() === idx ? 'var(--p1)' : 'var(--border)'">
+                      {{ m.month }} · ₹{{ m.totalAmount | number:'1.0-0' }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Selected Month Item Breakdown Drilldown -->
+              @if (selectedItemMonth()) {
+                <div class="p-3.5 rounded-2xl border space-y-2.5"
+                     style="background: var(--bg2); border-color: var(--border);">
+                  <div class="flex justify-between items-center border-b pb-2" style="border-color: var(--border);">
+                    <span class="text-xs font-black" style="color: var(--text);">
+                      🛒 {{ selectedItemMonth()!.month }} Top Purchased Items
+                    </span>
+                    <span class="text-xs font-extrabold" style="color: var(--p1);">
+                      ₹{{ selectedItemMonth()!.totalAmount | number:'1.0-0' }} total
+                    </span>
+                  </div>
+
+                  @if (selectedItemMonth()!.items.length > 0) {
+                    <div class="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+                      @for (it of selectedItemMonth()!.items; track it.itemName; let idx = $index) {
+                        <div class="p-2.5 rounded-2xl border"
+                             style="background: var(--card); border-color: var(--border);">
+                          <div class="flex items-center justify-between mb-1.5">
+                            <div class="flex items-center gap-2 min-w-0">
+                              <div class="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black shrink-0"
+                                   [style.background]="idx === 0 ? '#f59e0b' : 'color-mix(in srgb, var(--p1) 20%, transparent)'"
+                                   [style.color]="idx === 0 ? '#ffffff' : 'var(--p1)'">
+                                #{{ idx + 1 }}
+                              </div>
+                              <div class="min-w-0">
+                                <div class="text-xs font-bold truncate" style="color: var(--text);">
+                                  {{ it.itemName }}
+                                </div>
+                                <div class="text-[10px] font-medium" style="color: var(--t3);">
+                                  <span>{{ it.categoryName }}</span>
+                                  @if (it.quantity > 0) {
+                                    <span> · {{ it.quantity }} Qty</span>
+                                  }
+                                </div>
+                              </div>
+                            </div>
+                            <div class="text-right shrink-0">
+                              <div class="text-xs font-black" style="color: var(--text);">
+                                ₹{{ it.totalAmount | number:'1.0-0' }}
+                              </div>
+                              <span class="text-[10px] font-semibold" style="color: var(--t3);">
+                                {{ it.percentage }}% of month
+                              </span>
+                            </div>
+                          </div>
+
+                          <!-- Comparative bar scaled to month's top item -->
+                          <div class="h-1.5 w-full rounded-full overflow-hidden" style="background: var(--bg3);">
+                            <div class="h-full rounded-full transition-all duration-500"
+                                 [style.width.%]="(it.totalAmount / getMaxMonthlyItemSpend()) * 100"
+                                 [style.background]="getCategoryColor(it.categoryName)"></div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <div class="text-center py-4 text-xs font-semibold" style="color: var(--t3);">
+                      No individual items recorded in {{ selectedItemMonth()!.month }}.
+                    </div>
+                  }
+                </div>
+              }
+            } @else {
+              <div class="p-8 rounded-2xl border text-center text-xs font-semibold"
+                   style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
+                🗓️ No monthly historical expenses recorded yet.
+              </div>
+            }
+          </div>
+        }
 
         <button type="button"
                 (click)="goToPool()"
@@ -294,7 +688,7 @@
                       {{ exp.description }}
                     </div>
                     <div class="text-[11px] font-medium" style="color: var(--t3);">
-                      {{ exp.expenseDate }} · Paid by {{ exp.paidByName || 'Flatmate' }}
+                      {{ exp.expenseDate | date:'dd MMM yyyy, hh:mm a' }} · Paid by {{ exp.paidByName || 'Flatmate' }}
                     </div>
                   </div>
                 </div>

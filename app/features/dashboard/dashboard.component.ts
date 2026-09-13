@@ -27,6 +27,50 @@ export interface DashboardCategory {
   percentage: number;
 }
 
+export interface DashboardItemBreakdown {
+  itemName: string;
+  categoryName: string;
+  totalAmount: number;
+  count: number;
+  percentage: number;
+}
+
+export interface MonthlyTrend {
+  month: string;
+  totalAmount: number;
+  percentage: number;
+}
+
+export interface DashboardCategorySlice {
+  categoryName: string;
+  icon: string;
+  totalAmount: number;
+  percentage: number;
+}
+
+export interface DashboardMonthlyCategory {
+  month: string;
+  monthKey: string;
+  totalAmount: number;
+  categories: DashboardCategorySlice[];
+}
+
+export interface DashboardItemSlice {
+  itemName: string;
+  categoryName: string;
+  totalAmount: number;
+  quantity: number;
+  count: number;
+  percentage: number;
+}
+
+export interface DashboardMonthlyItem {
+  month: string;
+  monthKey: string;
+  totalAmount: number;
+  items: DashboardItemSlice[];
+}
+
 export interface DashboardExpenseItem {
   itemName: string;
   quantity?: number;
@@ -73,10 +117,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
-  @ViewChild('settleQrCanvas') settleQrCanvasRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('settleQrCanvas') settleQrCanvasRef!: ElementRef<HTMLCanvasElement>;
 
-  groupId = '';
-  me = this.auth.user;
+  groupId!: string;
+  me = computed(() => this.auth.user());
 
   // Active Bucket Tab: 'daily' | 'bills' | 'iou'
   activeBucket = signal<'daily' | 'bills' | 'iou'>('daily');
@@ -96,8 +140,68 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   groupAddress = signal('');
   memberCount = signal(1);
 
+  // Category vs Items vs Monthly Categories vs Monthly Items Switcher
+  breakdownView = signal<'category' | 'items' | 'monthly_category' | 'monthly_items'>('category');
+
   // Dynamic Collections
   categoryBreakdown = signal<DashboardCategory[]>([]);
+  itemBreakdown = signal<DashboardItemBreakdown[]>([]);
+  monthlyTrends = signal<MonthlyTrend[]>([]);
+  monthlyCategories = signal<DashboardMonthlyCategory[]>([]);
+  monthlyItems = signal<DashboardMonthlyItem[]>([]);
+  selectedCategoryMonthIndex = signal<number>(5);
+  selectedItemMonthIndex = signal<number>(5);
+
+  selectedCategoryMonth = computed(() => {
+    const list = this.monthlyCategories();
+    if (!list || list.length === 0) return null;
+    const idx = Math.min(Math.max(0, this.selectedCategoryMonthIndex()), list.length - 1);
+    return list[idx];
+  });
+
+  selectedItemMonth = computed(() => {
+    const list = this.monthlyItems();
+    if (!list || list.length === 0) return null;
+    const idx = Math.min(Math.max(0, this.selectedItemMonthIndex()), list.length - 1);
+    return list[idx];
+  });
+
+  categoryConicGradient = computed(() => {
+    const cats = this.categoryBreakdown();
+    if (!cats || cats.length === 0) return 'conic-gradient(#334155 0% 100%)';
+    let acc = 0;
+    const parts: string[] = [];
+    cats.forEach(c => {
+      const start = acc;
+      const end = acc + c.percentage;
+      const color = this.getCategoryColor(c.categoryName);
+      parts.push(`${color} ${start}% ${end}%`);
+      acc = end;
+    });
+    if (acc < 100) {
+      parts.push(`#334155 ${acc}% 100%`);
+    }
+    return `conic-gradient(${parts.join(', ')})`;
+  });
+
+  selectedMonthCategoryConic = computed(() => {
+    const m = this.selectedCategoryMonth();
+    if (!m || !m.categories || m.categories.length === 0) return 'conic-gradient(#334155 0% 100%)';
+    let acc = 0;
+    const parts: string[] = [];
+    m.categories.forEach(c => {
+      const start = acc;
+      const end = acc + c.percentage;
+      const color = this.getCategoryColor(c.categoryName);
+      parts.push(`${color} ${start}% ${end}%`);
+      acc = end;
+    });
+    if (acc < 100) {
+      parts.push(`#334155 ${acc}% 100%`);
+    }
+    return `conic-gradient(${parts.join(', ')})`;
+  });
+
   recentExpenses = signal<DashboardExpense[]>([]);
   upcomingBills = signal<DashboardUpcomingBill[]>([]);
   iouDebts = signal<DashboardIouDebt[]>([]);
@@ -169,6 +273,16 @@ export class DashboardComponent implements OnInit, AfterViewInit {
           if (d.unreadNotifications !== undefined) this.unreadCount.set(d.unreadNotifications);
 
           this.categoryBreakdown.set(d.categoryBreakdown ?? []);
+          this.itemBreakdown.set(d.itemBreakdown ?? []);
+          this.monthlyTrends.set(d.monthlyTrends ?? []);
+          this.monthlyCategories.set(d.monthlyCategories ?? []);
+          this.monthlyItems.set(d.monthlyItems ?? []);
+          if (d.monthlyCategories && d.monthlyCategories.length > 0) {
+            this.selectedCategoryMonthIndex.set(d.monthlyCategories.length - 1);
+          }
+          if (d.monthlyItems && d.monthlyItems.length > 0) {
+            this.selectedItemMonthIndex.set(d.monthlyItems.length - 1);
+          }
           this.recentExpenses.set(d.recentExpenses ?? []);
           this.upcomingBills.set(d.upcomingBills ?? []);
           this.iouDebts.set(d.iouDebts ?? []);
@@ -182,6 +296,30 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   setBucket(bucket: 'daily' | 'bills' | 'iou'): void {
     this.activeBucket.set(bucket);
+  }
+
+  setBreakdownView(view: 'category' | 'items' | 'monthly_category' | 'monthly_items'): void {
+    this.breakdownView.set(view);
+  }
+
+  selectCategoryMonth(index: number): void {
+    this.selectedCategoryMonthIndex.set(index);
+  }
+
+  selectItemMonth(index: number): void {
+    this.selectedItemMonthIndex.set(index);
+  }
+
+  getMaxItemSpend(): number {
+    const items = this.itemBreakdown();
+    if (!items || items.length === 0) return 1;
+    return Math.max(...items.map(i => i.totalAmount), 1);
+  }
+
+  getMaxMonthlyItemSpend(): number {
+    const m = this.selectedItemMonth();
+    if (!m || !m.items || m.items.length === 0) return 1;
+    return Math.max(...m.items.map(i => i.totalAmount), 1);
   }
 
   toggleReceipt(id: string | number): void {
@@ -260,14 +398,16 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   }
 
   getCategoryColor(catName: string): string {
-    if (!catName) return 'var(--p2)';
+    if (!catName) return '#8b5cf6';
     const lower = catName.toLowerCase();
-    if (lower.includes('groc')) return 'var(--ok)';
-    if (lower.includes('dair') || lower.includes('milk')) return 'var(--p1)';
-    if (lower.includes('util') || lower.includes('elect')) return 'var(--warn)';
-    if (lower.includes('clean') || lower.includes('suppl')) return 'var(--err)';
-    if (lower.includes('food')) return '#f97316';
-    return 'var(--p2)';
+    if (lower.includes('groc')) return '#10b981';
+    if (lower.includes('dair') || lower.includes('milk')) return '#06b6d4';
+    if (lower.includes('util') || lower.includes('elect') || lower.includes('bill')) return '#f59e0b';
+    if (lower.includes('clean') || lower.includes('suppl') || lower.includes('house')) return '#ec4899';
+    if (lower.includes('food') || lower.includes('snack')) return '#f97316';
+    if (lower.includes('maint') || lower.includes('repair')) return '#6366f1';
+    if (lower.includes('trav') || lower.includes('cab')) return '#3b82f6';
+    return '#8b5cf6';
   }
 
   getBillIcon(billName: string): string {
