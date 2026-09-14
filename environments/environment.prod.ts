@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://roomledger.runasp.net/api/'   // your MonsterASP URL
+  apiUrl: 'https://roomledger.runasp.net/api/'
 };
