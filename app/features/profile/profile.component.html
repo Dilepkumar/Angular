@@ -484,3 +484,48 @@
     </div>
   </div>
 }
+
+<!-- ═══════════════════════════════════════════
+     LOGOUT CONFIRMATION MODAL POPUP
+═══════════════════════════════════════════ -->
+@if (showLogoutModal()) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-up"
+       (click)="cancelLogout()">
+    <div class="w-full max-w-sm rounded-3xl p-6 sm:p-7 shadow-2xl relative text-center"
+         style="background: var(--card); border: 1.5px solid var(--border);"
+         (click)="$event.stopPropagation()">
+      
+      <!-- Icon -->
+      <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl shadow-sm"
+           style="background: color-mix(in srgb, var(--err) 15%, transparent); border: 1.5px solid color-mix(in srgb, var(--err) 30%, transparent); color: var(--err);">
+        <i class="fa-solid fa-arrow-right-from-bracket text-xl"></i>
+      </div>
+
+      <!-- Content -->
+      <h3 class="text-lg font-black mb-1.5" style="color: var(--text);">
+        Log Out of RoomLedger?
+      </h3>
+      <p class="text-xs font-medium mb-6 leading-relaxed" style="color: var(--t3);">
+        Are you sure you want to end your session? You can log back in anytime with your credentials.
+      </p>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-3">
+        <button type="button"
+                (click)="cancelLogout()"
+                class="flex-1 py-3 px-4 rounded-xl text-xs font-extrabold border cursor-pointer transition hover:opacity-90 active:scale-95"
+                style="background: var(--bg2); border-color: var(--border); color: var(--text);">
+          Cancel
+        </button>
+        <button type="button"
+                (click)="confirmLogout()"
+                class="flex-1 py-3 px-4 rounded-xl text-xs font-black text-white shadow-md cursor-pointer transition hover:opacity-90 active:scale-95 flex items-center justify-center gap-1.5"
+                style="background: #ef4444;">
+          <span>Log Out</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+

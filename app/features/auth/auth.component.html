@@ -1,7 +1,7 @@
 <div class="blob b1"></div>
 <div class="blob b2"></div>
 
-<div class="min-h-screen flex flex-col md:flex-row relative z-10">
+<div class="min-h-screen md:h-screen md:max-h-screen md:overflow-hidden flex flex-col md:flex-row relative z-10">
 
   <!-- ═══════════════════════════════════════════
        1. MOBILE-ONLY BRAND HEADER (< md)
@@ -93,8 +93,8 @@
   <!-- ═══════════════════════════════════════════
        2. DESKTOP LEFT HERO SECTION (>= md)
   ═══════════════════════════════════════════ -->
-  <div class="hidden md:flex flex-1 p-10 lg:p-14 flex-col justify-center relative overflow-hidden"
-       style="background: var(--hero); min-width: 320px;">
+  <div class="hidden md:flex flex-1 p-6 lg:p-10 flex-col justify-center relative overflow-hidden"
+       style="background: var(--hero); min-width: 300px;">
     
     <!-- Ambient Glowing Circles -->
     <div class="absolute -top-20 -right-16 w-88 h-88 rounded-full pointer-events-none"
@@ -104,54 +104,54 @@
     <div class="absolute top-[45%] right-[10%] w-44 h-44 rounded-full pointer-events-none"
          style="background: rgba(255, 255, 255, 0.04);"></div>
 
-    <div class="relative z-10 max-w-lg">
+    <div class="relative z-10 max-w-md lg:max-w-lg mx-auto w-full">
       <!-- App Brand Header -->
-      <div class="flex items-center gap-3.5 mb-12">
-        <div class="w-13 h-13 rounded-2xl flex items-center justify-center font-black text-2xl text-white shadow-lg"
+      <div class="flex items-center gap-3 mb-6 lg:mb-8">
+        <div class="w-11 h-11 lg:w-12 lg:h-12 rounded-2xl flex items-center justify-center font-black text-xl lg:text-2xl text-white shadow-lg"
              style="background: rgba(255, 255, 255, 0.22); backdrop-filter: blur(8px); border: 1.5px solid rgba(255, 255, 255, 0.35);">
           RL
         </div>
         <div>
-          <div class="text-2xl font-black text-white tracking-tight leading-none">RoomLedger</div>
-          <div class="text-[10px] font-extrabold tracking-widest text-white/70 mt-1 uppercase">Smart Expense Sharing</div>
+          <div class="text-xl lg:text-2xl font-black text-white tracking-tight leading-none">RoomLedger</div>
+          <div class="text-[9px] font-extrabold tracking-widest text-white/70 mt-1 uppercase">Smart Expense Sharing</div>
         </div>
       </div>
 
       <!-- Hero Headline -->
-      <div class="text-4xl lg:text-5xl font-black text-white leading-[1.1] tracking-tight mb-3.5">
+      <div class="text-3xl lg:text-4xl font-black text-white leading-[1.15] tracking-tight mb-2.5">
         Your room.<br/>
         <span class="text-white/75">One budget.</span><br/>
-        <span class="text-white/45 text-3xl lg:text-4xl font-extrabold">Zero confusion.</span>
+        <span class="text-white/45 text-2xl lg:text-3xl font-extrabold">Zero confusion.</span>
       </div>
-      <p class="text-white/65 text-sm lg:text-base leading-relaxed max-w-sm mb-10 font-medium">
+      <p class="text-white/70 text-xs lg:text-sm leading-relaxed max-w-sm mb-6 lg:mb-7 font-medium">
         Split bills fairly, track every rupee, and settle instantly via UPI. Designed for modern shared living.
       </p>
 
       <!-- 3 Live Floating Cards -->
-      <div class="flex flex-col gap-3 max-w-xs lg:max-w-sm mb-10">
+      <div class="flex flex-col gap-2.5 max-w-xs lg:max-w-sm mb-6 lg:mb-8">
         <!-- Card 1: Rahul settled -->
-        <div class="float-a p-3.5 px-4 rounded-2xl flex items-center gap-3.5 shadow-sm"
+        <div class="float-a p-2.5 lg:p-3 px-3.5 rounded-xl flex items-center gap-3 shadow-sm"
              style="background: rgba(255, 255, 255, 0.14); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.22);">
-          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
                style="background: rgba(255, 255, 255, 0.2);">
             ✅
           </div>
           <div>
             <div class="text-xs lg:text-[13px] font-bold text-white">Rahul settled ₹450 via UPI</div>
-            <div class="text-[11px] text-white/65 font-semibold mt-0.5">● Just now · Apartment 402</div>
+            <div class="text-[10px] text-white/65 font-semibold mt-0.5">● Just now · Apartment 402</div>
           </div>
         </div>
 
         <!-- Card 2: Daily Pool Fund -->
-        <div class="float-b p-3.5 px-4 rounded-2xl flex items-center gap-3.5 shadow-sm"
+        <div class="float-b p-2.5 lg:p-3 px-3.5 rounded-xl flex items-center gap-3 shadow-sm"
              style="background: rgba(255, 255, 255, 0.14); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.22);">
-          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
                style="background: rgba(255, 255, 255, 0.2);">
             🛒
           </div>
           <div class="flex-1">
             <div class="text-xs lg:text-[13px] font-bold text-white">Daily Pool Fund</div>
-            <div class="h-1.5 rounded-full overflow-hidden mt-1.5"
+            <div class="h-1 rounded-full overflow-hidden mt-1.5"
                  style="background: rgba(255, 255, 255, 0.2);">
               <div class="h-full rounded-full" style="width: 70%; background: rgba(255, 255, 255, 0.85);"></div>
             </div>
@@ -160,33 +160,33 @@
         </div>
 
         <!-- Card 3: Electricity bill -->
-        <div class="float-c p-3.5 px-4 rounded-2xl flex items-center gap-3.5 shadow-sm"
+        <div class="float-c p-2.5 lg:p-3 px-3.5 rounded-xl flex items-center gap-3 shadow-sm"
              style="background: rgba(255, 255, 255, 0.14); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.22);">
-          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
                style="background: rgba(255, 255, 255, 0.2);">
             ⚡
           </div>
           <div>
             <div class="text-xs lg:text-[13px] font-bold text-white">Electricity bill due in 3 days</div>
-            <div class="text-[11px] text-white/65 font-semibold mt-0.5">₹4,500 · 3 of 7 paid</div>
+            <div class="text-[10px] text-white/65 font-semibold mt-0.5">₹4,500 · 3 of 7 paid</div>
           </div>
         </div>
       </div>
 
       <!-- Trust Metrics -->
-      <div class="flex items-center gap-7 pt-2">
+      <div class="flex items-center gap-6 lg:gap-7 pt-1">
         <div>
-          <div class="text-2xl lg:text-3xl font-black text-white">₹2.4L+</div>
+          <div class="text-xl lg:text-2xl font-black text-white">₹2.4L+</div>
           <div class="text-[9px] text-white/50 font-extrabold tracking-widest uppercase mt-0.5">TRACKED</div>
         </div>
-        <div class="w-px h-8" style="background: rgba(255, 255, 255, 0.2);"></div>
+        <div class="w-px h-6" style="background: rgba(255, 255, 255, 0.2);"></div>
         <div>
-          <div class="text-2xl lg:text-3xl font-black text-white">1,200+</div>
+          <div class="text-xl lg:text-2xl font-black text-white">1,200+</div>
           <div class="text-[9px] text-white/50 font-extrabold tracking-widest uppercase mt-0.5">ROOMS</div>
         </div>
-        <div class="w-px h-8" style="background: rgba(255, 255, 255, 0.2);"></div>
+        <div class="w-px h-6" style="background: rgba(255, 255, 255, 0.2);"></div>
         <div>
-          <div class="text-2xl lg:text-3xl font-black text-white">₹0</div>
+          <div class="text-xl lg:text-2xl font-black text-white">₹0</div>
           <div class="text-[9px] text-white/50 font-extrabold tracking-widest uppercase mt-0.5">DISPUTES</div>
         </div>
       </div>
@@ -196,34 +196,34 @@
   <!-- ═══════════════════════════════════════════
        3. RIGHT AUTH CONTAINER (MATCHING SCREENSHOT 2)
   ═══════════════════════════════════════════ -->
-  <div class="w-full md:w-[440px] shrink-0 -mt-6 md:mt-0 rounded-t-[28px] md:rounded-t-none p-6 sm:p-9 md:p-10 lg:p-12 flex flex-col justify-center overflow-y-auto relative z-20 shadow-2xl md:shadow-none"
+  <div class="w-full md:w-[420px] lg:w-[450px] shrink-0 -mt-6 md:mt-0 rounded-t-[28px] md:rounded-t-none p-6 sm:p-8 md:px-8 md:py-6 lg:px-10 lg:py-8 flex flex-col justify-center md:h-full md:overflow-y-auto relative z-20 shadow-2xl md:shadow-none"
        style="background: var(--card); border-left: 2px solid var(--border);">
     
-    <div class="max-w-[360px] w-full mx-auto">
+    <div class="max-w-[360px] w-full mx-auto my-auto">
       
       <!-- Gradient Accent Pill (as in Screenshot 2) -->
-      <div style="width: 48px; height: 5px; background: var(--grad); border-radius: 3px; margin-bottom: 24px;"></div>
+      <div style="width: 44px; height: 4px; background: var(--grad); border-radius: 2px; margin-bottom: 14px;"></div>
 
       <!-- Header Title & Subtitle -->
-      <h2 style="font-size: 28px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; margin-bottom: 6px;">
+      <h2 style="font-size: 24px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px;">
         {{ activeTab() === 'login' ? 'Welcome back 👋' : 'Create account 🚀' }}
       </h2>
-      <p style="color: var(--t2); font-size: 14px; margin-bottom: 24px; line-height: 1.5;">
+      <p style="color: var(--t2); font-size: 13px; margin-bottom: 16px; line-height: 1.4;">
         {{ activeTab() === 'login' ? 'Sign in to manage your room\'s shared expenses.' : 'Join your room and start splitting expenses with zero confusion.' }}
       </p>
 
       <!-- Primary Segmented Tab Switcher (Sign In vs Create Account) -->
-      <div style="background: var(--bg2); border-radius: 14px; padding: 4px; display: flex; margin-bottom: 20px; border: 1.5px solid var(--border);">
+      <div style="background: var(--bg2); border-radius: 12px; padding: 3px; display: flex; margin-bottom: 14px; border: 1.5px solid var(--border);">
         <button type="button"
                 class="atab"
-                style="flex: 1;"
+                style="flex: 1; padding: 7px 10px; font-size: 12px;"
                 [class.on]="activeTab() === 'login'"
                 (click)="setTab('login')">
           Sign In
         </button>
         <button type="button"
                 class="atab"
-                style="flex: 1;"
+                style="flex: 1; padding: 7px 10px; font-size: 12px;"
                 [class.on]="activeTab() === 'register'"
                 (click)="setTab('register')">
           Create Account
@@ -232,7 +232,7 @@
 
       <!-- Error Alert Box -->
       @if (error()) {
-        <div class="fade-up p-3 rounded-xl text-xs font-bold mb-4 flex items-start gap-2"
+        <div class="fade-up p-2.5 rounded-xl text-xs font-bold mb-3 flex items-start gap-2"
              style="background: color-mix(in srgb, var(--err) 10%, transparent); color: var(--err); border: 1.5px solid color-mix(in srgb, var(--err) 25%, transparent);">
           <span>⚠️</span>
           <span class="flex-1">{{ error() }}</span>
@@ -246,30 +246,31 @@
         <form (ngSubmit)="submitLogin()" class="fade-up">
           
           <!-- Sub-tabs: Email vs Mobile (Screenshot 2) -->
-          <div style="background: var(--bg2); border-radius: 10px; padding: 3px; display: flex; gap: 3px; margin-bottom: 18px; border: 1px solid var(--border);">
+          <div style="background: var(--bg2); border-radius: 10px; padding: 3px; display: flex; gap: 3px; margin-bottom: 14px; border: 1px solid var(--border);">
             <button type="button"
                     (click)="setLoginMode('email')"
                     [style.background]="loginMode() === 'email' ? 'var(--btn)' : 'transparent'"
                     [style.color]="loginMode() === 'email' ? '#fff' : 'var(--t3)'"
-                    style="flex: 1; padding: 8px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: var(--font);">
+                    style="flex: 1; padding: 6px 10px; border-radius: 7px; border: none; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: var(--font);">
               📧 Email
             </button>
             <button type="button"
                     (click)="setLoginMode('phone')"
                     [style.background]="loginMode() === 'phone' ? 'var(--btn)' : 'transparent'"
                     [style.color]="loginMode() === 'phone' ? '#fff' : 'var(--t3)'"
-                    style="flex: 1; padding: 8px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: var(--font);">
+                    style="flex: 1; padding: 6px 10px; border-radius: 7px; border: none; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: var(--font);">
               📱 Mobile
             </button>
           </div>
 
           <!-- Email Mode Input -->
           @if (loginMode() === 'email') {
-            <div style="margin-bottom: 16px;">
-              <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 6px; letter-spacing: 0.07em;">
+            <div style="margin-bottom: 12px;">
+              <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 4px; letter-spacing: 0.07em;">
                 EMAIL ADDRESS
               </label>
               <input class="inp"
+                     style="padding: 10px 14px;"
                      type="email"
                      name="emailLogin"
                      [(ngModel)]="emailLogin"
@@ -277,23 +278,23 @@
                      autocomplete="email"
                      [class.border-red-400]="loginTouched() && emailLoginError" />
               @if (loginTouched() && emailLoginError) {
-                <p style="color: var(--err); font-size: 11px; font-weight: 800; margin-top: 5px;">{{ emailLoginError }}</p>
+                <p style="color: var(--err); font-size: 11px; font-weight: 800; margin-top: 4px;">{{ emailLoginError }}</p>
               }
             </div>
           }
 
           <!-- Mobile Mode Input -->
           @if (loginMode() === 'phone') {
-            <div style="margin-bottom: 16px;">
-              <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 6px; letter-spacing: 0.07em;">
+            <div style="margin-bottom: 12px;">
+              <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 4px; letter-spacing: 0.07em;">
                 MOBILE NUMBER
               </label>
               <div style="display: flex; gap: 8px;">
-                <div style="padding: 11px 12px; border: 1.5px solid var(--border); border-radius: 12px; background: var(--bg2); color: var(--p1); font-weight: 800; font-size: 13px; flex-shrink: 0;">
+                <div style="padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 12px; background: var(--bg2); color: var(--p1); font-weight: 800; font-size: 12px; flex-shrink: 0;">
                   +91
                 </div>
                 <input class="inp"
-                       style="flex: 1;"
+                       style="flex: 1; padding: 10px 14px;"
                        type="tel"
                        name="phoneLogin"
                        [(ngModel)]="phoneLogin"
@@ -303,19 +304,19 @@
                        [class.border-red-400]="loginTouched() && phoneLoginError" />
               </div>
               @if (loginTouched() && phoneLoginError) {
-                <p style="color: var(--err); font-size: 11px; font-weight: 800; margin-top: 5px;">{{ phoneLoginError }}</p>
+                <p style="color: var(--err); font-size: 11px; font-weight: 800; margin-top: 4px;">{{ phoneLoginError }}</p>
               }
             </div>
           }
 
           <!-- Password Field -->
-          <div style="margin-bottom: 8px;">
-            <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 6px; letter-spacing: 0.07em;">
+          <div style="margin-bottom: 6px;">
+            <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 4px; letter-spacing: 0.07em;">
               PASSWORD
             </label>
             <div style="position: relative;">
               <input class="inp"
-                     style="padding-right: 46px;"
+                     style="padding: 10px 46px 10px 14px;"
                      [type]="showLoginPw ? 'text' : 'password'"
                      name="loginPassword"
                      [(ngModel)]="loginPassword"
@@ -324,19 +325,19 @@
                      [class.border-red-400]="loginTouched() && loginPasswordError" />
               <button type="button"
                       (click)="showLoginPw = !showLoginPw"
-                      style="position: absolute; right: 13px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 17px; line-height: 1;">
+                      style="position: absolute; right: 13px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px; line-height: 1;">
                 {{ showLoginPw ? '🙈' : '👁' }}
               </button>
             </div>
             @if (loginTouched() && loginPasswordError) {
-              <p style="color: var(--err); font-size: 11px; font-weight: 800; margin-top: 5px;">{{ loginPasswordError }}</p>
+              <p style="color: var(--err); font-size: 11px; font-weight: 800; margin-top: 4px;">{{ loginPasswordError }}</p>
             }
           </div>
 
           <!-- Right-aligned Forgot Password (Exactly as in Screenshot 2) -->
-          <div style="text-align: right; margin-bottom: 20px;">
+          <div style="text-align: right; margin-bottom: 14px;">
             <a routerLink="/auth/forgot-password"
-               style="font-size: 12px; color: var(--p1); font-weight: 800; text-decoration: none;">
+               style="font-size: 11px; color: var(--p1); font-weight: 800; text-decoration: none;">
               Forgot Password?
             </a>
           </div>
@@ -344,7 +345,7 @@
           <!-- Sign In Button -->
           <button type="submit"
                   [disabled]="loading()"
-                  class="btn">
+                  class="btn py-2.5 sm:py-3 text-xs sm:text-sm font-black">
             @if (loading()) {
               <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -357,7 +358,7 @@
           </button>
 
           <!-- No Account Link -->
-          <p style="text-align: center; margin-top: 16px; font-size: 13px; color: var(--t3); font-family: var(--font);">
+          <p style="text-align: center; margin-top: 12px; font-size: 12px; color: var(--t3); font-family: var(--font);">
             No account?
             <a href="javascript:void(0)"
                (click)="setTab('register')"
@@ -375,12 +376,13 @@
         <form (ngSubmit)="submitRegister()" class="fade-up">
           
           <!-- Full Name & Mobile Number Grid -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
             <div>
-              <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 5px; letter-spacing: 0.07em;">
+              <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 4px; letter-spacing: 0.07em;">
                 FULL NAME
               </label>
               <input class="inp"
+                     style="padding: 9px 12px;"
                      type="text"
                      name="regFullName"
                      [(ngModel)]="regFullName"
@@ -388,15 +390,16 @@
                      autocomplete="name"
                      [class.border-red-400]="regTouched() && regNameError" />
               @if (regTouched() && regNameError) {
-                <p style="color: var(--err); font-size: 10px; font-weight: 800; margin-top: 4px;">{{ regNameError }}</p>
+                <p style="color: var(--err); font-size: 10px; font-weight: 800; margin-top: 3px;">{{ regNameError }}</p>
               }
             </div>
 
             <div>
-              <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 5px; letter-spacing: 0.07em;">
+              <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 4px; letter-spacing: 0.07em;">
                 PHONE
               </label>
               <input class="inp"
+                     style="padding: 9px 12px;"
                      type="tel"
                      name="regPhone"
                      [(ngModel)]="regPhone"
@@ -405,17 +408,18 @@
                      autocomplete="tel"
                      [class.border-red-400]="regTouched() && regPhoneError" />
               @if (regTouched() && regPhoneError) {
-                <p style="color: var(--err); font-size: 10px; font-weight: 800; margin-top: 4px;">{{ regPhoneError }}</p>
+                <p style="color: var(--err); font-size: 10px; font-weight: 800; margin-top: 3px;">{{ regPhoneError }}</p>
               }
             </div>
           </div>
 
           <!-- Email -->
-          <div style="margin-bottom: 12px;">
-            <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 5px; letter-spacing: 0.07em;">
+          <div style="margin-bottom: 10px;">
+            <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 4px; letter-spacing: 0.07em;">
               EMAIL
             </label>
             <input class="inp"
+                   style="padding: 9px 12px;"
                    type="email"
                    name="regEmail"
                    [(ngModel)]="regEmail"
@@ -423,18 +427,18 @@
                    autocomplete="email"
                    [class.border-red-400]="regTouched() && regEmailError" />
             @if (regTouched() && regEmailError) {
-              <p style="color: var(--err); font-size: 10px; font-weight: 800; margin-top: 4px;">{{ regEmailError }}</p>
+              <p style="color: var(--err); font-size: 10px; font-weight: 800; margin-top: 3px;">{{ regEmailError }}</p>
             }
           </div>
 
           <!-- Password with Interactive Strength Meter -->
-          <div style="margin-bottom: 12px;">
-            <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 5px; letter-spacing: 0.07em;">
+          <div style="margin-bottom: 10px;">
+            <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 4px; letter-spacing: 0.07em;">
               PASSWORD
             </label>
             <div style="position: relative;">
               <input class="inp"
-                     style="padding-right: 46px;"
+                     style="padding: 9px 44px 9px 12px;"
                      [type]="showRegPw ? 'text' : 'password'"
                      name="regPassword"
                      [(ngModel)]="regPassword"
@@ -443,40 +447,40 @@
                      [class.border-red-400]="regTouched() && regPasswordError" />
               <button type="button"
                       (click)="showRegPw = !showRegPw"
-                      style="position: absolute; right: 13px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 17px; line-height: 1;">
+                      style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px; line-height: 1;">
                 {{ showRegPw ? '🙈' : '👁' }}
               </button>
             </div>
 
             <!-- Password Strength Bar & Label -->
-            <div style="margin-top: 7px;">
-              <div style="height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden;">
+            <div style="margin-top: 5px;">
+              <div style="height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden;">
                 <div class="sbar"
                      [style.width]="pwScoreWidth"
                      [style.background]="pwScoreColor"></div>
               </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 3px;">
-                <span [style.color]="pwScoreColor" style="font-size: 11px; font-weight: 800;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
+                <span [style.color]="pwScoreColor" style="font-size: 10px; font-weight: 800;">
                   {{ pwScoreLabel }}
                 </span>
-                <span style="font-size: 10px; color: var(--t3); font-weight: 600;">
+                <span style="font-size: 9px; color: var(--t3); font-weight: 600;">
                   Min 8 chars, number & symbol
                 </span>
               </div>
             </div>
             @if (regTouched() && regPasswordError) {
-              <p style="color: var(--err); font-size: 10px; font-weight: 800; margin-top: 4px;">{{ regPasswordError }}</p>
+              <p style="color: var(--err); font-size: 10px; font-weight: 800; margin-top: 3px;">{{ regPasswordError }}</p>
             }
           </div>
 
           <!-- Room Invite Code -->
-          <div style="margin-bottom: 20px;">
-            <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 5px; letter-spacing: 0.07em;">
+          <div style="margin-bottom: 14px;">
+            <label style="font-size: 10px; font-weight: 900; color: var(--t2); display: block; margin-bottom: 4px; letter-spacing: 0.07em;">
               ROOM INVITE CODE
             </label>
             <div style="position: relative;">
               <input class="inp"
-                     style="text-transform: uppercase; letter-spacing: 3px; font-weight: 900;"
+                     style="padding: 9px 12px; text-transform: uppercase; letter-spacing: 3px; font-weight: 900;"
                      type="text"
                      name="regRoomCode"
                      [(ngModel)]="regRoomCode"
@@ -484,7 +488,7 @@
                      placeholder="e.g. APT402" />
               @if (hasValidRoomCode) {
                 <div class="fade-up"
-                     style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 3px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); border: 1.5px solid color-mix(in srgb, var(--ok) 28%, transparent); pointer-events: none;">
+                     style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 2px 8px; border-radius: 6px; font-size: 9px; font-weight: 800; background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); border: 1.5px solid color-mix(in srgb, var(--ok) 28%, transparent); pointer-events: none;">
                   ✓ Apt 402
                 </div>
               }
@@ -494,7 +498,7 @@
           <!-- Join Room Button -->
           <button type="submit"
                   [disabled]="loading()"
-                  class="btn">
+                  class="btn py-2.5 sm:py-3 text-xs sm:text-sm font-black">
             @if (loading()) {
               <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -507,7 +511,7 @@
           </button>
 
           <!-- Already a Member Link -->
-          <p style="text-align: center; margin-top: 16px; font-size: 13px; color: var(--t3); font-family: var(--font);">
+          <p style="text-align: center; margin-top: 12px; font-size: 12px; color: var(--t3); font-family: var(--font);">
             Already a member?
             <a href="javascript:void(0)"
                (click)="setTab('login')"

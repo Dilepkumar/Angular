@@ -155,13 +155,23 @@ export class GroupPickerComponent implements OnInit {
     return n.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
   }
 
+  showLogoutModal = signal<boolean>(false);
+
   goProfile(): void {
     this.router.navigateByUrl('/profile');
   }
 
   logout(): void {
-    if (confirm('Log out of RoomLedger?')) {
-      this.auth.logout();
-    }
+    this.showLogoutModal.set(true);
+  }
+
+  confirmLogout(): void {
+    this.showLogoutModal.set(false);
+    this.auth.logout();
+  }
+
+  cancelLogout(): void {
+    this.showLogoutModal.set(false);
   }
 }
+

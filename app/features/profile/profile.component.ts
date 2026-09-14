@@ -370,13 +370,23 @@ export class ProfileComponent implements OnInit, AfterViewInit {
     }, 3200);
   }
 
+  showLogoutModal = signal<boolean>(false);
+
   goBack(): void {
     this.router.navigate(['/']);
   }
 
   logout(): void {
-    if (confirm('Are you sure you want to log out of RoomLedger?')) {
-      this.auth.logout();
-    }
+    this.showLogoutModal.set(true);
+  }
+
+  confirmLogout(): void {
+    this.showLogoutModal.set(false);
+    this.auth.logout();
+  }
+
+  cancelLogout(): void {
+    this.showLogoutModal.set(false);
   }
 }
+

@@ -410,8 +410,11 @@
                 <input class="inp font-black text-2xl"
                        style="padding-left: 36px;"
                        type="number"
+                       min="0"
+                       step="any"
                        [(ngModel)]="expenseTotal"
-                       placeholder="650" />
+                       (ngModelChange)="onTotalSpendChange()"
+                       placeholder="0.00" />
               </div>
             </div>
           </div>
@@ -454,8 +457,8 @@
                            step="any"
                            [(ngModel)]="row.price"
                            (ngModelChange)="onRowPriceChange(row)"
-                           placeholder="0"
-                           [title]="row.qty && row.qty > 1 && row.rate ? 'Total (₹' + row.rate + ' each)' : 'Item Total Amount (₹)'" />
+                           placeholder=" 0"
+                           title="Item Total Amount (₹)" />
                   </div>
                   <button type="button"
                           (click)="removeRow(row.id)"
@@ -471,8 +474,10 @@
             <div class="p-2.5 pt-0 pb-3">
               <button type="button"
                       (click)="addRow()"
-                      class="w-full py-2 rounded-xl text-xs font-black border border-dashed cursor-pointer transition hover:bg-white"
-                      style="border-color: var(--border); color: var(--p1);">
+                      [disabled]="!canAddSubItem"
+                      class="w-full py-2 rounded-xl text-xs font-black border border-dashed cursor-pointer transition hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                      style="border-color: var(--border); color: var(--p1);"
+                      [title]="!canAddSubItem ? 'Please enter current item name and amount first' : 'Add another sub-item'">
                 + Add Sub-item
               </button>
             </div>
@@ -485,8 +490,16 @@
                 <span>✅ Balanced! Items ₹{{ itemsSum }} = Total Spend ₹{{ expenseTotal }} ✓</span>
               </div>
             } @else {
-              <div class="verr text-xs font-extrabold flex items-center gap-2">
-                <span>⚠️ Mismatch: Items ₹{{ itemsSum }} vs Total ₹{{ expenseTotal }} (Diff: ₹{{ receiptMismatchDiff }})</span>
+              <div class="verr text-xs font-extrabold flex items-center justify-between gap-2 flex-wrap">
+                <span>⚠️ Mismatch: Items ₹{{ itemsSum }} vs Total ₹{{ expenseTotal || 0 }} (Diff: ₹{{ receiptMismatchDiff }})</span>
+                @if (itemsSum > 0) {
+                  <button type="button"
+                          (click)="syncTotalFromItems()"
+                          class="text-[10px] font-black underline cursor-pointer hover:opacity-80"
+                          title="Click to set Total Spend to match items sum">
+                    Set Total to ₹{{ itemsSum }}
+                  </button>
+                }
               </div>
             }
           }
@@ -551,8 +564,8 @@
           <div class="pt-2">
             <button type="button"
                     (click)="submitExpense()"
-                    [disabled]="savingExpense || (expenseRows.length > 0 && !isReceiptBalanced)"
-                    class="btn w-full py-3.5 text-sm font-black shadow-md flex items-center justify-center gap-2 disabled:opacity-50">
+                    [disabled]="savingExpense || !expenseTotal || expenseTotal <= 0 || (expenseRows.length > 0 && !isReceiptBalanced)"
+                    class="btn w-full py-3.5 text-sm font-black shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
               <span>{{ savingExpense ? 'Saving to Pool…' : 'Log Expense to Pool (₹' + (expenseTotal || 0) + ')' }}</span>
             </button>
           </div>
@@ -791,35 +804,100 @@
               <div class="sl mb-0 flex items-center gap-1.5">
                 <span>👤 Out-of-Pocket Roommate Expenses</span>
               </div>
-              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full" style="background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok);">
-                Reimbursed ✓
-              </span>
+              @if ((balance()?.pendingReimbursementsTotal || 0) > 0) {
+                <span class="text-[10px] font-black px-2 py-0.5 rounded-full"
+                      style="background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn);">
+                  ⏳ ₹{{ balance()?.pendingReimbursementsTotal | number:'1.0-0' }} Pending Reimbursement
+                </span>
+              } @else {
+                <span class="text-[10px] font-black px-2 py-0.5 rounded-full"
+                      style="background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok);">
+                  All Settled &amp; Reimbursed ✓
+                </span>
+              }
             </div>
 
-            <div class="space-y-2">
+            <div class="space-y-2.5">
               @for (oop of balance()!.outOfPocketSummary; track oop.userId) {
-                <div class="flex items-center justify-between p-2.5 rounded-2xl border transition"
+                <div class="p-3.5 rounded-2xl border transition flex flex-col gap-2.5"
                      style="background: var(--bg2); border-color: var(--border);">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white"
-                         style="background: #6366f1;">
-                      {{ getInitials(oop.userName) }}
-                    </div>
-                    <div>
-                      <div class="text-xs font-bold" style="color: var(--text);">{{ oop.userName }}</div>
-                      <div class="text-[10px] font-medium" style="color: var(--t3);">
-                        {{ oop.expenseCount }} {{ oop.expenseCount === 1 ? 'receipt' : 'receipts' }} · Paid own money
+                  
+                  <!-- Top Row: Avatar + Name on Left; Status Badge on Right -->
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0"
+                           style="background: #6366f1;">
+                        {{ getInitials(oop.userName) }}
+                      </div>
+                      <div class="min-w-0">
+                        <div class="text-xs sm:text-[13px] font-bold flex items-center gap-1.5 truncate" style="color: var(--text);">
+                          <span class="truncate">{{ oop.userName }}</span>
+                          @if (me?.id === oop.userId) {
+                            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded shrink-0"
+                                  style="background: color-mix(in srgb, var(--p1) 20%, transparent); color: var(--p1);">You</span>
+                          }
+                        </div>
+                        <div class="text-[10px] font-medium mt-0.5 truncate" style="color: var(--t3);">
+                          {{ oop.expenseCount }} {{ oop.expenseCount === 1 ? 'receipt' : 'receipts' }} · Total spent: ₹{{ oop.totalPaid | number:'1.0-0' }}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div class="text-right">
-                    <div class="text-xs font-black" style="color: var(--text);">₹{{ oop.totalPaid | number:'1.0-0' }}</div>
-                    <div class="text-[10px] font-bold" style="color: var(--ok);">
-                      Reimbursed from Pool ✓
+
+                    <!-- Status Pill (Top Right) -->
+                    <div class="shrink-0 text-right">
+                      @if (oop.pendingReimbursement && oop.pendingReimbursement > 0) {
+                        <span class="text-[10px] font-black px-2.5 py-1 rounded-full border inline-flex items-center gap-1"
+                              style="background: color-mix(in srgb, var(--warn) 14%, transparent); border-color: color-mix(in srgb, var(--warn) 30%, transparent); color: var(--warn);">
+                          <span>⏳ Pending: ₹{{ oop.pendingReimbursement | number:'1.0-0' }}</span>
+                        </span>
+                      } @else {
+                        <span class="text-[10px] font-black px-2.5 py-1 rounded-full border inline-flex items-center gap-1"
+                              style="background: color-mix(in srgb, var(--ok) 14%, transparent); border-color: color-mix(in srgb, var(--ok) 30%, transparent); color: var(--ok);">
+                          <span>✓ Reimbursed</span>
+                        </span>
+                      }
                     </div>
                   </div>
+
+                  <!-- Breakdown Strip (if user has partial reimbursements or pending) -->
+                  @if (oop.reimbursedAmount && oop.reimbursedAmount > 0 && oop.pendingReimbursement && oop.pendingReimbursement > 0) {
+                    <div class="flex items-center justify-between px-3 py-1.5 rounded-xl border text-[11px] font-bold"
+                         style="background: var(--card); border-color: var(--border);">
+                      <div class="flex items-center gap-1.5" style="color: var(--warn);">
+                        <span>⏳ Pending payout:</span>
+                        <span class="font-black">₹{{ oop.pendingReimbursement | number:'1.0-0' }}</span>
+                      </div>
+                      <div class="flex items-center gap-1.5" style="color: var(--ok);">
+                        <span>✓ Already reimbursed:</span>
+                        <span class="font-black">₹{{ oop.reimbursedAmount | number:'1.0-0' }}</span>
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Action Button: Mark as Received / Reimburse (Full Width at Bottom of Card) -->
+                  @if (oop.pendingReimbursement && oop.pendingReimbursement > 0 && (isAdmin() || me?.id === oop.userId)) {
+                    <button type="button"
+                            (click)="reimburseOutOfPocket(oop.userId)"
+                            [disabled]="reimbursingOutOfPocket()"
+                            class="w-full py-2 px-3 text-xs font-black flex items-center justify-center gap-1.5 rounded-xl shadow-xs transition hover:opacity-90 active:scale-98 cursor-pointer disabled:opacity-50"
+                            style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none;"
+                            title="Deduct money from central room pool and reimburse roommate">
+                      @if (reimbursingOutOfPocket()) {
+                        <span class="text-xs animate-spin">⏳</span>
+                        <span>Processing Reimbursement...</span>
+                      } @else {
+                        <span>💸 Mark as Received / Reimburse (₹{{ oop.pendingReimbursement | number:'1.0-0' }})</span>
+                      }
+                    </button>
+                  }
+
                 </div>
               }
+            </div>
+
+            <div class="text-[10px] font-medium mt-2 flex items-center gap-1" style="color: var(--t3);">
+              <span>💡</span>
+              <span>Reimbursing an out-of-pocket expense settles it, deducts the payout from the central room pool balance, and logs the transaction.</span>
             </div>
           </div>
 
@@ -829,21 +907,32 @@
         <!-- Monthly Pool Contributions per Roommate -->
         <div>
           <div class="flex justify-between items-center mb-2">
-            <div class="flex items-center gap-1.5">
-              <div class="sl mb-0">Who has paid target this month</div>
+            <div>
+              <div class="sl mb-0 flex items-center gap-1.5 flex-wrap">
+                <span>Who has contributed this month?</span>
+                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full"
+                      style="background: color-mix(in srgb, var(--p1) 12%, transparent); color: var(--p1);">
+                  {{ targetPaidCount }} of {{ targetTotalCount }} paid
+                </span>
+              </div>
+              <div class="text-[10px] font-medium mt-0.5" style="color: var(--t3);">
+                Tracks each roommate's contribution towards this month's room maintenance target
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
               <button type="button"
                       (click)="toggleTargetInfo()"
-                      class="text-[10px] font-bold px-1.5 py-0.5 rounded border transition cursor-pointer"
+                      class="text-[10px] font-bold px-2 py-1 rounded-lg border transition cursor-pointer flex items-center gap-1"
                       style="border-color: var(--border); background: var(--bg2); color: var(--t2);"
-                      title="Learn what this section is for">
-                ℹ️ What is this?
+                      title="Learn how monthly targets work">
+                <span>💡 How it works</span>
               </button>
+              @if (isAdmin()) {
+                <button type="button" (click)="openShares()" class="text-[11px] font-extrabold underline cursor-pointer" style="color: var(--p1);">
+                  ⚙️ Set shares
+                </button>
+              }
             </div>
-            @if (isAdmin()) {
-              <button type="button" (click)="openShares()" class="text-[11px] font-extrabold underline cursor-pointer" style="color: var(--p1);">
-                ⚙️ Set shares
-              </button>
-            }
           </div>
 
           <!-- Explanation Popover/Box -->
@@ -857,39 +946,73 @@
                 <button type="button" (click)="toggleTargetInfo()" class="text-[11px] font-bold text-zinc-400 hover:text-white cursor-pointer">✕</button>
               </div>
               <p class="text-[11px] mb-1.5" style="color: var(--t2);">
-                In shared flat living, all roommates agree on a shared budget (e.g. ₹5,000 total or ₹1,000 per person) for common living items like vegetables, groceries, cleaning supplies, and wifi.
-              </p>
-              <p class="text-[11px] mb-2" style="color: var(--t2);">
-                This card tracks each roommate's progress for this month:
+                Every month, flatmates deposit their fixed share (e.g. ₹1,000 each) into the central room maintenance pool to pay for shared items like water, wifi, groceries, and cleaner.
               </p>
               <div class="text-[10px] font-bold flex flex-col gap-1 pt-1.5 border-t" style="border-color: color-mix(in srgb, var(--p1) 18%, transparent);">
-                <span style="color: var(--ok);">✓ Paid: Roommate has added their expected monthly share into the room pool.</span>
-                <span style="color: var(--warn);">⏳ Pending: The remaining amount this roommate still needs to contribute this month.</span>
+                <span style="color: var(--ok);">✓ Paid: Flatmate has deposited their required monthly share into the room maintenance pool.</span>
+                <span style="color: var(--warn);">⏳ Pending: Flatmate has not yet deposited their share (or only paid partially).</span>
               </div>
             </div>
           }
 
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             @for (m of balance()?.memberStatuses; track m.userId) {
-              <div class="flex items-center justify-between py-1">
-                <div class="flex items-center gap-2">
-                  <div class="chk" [class.on]="m.hasPaidTarget">
-                    @if (m.hasPaidTarget) {
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5"><path d="M2 6l3 3 5-5"/></svg>
+              <div class="p-2.5 rounded-2xl border transition flex items-center justify-between gap-3"
+                   style="background: var(--bg2); border-color: var(--border);">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0"
+                       [style.background]="m.hasPaidTarget ? '#10b981' : '#64748b'">
+                    {{ getInitials(m.userName) }}
+                  </div>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span class="text-xs font-bold truncate" [style.color]="m.hasPaidTarget ? 'var(--text)' : 'var(--t2)'">
+                        {{ m.userName }}
+                      </span>
+                      @if (me?.id === m.userId) {
+                        <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded" style="background: color-mix(in srgb, var(--p1) 20%, transparent); color: var(--p1);">You</span>
+                      }
+                      @if (m.isAlias) {
+                        <span class="text-[9px] px-1.5 py-0.5 rounded-full" style="background: var(--bg3); color: var(--t3);">alias</span>
+                      }
+                    </div>
+                    <!-- Mini progress bar -->
+                    @if (m.expectedThisMonth > 0) {
+                      <div class="flex items-center gap-2 mt-1">
+                        <div class="h-1.5 w-20 rounded-full overflow-hidden shrink-0" style="background: var(--bg3);">
+                          <div class="h-full rounded-full transition-all duration-300"
+                               [style.width.%]="m.hasPaidTarget ? 100 : getMemberProgress(m.contributedThisMonth, m.expectedThisMonth)"
+                               [style.background]="m.hasPaidTarget ? 'var(--ok)' : 'var(--warn)'"></div>
+                        </div>
+                        <span class="text-[10px] font-semibold" style="color: var(--t3);">
+                          ₹{{ m.contributedThisMonth }} of ₹{{ m.expectedThisMonth }}
+                        </span>
+                      </div>
+                    } @else {
+                      <div class="text-[10px] font-semibold mt-0.5" style="color: var(--t3);">No target set</div>
                     }
                   </div>
-                  <span class="text-xs font-bold" [style.color]="m.hasPaidTarget ? 'var(--text)' : 'var(--t2)'">
-                    {{ m.userName }}
-                    @if (m.isAlias) {
-                      <span class="text-[9px] px-1.5 py-0.5 rounded-full" style="background: var(--bg2); color: var(--t3);">alias</span>
-                    }
-                  </span>
                 </div>
-                <div>
+
+                <div class="shrink-0 text-right flex items-center gap-2">
                   @if (m.hasPaidTarget) {
-                    <span class="text-xs font-black" style="color: var(--ok);">₹{{ m.contributedThisMonth }} ✓</span>
+                    <span class="text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-1"
+                          style="background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok);">
+                      <span>✓ Paid</span>
+                    </span>
                   } @else {
-                    <span class="pp">Pending ₹{{ m.pendingAmount }}</span>
+                    <span class="text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-1"
+                          style="background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn);">
+                      <span>⏳ Pending ₹{{ m.pendingAmount }}</span>
+                    </span>
+                    @if (me?.id === m.userId) {
+                      <button type="button"
+                              (click)="openContribute()"
+                              class="text-[10px] font-black px-2 py-1 rounded-lg border transition cursor-pointer hover:scale-105 active:scale-95"
+                              style="background: var(--p1); color: white; border-color: var(--p1);">
+                        + Pay
+                      </button>
+                    }
                   }
                 </div>
               </div>
@@ -919,7 +1042,8 @@
           </div>
         </div>
 
-        <div class="space-y-3">
+        <!-- Scrollable list container with max height to avoid page expansion -->
+        <div class="max-h-[520px] overflow-y-auto pr-1 space-y-3" style="scrollbar-width: thin; scrollbar-color: var(--border) transparent;">
           
           @for (t of displayedTransactions(); track t.id) {
             <div>
@@ -947,8 +1071,11 @@
                       @if (t.status === 'Pending') {
                         <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded" style="background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn);">⏳ Pending</span>
                       }
-                      @if (t.status === 'Reimbursed ✓') {
-                        <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded" style="background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok);">💸 Reimbursed from Pool</span>
+                      @if (t.status === 'Pending Reimbursement' || (t.payerType === 'member' && !t.isReimbursed)) {
+                        <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded" style="background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn);">⏳ Pending Reimbursement</span>
+                      }
+                      @if (t.status === 'Reimbursed ✓' || (t.payerType === 'member' && t.isReimbursed)) {
+                        <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded" style="background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok);">💸 Reimbursed from Pool ✓</span>
                       }
                     </div>
                   </div>
@@ -963,6 +1090,16 @@
                             title="View Attached Bill Photo">
                       <span>📸</span>
                       <span>Photo</span>
+                    </button>
+                  }
+                  @if (t.payerType === 'member' && !t.isReimbursed && (isAdmin() || (t.payerName && me?.fullName && t.payerName === me?.fullName))) {
+                    <button type="button"
+                            (click)="$event.stopPropagation(); reimburseOutOfPocket(undefined, t.id.startsWith('e') ? +t.id.slice(1) : undefined)"
+                            [disabled]="reimbursingOutOfPocket()"
+                            class="text-[10px] font-extrabold px-2 py-1 rounded-lg border transition cursor-pointer hover:scale-105 active:scale-95"
+                            style="background: color-mix(in srgb, var(--p1) 15%, transparent); border-color: var(--p1); color: var(--p1);"
+                            title="Reimburse this expense from Central Pool">
+                      💸 Reimburse
                     </button>
                   }
                   <span class="text-xs sm:text-[13px] font-black"
@@ -1039,20 +1176,23 @@
               No receipts or transactions found for this filter.
             </div>
           }
-
-          <!-- Show More (+5) Button -->
-          @if (hasMoreTransactions()) {
-            <div class="pt-3 text-center">
-              <button type="button"
-                      (click)="loadMoreTransactions()"
-                      class="btn py-2 px-5 text-xs font-bold shadow-xs mx-auto flex items-center gap-1.5 hover:scale-105 active:scale-95 transition"
-                      style="background: var(--bg2); border-color: var(--border); color: var(--p1);">
-                <span>Show More (+5) ▾</span>
-              </button>
-            </div>
-          }
-
         </div>
+
+        <!-- Show More (+5) Button & Pagination stats -->
+        @if (hasMoreTransactions()) {
+          <div class="pt-3 text-center border-t mt-3" style="border-color: var(--border);">
+            <button type="button"
+                    (click)="loadMoreTransactions()"
+                    class="btn py-2 px-5 text-xs font-bold shadow-xs mx-auto flex items-center gap-1.5 hover:scale-105 active:scale-95 transition"
+                    style="background: var(--bg2); border-color: var(--border); color: var(--p1);">
+              <span>Show More (+5) ▾</span>
+            </button>
+            <div class="text-[10px] font-medium mt-1.5" style="color: var(--t3);">
+              Showing {{ displayedTransactions().length }} of {{ filteredTransactions().length }} movements
+            </div>
+          </div>
+        }
+
       </div>
 
     </div>

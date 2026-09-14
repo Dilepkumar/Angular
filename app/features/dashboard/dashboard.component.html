@@ -687,8 +687,23 @@
                     <div class="text-xs sm:text-[13px] font-bold truncate" style="color: var(--text);">
                       {{ exp.description }}
                     </div>
-                    <div class="text-[11px] font-medium" style="color: var(--t3);">
-                      {{ exp.expenseDate | date:'dd MMM yyyy, hh:mm a' }} · Paid by {{ exp.paidByName || 'Flatmate' }}
+                    <div class="text-[11px] font-medium flex items-center gap-1.5 flex-wrap" style="color: var(--t3);">
+                      <span>{{ exp.expenseDate | date:'dd MMM yyyy, hh:mm a' }}</span>
+                      <span>·</span>
+                      @if (exp.payerType === 'pool') {
+                        <span class="font-semibold" style="color: var(--t2);">
+                          Central Pool (Added by {{ exp.recordedByName || 'Flatmate' }})
+                        </span>
+                      } @else {
+                        <span class="font-semibold" style="color: var(--t2);">
+                          {{ exp.paidByName }}
+                        </span>
+                        @if (exp.isReimbursed) {
+                          <span class="text-[9px] font-extrabold px-1.5 py-0.2 rounded" style="background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok);">💸 Reimbursed ✓</span>
+                        } @else {
+                          <span class="text-[9px] font-extrabold px-1.5 py-0.2 rounded" style="background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn);">⏳ Pending Reimbursement</span>
+                        }
+                      }
                     </div>
                   </div>
                 </div>

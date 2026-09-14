@@ -86,6 +86,8 @@ export interface DashboardExpense {
   payerType: string;
   receiptUrl: string | null;
   items: DashboardExpenseItem[];
+  recordedByName?: string | null;
+  isReimbursed?: boolean;
 }
 
 export interface DashboardUpcomingBill {

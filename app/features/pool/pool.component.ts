@@ -59,6 +59,10 @@ export interface OutOfPocketItem {
   userId: number;
   userName: string;
   totalPaid: number;
+  pendingReimbursement?: number;
+  reimbursedAmount?: number;
+  isFullyReimbursed?: boolean;
+  pendingCount?: number;
   expenseCount: number;
   status: string;
 }
@@ -76,6 +80,7 @@ export interface PoolBalance {
   monthlyTarget: number;
   totalContributions: number;
   totalSpent: number;
+  pendingReimbursementsTotal?: number;
   memberStatuses: MemberStatus[];
   categoryBreakdown?: CategoryBreakdownItem[];
   itemBreakdown?: OverallItemBreakdown[];
@@ -130,6 +135,9 @@ export class PoolComponent implements OnInit {
 
   // ── Target Explanation Info Toggle ──
   showTargetInfo = signal<boolean>(false);
+
+  // ── Out-of-Pocket Reimbursement State ──
+  reimbursingOutOfPocket = signal<boolean>(false);
 
   // ── Category vs Item-wise vs Monthly Tracking View ──
   breakdownView = signal<'category' | 'items' | 'monthly'>('category');
@@ -220,6 +228,7 @@ export class PoolComponent implements OnInit {
 
     this.load();
     this.loadGroupInfo();
+    this.loadCategories();
   }
 
   initExpenseForm(): void {
@@ -284,6 +293,18 @@ export class PoolComponent implements OnInit {
       error: () => {}
     });
   }
+
+  loadCategories(): void {
+    this.api.get<any[]>(`groups/${this.groupId}/pool/categories`).subscribe({
+      next: (list) => {
+        if (list && list.length > 0) {
+          this.categories = list.map(c => `${c.icon || '📦'} ${c.name}`);
+        }
+      },
+      error: () => {}
+    });
+  }
+
 
   getInitials(name: string): string {
     if (!name?.trim()) return 'DK';
@@ -355,41 +376,58 @@ export class PoolComponent implements OnInit {
     return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
   }
 
-  // ═══════════════════════════════════════════
-  // ITEMIZED EXPENSE METHODS
-  // ═══════════════════════════════════════════
+  get canAddSubItem(): boolean {
+    if (this.expenseRows.length === 0) return true;
+    const last = this.expenseRows[this.expenseRows.length - 1];
+    return !!(last.name && last.name.trim() && last.price !== null && last.price !== undefined && last.price > 0);
+  }
+
   addRow(): void {
+    if (!this.canAddSubItem) {
+      this.showToast('⚠️ Please enter current item name and amount before adding another sub-item');
+      return;
+    }
     this.rowCounter++;
     this.expenseRows.push({ id: this.rowCounter, name: '', qty: 1, rate: null, price: null });
   }
 
   removeRow(id: number): void {
     this.expenseRows = this.expenseRows.filter(r => r.id !== id);
-    if (this.expenseRows.length > 0) {
-      this.expenseTotal = Number(this.itemsSum.toFixed(2));
+    // Do not overwrite user-entered total spend when deleting a row!
+    // Only auto-fill if expenseTotal was not yet entered
+    if (!this.expenseTotal || this.expenseTotal <= 0) {
+      if (this.expenseRows.length > 0) {
+        this.expenseTotal = Number(this.itemsSum.toFixed(2));
+      }
     }
   }
 
+
   onRowQtyChange(row: ReceiptRow): void {
-    const qty = row.qty && row.qty > 0 ? row.qty : 1;
-    if (row.rate !== null && row.rate !== undefined && row.rate > 0) {
-      row.price = Number((qty * row.rate).toFixed(2));
-    } else if (row.price !== null && row.price !== undefined && row.price > 0) {
-      row.rate = Number((row.price / qty).toFixed(2));
-    }
-    if (this.expenseRows.length > 0) {
-      this.expenseTotal = Number(this.itemsSum.toFixed(2));
+    // Quantity change only updates the quantity count.
+    // It must NOT multiply or alter the item's total amount entered by the user.
+    if (row.qty !== null && row.qty !== undefined && row.qty < 1) {
+      row.qty = 1;
     }
   }
 
   onRowPriceChange(row?: ReceiptRow): void {
-    if (row && row.price !== null && row.price !== undefined) {
-      const qty = row.qty && row.qty > 0 ? row.qty : 1;
-      row.rate = Number((row.price / qty).toFixed(2));
-    }
-    if (this.expenseRows.length > 0) {
+    // Only auto-fill expenseTotal if the user hasn't entered a total spend yet.
+    // If the user already set total spend (e.g. ₹300), keep it untouched when editing items!
+    if (!this.expenseTotal || this.expenseTotal <= 0) {
       this.expenseTotal = Number(this.itemsSum.toFixed(2));
     }
+  }
+
+  onTotalSpendChange(): void {
+    // Only initialize row 1 price if it's currently unset/zero
+    if (this.expenseRows.length === 1 && (!this.expenseRows[0].price || this.expenseRows[0].price <= 0)) {
+      this.expenseRows[0].price = this.expenseTotal;
+    }
+  }
+
+  syncTotalFromItems(): void {
+    this.expenseTotal = Number(this.itemsSum.toFixed(2));
   }
 
   get itemsSum(): number {
@@ -685,6 +723,38 @@ export class PoolComponent implements OnInit {
 
   toggleTargetInfo(): void {
     this.showTargetInfo.update(v => !v);
+  }
+
+  get targetPaidCount(): number {
+    return (this.balance()?.memberStatuses || []).filter(m => m.hasPaidTarget).length;
+  }
+
+  get targetTotalCount(): number {
+    return (this.balance()?.memberStatuses || []).length;
+  }
+
+  getMemberProgress(contributed: number, expected: number): number {
+    if (!expected || expected <= 0) return 0;
+    return Math.min(100, Math.round((contributed / expected) * 100));
+  }
+
+  reimburseOutOfPocket(targetUserId?: number, expenseId?: number): void {
+    if (this.reimbursingOutOfPocket()) return;
+    this.reimbursingOutOfPocket.set(true);
+    this.api.post<{ message: string; reimbursedAmount?: number }>(
+      `groups/${this.groupId}/pool/reimburse-out-of-pocket`,
+      { targetUserId: targetUserId ?? null, expenseId: expenseId ?? null }
+    ).subscribe({
+      next: (res) => {
+        this.reimbursingOutOfPocket.set(false);
+        this.showToast(`✅ ${res.message || 'Expenses reimbursed from Room Pool!'}`);
+        this.load();
+      },
+      error: (e) => {
+        this.reimbursingOutOfPocket.set(false);
+        this.showToast(`❌ ${e.error?.message || 'Failed to reimburse expense'}`);
+      }
+    });
   }
 
   toggleCategory(catName: string): void {
