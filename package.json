@@ -1,5 +1,5 @@
 {
-  "name": "client-app",
+  "name": "room-ledger",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",

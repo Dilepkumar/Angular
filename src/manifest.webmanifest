@@ -1,8 +1,9 @@
 {
-  "name": "RoomLedger — Smart Expense Sharing",
+  "name": "RoomLedger",
   "short_name": "RoomLedger",
-  "theme_color": "#1ABC9C",
-  "background_color": "#0f172a",
+  "description": "RoomLedger — Smart Expense Sharing",
+  "theme_color": "#0F172A",
+  "background_color": "#0F172A",
   "display": "standalone",
   "orientation": "portrait",
   "scope": "/",
