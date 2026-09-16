@@ -30,3 +30,20 @@
   z-index: 60;
   white-space: nowrap;
 }
+
+.dcard {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 22px;
+  padding: 18px 20px;
+  box-shadow: var(--sh);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  z-index: 1;
+
+  &:hover {
+    box-shadow: var(--sh2);
+    border-color: var(--border2);
+    transform: translateY(-2px);
+  }
+}

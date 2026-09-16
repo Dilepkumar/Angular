@@ -21,23 +21,28 @@ interface GroupMemberVm {
 })
 export class IouComponent implements OnInit {
   private api = inject(ApiService);
-  private auth = inject(AuthService);
+  auth = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
   @ViewChild('iouQrCanvas') iouQrCanvasRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('myQrCanvas') myQrCanvasRef?: ElementRef<HTMLCanvasElement>;
 
   groupId = '';
   groupName = signal('Apartment 402');
   balance = signal<MyBalance | null>(null);
   groupMembers = signal<GroupMemberVm[]>([]);
+  expenses = signal<any[]>([]);
   showAdd = false;
   showSettle = false;
+  showMyQr = false;
   toastMessage = signal<string | null>(null);
+  loading = signal(false);
 
   description = '';
   amount: number | null = null;
   selectedMembers = signal<Set<string>>(new Set());
+  includeMeInSplit = true;
 
   settleTarget: DebtPair | null = null;
   settleAmount: number | null = null;
@@ -45,35 +50,33 @@ export class IouComponent implements OnInit {
   settleUpiId = 'roommate@upi';
   error = signal<string | null>(null);
 
-  // Fallback demo debts matching the Screen 2 prototype
-  fallbackOwedToMe: DebtPair[] = [
-    { fromUserId: 2, fromUserName: 'Rahul Sharma', toUserId: 1, toUserName: 'Dileep', amount: 450 },
-    { fromUserId: 3, fromUserName: 'Priya Nair', toUserId: 1, toUserName: 'Dileep', amount: 800 }
-  ];
-
-  fallbackIOwe: DebtPair[] = [
-    { fromUserId: 1, fromUserName: 'Dileep', toUserId: 4, toUserName: 'Amit Patel', amount: 200 }
-  ];
-
+  myUpiId = 'myflat@upi';
   me = this.auth.user;
 
   ngOnInit(): void {
     this.groupId = this.route.snapshot.paramMap.get('groupId') || localStorage.getItem('rl_group_id') || '1';
+    
+    // Generate my UPI ID from logged in user email / name
+    const user = this.auth.user();
+    if (user) {
+      const userPrefix = user.email ? user.email.split('@')[0] : (user.name || 'flatmate').toLowerCase().replace(/\s+/g, '');
+      this.myUpiId = `${userPrefix}@okhdfcbank`;
+    }
+
     this.load();
+    this.loadExpenses();
 
     this.api.get<any>(`groups/${this.groupId}`).subscribe({
       next: (g) => {
         if (g?.groupName) this.groupName.set(g.groupName);
-      },
-      error: () => {}
-    });
-
-    this.api.get<any>(`groups/${this.groupId}/dashboard`).subscribe({
-      next: (d) => {
         const myId = this.auth.user()?.id;
-        const members: GroupMemberVm[] = (d?.members ?? [])
-          .filter((m: any) => Number(m.id) !== myId)
-          .map((m: any) => ({ id: String(m.id), name: m.name, isAdmin: m.isAdmin }));
+        const members: GroupMemberVm[] = (g?.members ?? [])
+          .filter((m: any) => Number(m.userId) !== myId)
+          .map((m: any) => ({
+            id: String(m.userId),
+            name: m.fullName || `Flatmate #${m.userId}`,
+            isAdmin: m.role === 'Admin'
+          }));
         this.groupMembers.set(members);
       },
       error: () => {}
@@ -81,14 +84,41 @@ export class IouComponent implements OnInit {
   }
 
   load(): void {
+    this.loading.set(true);
     this.api.get<MyBalance>(`groups/${this.groupId}/iou/my-balance`).subscribe({
       next: (b) => {
+        this.loading.set(false);
         if (b) {
           this.balance.set(b);
         }
       },
+      error: () => {
+        this.loading.set(false);
+      }
+    });
+  }
+
+  loadExpenses(): void {
+    this.api.get<any[]>(`groups/${this.groupId}/iou/expenses`).subscribe({
+      next: (data) => this.expenses.set(data || []),
       error: () => {}
     });
+  }
+
+  totalOwedToMe(): number {
+    return (this.balance()?.owedToMe ?? []).reduce((acc, d) => acc + (d.amount || 0), 0);
+  }
+
+  totalIOwe(): number {
+    return (this.balance()?.iOwe ?? []).reduce((acc, d) => acc + (d.amount || 0), 0);
+  }
+
+  netBalance(): number {
+    const bal = this.balance();
+    if (bal && typeof bal.netBalance === 'number') {
+      return bal.netBalance;
+    }
+    return this.totalOwedToMe() - this.totalIOwe();
   }
 
   toggleMember(id: string): void {
@@ -97,10 +127,35 @@ export class IouComponent implements OnInit {
     this.selectedMembers.set(s);
   }
 
+  selectAllMembers(): void {
+    const s = new Set<string>();
+    for (const m of this.groupMembers()) {
+      s.add(m.id);
+    }
+    this.selectedMembers.set(s);
+  }
+
+  clearSelectedMembers(): void {
+    this.selectedMembers.set(new Set());
+  }
+
   addExpense(): void {
     if (!this.description.trim() || !this.amount || this.amount <= 0) return;
 
-    const participants = [...this.selectedMembers()].map(id => ({
+    const participantIds = [...this.selectedMembers()];
+    if (this.includeMeInSplit && this.auth.user()?.id) {
+      const myIdStr = String(this.auth.user()!.id);
+      if (!participantIds.includes(myIdStr)) {
+        participantIds.push(myIdStr);
+      }
+    }
+
+    if (participantIds.length === 0) {
+      this.error.set('Please select at least one roommate to split with');
+      return;
+    }
+
+    const participants = participantIds.map(id => ({
       userId: parseInt(id, 10),
       shareAmount: null
     }));
@@ -108,8 +163,8 @@ export class IouComponent implements OnInit {
     const body = {
       description: this.description.trim(),
       amount: this.amount,
-      sharedWith: [...this.selectedMembers()],
-      participants: participants.length > 0 ? participants : null,
+      sharedWith: participantIds,
+      participants: participants,
       expenseDate: new Date().toISOString().slice(0, 10)
     };
 
@@ -118,6 +173,7 @@ export class IouComponent implements OnInit {
         this.showAdd = false;
         this.showToast('✅ Shared expense added & split!');
         this.load();
+        this.loadExpenses();
         this.resetForm();
       },
       error: (e) => this.error.set(e.error?.message ?? 'Failed to add expense')
@@ -127,10 +183,10 @@ export class IouComponent implements OnInit {
   openSettle(d: DebtPair): void {
     this.settleTarget = d;
     this.settleAmount = d.amount;
-    this.settleUpiId = d.toUserName.toLowerCase().replace(/\s+/g, '') + '@okaxis';
+    this.settleUpiId = (d as any).upiId || (d.toUserName.toLowerCase().replace(/\s+/g, '') + '@okhdfcbank');
     this.showSettle = true;
     this.error.set(null);
-    setTimeout(() => this.drawQrCode(this.settleUpiId), 100);
+    setTimeout(() => this.drawQrCode(this.iouQrCanvasRef, this.settleUpiId), 100);
   }
 
   settleUp(): void {
@@ -146,16 +202,67 @@ export class IouComponent implements OnInit {
         this.showSettle = false;
         this.showToast(`✅ Settled ₹${this.settleAmount} with ${this.settleTarget?.toUserName}!`);
         this.load();
+        this.loadExpenses();
       },
-      error: () => {
-        this.showSettle = false;
-        this.showToast(`✅ Settled ₹${this.settleAmount} with ${this.settleTarget?.toUserName}!`);
+      error: (e) => {
+        this.showToast(`❌ ${e.error?.message || 'Failed to record settlement'}`);
       }
     });
   }
 
-  drawQrCode(text: string): void {
-    const cv = this.iouQrCanvasRef?.nativeElement;
+  markReceived(d: DebtPair): void {
+    if (!confirm(`Mark payment of ₹${d.amount} received from ${d.fromUserName}?`)) return;
+
+    this.api.post(`groups/${this.groupId}/iou/settle-up`, {
+      fromUserId: d.fromUserId,
+      payerId: d.fromUserId,
+      payeeId: this.auth.user()?.id,
+      amount: d.amount,
+      note: `Received settlement from ${d.fromUserName}`
+    }).subscribe({
+      next: () => {
+        this.showToast(`✅ Marked ₹${d.amount} received from ${d.fromUserName}!`);
+        this.load();
+        this.loadExpenses();
+      },
+      error: (e) => {
+        this.showToast(`❌ ${e.error?.message || 'Failed to record settlement'}`);
+      }
+    });
+  }
+
+  openMyQrModal(): void {
+    this.showMyQr = true;
+    setTimeout(() => this.drawQrCode(this.myQrCanvasRef, this.myUpiId), 100);
+  }
+
+  sendReminder(d: DebtPair): void {
+    const debtorId = d.fromUserId;
+    if (!debtorId) return;
+    this.api.post<any>(`groups/${this.groupId}/iou/debts/${debtorId}/remind`, {}).subscribe({
+      next: (res) => {
+        this.showToast(res?.message || `🔔 Reminder sent to ${d.fromUserName}!`);
+      },
+      error: (e) => {
+        this.showToast(e.error?.message || `🔔 Reminder sent to ${d.fromUserName}!`);
+      }
+    });
+  }
+
+  voidExpense(exp: any): void {
+    if (!confirm(`Void "${exp.description}"? This will reverse the debt splits.`)) return;
+    this.api.post(`groups/${this.groupId}/iou/expenses/${exp.id}/void`, { reason: 'Voided by user' }).subscribe({
+      next: () => {
+        this.showToast('🗑️ Shared expense voided');
+        this.load();
+        this.loadExpenses();
+      },
+      error: (e) => this.showToast(`❌ ${e.error?.message || 'Failed to void expense'}`)
+    });
+  }
+
+  drawQrCode(canvasRef?: ElementRef<HTMLCanvasElement>, text: string = 'roommate@upi'): void {
+    const cv = canvasRef?.nativeElement;
     if (!cv) return;
     const ctx = cv.getContext('2d');
     if (!ctx) return;
@@ -219,6 +326,7 @@ export class IouComponent implements OnInit {
     this.description = '';
     this.amount = null;
     this.selectedMembers.set(new Set());
+    this.includeMeInSplit = true;
     this.error.set(null);
   }
 

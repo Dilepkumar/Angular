@@ -18,9 +18,9 @@
         </svg>
       </button>
       <div>
-        <div class="text-xl font-black tracking-tight flex items-center gap-2" style="color: var(--text);">
+        <div class="text-xl font-black tracking-tight flex items-center gap-2 flex-wrap" style="color: var(--text);">
           <span>📅 Fixed Recurring Bills</span>
-          <span class="text-xs font-black px-2 py-0.5 rounded-full uppercase"
+          <span class="text-xs font-black px-2.5 py-0.5 rounded-full uppercase"
                 style="background: color-mix(in srgb, var(--p1) 14%, transparent); color: var(--p1);">
             {{ groupName() }}
           </span>
@@ -31,18 +31,40 @@
       </div>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="flex items-center gap-2">
+    <!-- Action Buttons & Month Navigator -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <!-- Month Switcher -->
+      <div class="flex items-center rounded-xl border p-1 shadow-sm"
+           style="background: var(--card); border-color: var(--border);">
+        <button type="button"
+                (click)="prevMonth()"
+                class="w-7 h-7 rounded-lg flex items-center justify-center transition hover:bg-black/5 cursor-pointer"
+                style="color: var(--text);"
+                title="Previous Month">
+          ‹
+        </button>
+        <span class="text-xs font-black px-2" style="color: var(--text);">
+          {{ formattedMonth() }}
+        </span>
+        <button type="button"
+                (click)="nextMonth()"
+                class="w-7 h-7 rounded-lg flex items-center justify-center transition hover:bg-black/5 cursor-pointer"
+                style="color: var(--text);"
+                title="Next Month">
+          ›
+        </button>
+      </div>
+
       @if (isAdmin) {
         <button type="button"
                 (click)="generateNextMonth()"
-                class="btns py-2 px-3 text-xs font-black">
+                class="btns py-2 px-3 text-xs font-black cursor-pointer">
           Generate Next Month
         </button>
       }
       <button type="button"
               (click)="showAdd = true"
-              class="btn py-2 px-4 text-xs font-black shadow-md flex items-center gap-1.5">
+              class="btn py-2 px-4 text-xs font-black shadow-md flex items-center gap-1.5 cursor-pointer">
         <span>＋ Create Bill</span>
       </button>
     </div>
@@ -64,10 +86,10 @@
         </div>
       </div>
       <div class="text-3xl font-black tracking-tight mb-1" style="color: var(--warn);">
-        ₹{{ (overview()?.totalDue || 12000) | number:'1.0-0' }}
+        ₹{{ (overview()?.totalDue ?? 0) | number:'1.0-0' }}
       </div>
       <div class="text-xs font-semibold" style="color: var(--t2);">
-        Pending payment from flatmates
+        Pending payment across flatmates for {{ formattedMonth() }}
       </div>
     </div>
 
@@ -82,10 +104,10 @@
         </div>
       </div>
       <div class="text-3xl font-black tracking-tight mb-1" style="color: var(--ok);">
-        ₹{{ (overview()?.totalPaid || 36700) | number:'1.0-0' }}
+        ₹{{ (overview()?.totalPaid ?? 0) | number:'1.0-0' }}
       </div>
       <div class="text-xs font-semibold" style="color: var(--t2);">
-        Successfully paid across recurring bills
+        Successfully paid across recurring bills for {{ formattedMonth() }}
       </div>
     </div>
 
@@ -100,10 +122,15 @@
       @for (bill of overview()!.bills; track bill.id) {
         <div class="billc">
           <div class="flex justify-between items-start mb-3">
-            <div>
-              <div class="text-2xl mb-1">📋</div>
-              <div class="text-base font-extrabold" style="color: var(--text);">{{ bill.billName }}</div>
-              <div class="text-xs font-semibold" style="color: var(--t3);">{{ bill.dueDate }}</div>
+            <div class="flex items-start gap-2.5">
+              <div class="text-3xl p-2 rounded-2xl flex items-center justify-center"
+                   style="background: color-mix(in srgb, var(--p1) 12%, transparent);">
+                {{ billIcon(bill.billName) }}
+              </div>
+              <div>
+                <div class="text-base font-extrabold" style="color: var(--text);">{{ bill.billName }}</div>
+                <div class="text-xs font-semibold" style="color: var(--t3);">{{ bill.dueDate }}</div>
+              </div>
             </div>
             <div class="text-right">
               <div class="text-2xl font-black" style="color: var(--p1);">₹{{ bill.amount | number:'1.0-0' }}</div>
@@ -117,80 +144,74 @@
           </div>
 
           <!-- Roommate Splits Checklist -->
-          <div class="sl mb-2">Roommate Status</div>
+          <div class="sl mb-2 flex justify-between items-center">
+            <span>Roommate Checklist</span>
+            <span class="text-[10px] font-bold" style="color: var(--t3);">
+              {{ bill.splits.length }} flatmates
+            </span>
+          </div>
+          
           <div class="space-y-1.5 mb-4">
             @for (s of bill.splits; track s.id) {
-              <div class="flex justify-between items-center text-xs">
-                <span style="color: var(--t2);">{{ s.userName }} (₹{{ s.shareAmount }})</span>
+              <div class="flex justify-between items-center text-xs p-1.5 rounded-xl transition hover:bg-black/5">
+                <span class="font-medium" style="color: var(--text);">
+                  {{ s.userName }}
+                  <span class="font-bold text-[11px]" style="color: var(--t2);">(₹{{ s.shareAmount | number:'1.0-0' }})</span>
+                </span>
+
                 @if (s.isPaid) {
                   <span class="pk">PAID ✓</span>
                 } @else {
                   <div class="flex items-center gap-1.5">
                     <span class="pp">PENDING</span>
-                    <button type="button"
-                            (click)="markPaid(s)"
-                            class="text-[10px] font-black underline"
-                            style="color: var(--p1);">
-                      Mark Paid
-                    </button>
+                    @if (canMark(s)) {
+                      <button type="button"
+                              (click)="markPaid(s)"
+                              class="text-[11px] font-black underline cursor-pointer"
+                              style="color: var(--p1);">
+                        Mark Paid
+                      </button>
+                    }
                   </div>
                 }
               </div>
             }
           </div>
 
-          <button type="button"
-                  (click)="showToast('📨 Reminder sent to pending flatmates!')"
-                  class="btn py-2 text-xs font-black">
-            Send Reminder
-          </button>
+          <div class="flex items-center gap-2 pt-1 border-t" style="border-color: var(--border);">
+            <button type="button"
+                    (click)="sendReminder(bill)"
+                    class="btn flex-1 py-2 text-xs font-black cursor-pointer">
+              📨 Send Reminder
+            </button>
+
+            @if (isAdmin) {
+              <button type="button"
+                      (click)="deleteBill(bill)"
+                      class="btns py-2 px-3 text-xs font-black cursor-pointer hover:border-red-400 hover:text-red-500"
+                      title="Deactivate recurring bill">
+                🗑️
+              </button>
+            }
+          </div>
         </div>
       }
     } @else {
-      <!-- Prototype recurring bills layout -->
-      @for (bill of fallbackBills; track bill.id) {
-        <div class="billc">
-          <div class="flex justify-between items-start mb-3">
-            <div>
-              <div class="text-2xl mb-1">{{ bill.icon }}</div>
-              <div class="text-base font-extrabold" style="color: var(--text);">{{ bill.billName }}</div>
-              <div class="text-xs font-semibold" style="color: var(--t3);">{{ bill.dueNote }}</div>
-            </div>
-            <div class="text-right">
-              <div class="text-2xl font-black" style="color: var(--p1);">₹{{ bill.amount | number:'1.0-0' }}</div>
-              <div class="text-xs font-bold" style="color: var(--t3);">₹{{ bill.perHead }} / head</div>
-            </div>
-          </div>
-
-          <div class="sl mb-2">Roommate Status</div>
-          <div class="space-y-1.5 mb-4">
-            @for (s of bill.splits; track s.id) {
-              <div class="flex justify-between items-center text-xs">
-                <span style="color: var(--t2);">{{ s.userName }}</span>
-                @if (s.isPaid) {
-                  <span class="pk">PAID</span>
-                } @else {
-                  <div class="flex items-center gap-1.5">
-                    <span class="pp">PENDING</span>
-                    <button type="button"
-                            (click)="s.isPaid = true; showToast('✅ Marked ' + s.userName + ' as paid!')"
-                            class="text-[10px] font-black underline cursor-pointer"
-                            style="color: var(--p1);">
-                      Mark Paid
-                    </button>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-
-          <button type="button"
-                  (click)="showToast('📨 Reminder sent for ' + bill.billName)"
-                  class="btn py-2 text-xs font-black">
-            Send Reminder
-          </button>
-        </div>
-      }
+      <!-- Dynamic Empty State: No Bills for this month -->
+      <div class="col-span-full card p-10 text-center rounded-3xl flex flex-col items-center justify-center">
+        <div class="text-5xl mb-3">📋</div>
+        <h3 class="text-lg font-black tracking-tight mb-1" style="color: var(--text);">
+          No recurring bills for {{ formattedMonth() }}
+        </h3>
+        <p class="text-xs font-medium max-w-sm mb-5" style="color: var(--t2);">
+          Add regular monthly flat expenses like Rent, Wi-Fi, Electricity, or Maid service. RoomLedger splits them equally and tracks who paid.
+        </p>
+        <button type="button"
+                (click)="showAdd = true"
+                class="btn py-2.5 px-5 text-xs font-black shadow-md inline-flex items-center gap-1.5 cursor-pointer max-w-xs">
+          <span>＋ Create First Bill</span>
+        </button>
+      </div>
     }
 
   </div>
@@ -225,7 +246,7 @@
           <input class="inp"
                  type="text"
                  [(ngModel)]="billName"
-                 placeholder="e.g. WiFi, Room Rent, Electricity" />
+                 placeholder="e.g. WiFi, Room Rent, Electricity, Maid" />
         </div>
 
         <div>
@@ -260,7 +281,7 @@
 
         <p class="text-[11px] font-semibold p-3 rounded-xl border"
            style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
-          ℹ️ This bill will be split equally among all active flat members automatically.
+          ℹ️ This bill will automatically be split equally among all active flatmates for {{ formattedMonth() }}.
         </p>
 
         @if (error()) {
@@ -270,7 +291,7 @@
         <button type="button"
                 (click)="addBill()"
                 [disabled]="!billName.trim() || !amount || amount <= 0"
-                class="btn w-full py-3.5 text-sm font-black shadow-md disabled:opacity-50">
+                class="btn w-full py-3.5 text-sm font-black shadow-md disabled:opacity-50 cursor-pointer">
           Create Bill &amp; Split
         </button>
       </div>

@@ -490,6 +490,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     setTimeout(() => this.toastMessage.set(null), 3200);
   }
 
+  goNotifications(): void {
+    this.router.navigate(['/notifications']);
+  }
+
   goProfile(): void {
     this.router.navigate(['/profile']);
   }
