@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PopupService } from '../../core/services/popup.service';
 import { MyBalance, DebtPair } from '../shared/models';
 
 interface GroupMemberVm {
@@ -24,6 +25,7 @@ export class IouComponent implements OnInit {
   auth = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private popup = inject(PopupService);
 
   @ViewChild('iouQrCanvas') iouQrCanvasRef?: ElementRef<HTMLCanvasElement>;
   @ViewChild('myQrCanvas') myQrCanvasRef?: ElementRef<HTMLCanvasElement>;
@@ -151,7 +153,7 @@ export class IouComponent implements OnInit {
     }
 
     if (participantIds.length === 0) {
-      this.error.set('Please select at least one roommate to split with');
+      this.popup.warning('Please select at least one roommate to split with');
       return;
     }
 
@@ -176,7 +178,7 @@ export class IouComponent implements OnInit {
         this.loadExpenses();
         this.resetForm();
       },
-      error: (e) => this.error.set(e.error?.message ?? 'Failed to add expense')
+      error: (e) => this.popup.error(e.error?.message ?? 'Failed to add expense')
     });
   }
 
@@ -210,8 +212,15 @@ export class IouComponent implements OnInit {
     });
   }
 
-  markReceived(d: DebtPair): void {
-    if (!confirm(`Mark payment of ₹${d.amount} received from ${d.fromUserName}?`)) return;
+  async markReceived(d: DebtPair): Promise<void> {
+    const confirmed = await this.popup.confirm({
+      title: 'Confirm Payment Received',
+      message: `Mark payment of ₹${d.amount} received from ${d.fromUserName}?`,
+      confirmText: 'Mark Received',
+      cancelText: 'Cancel',
+      type: 'primary'
+    });
+    if (!confirmed) return;
 
     this.api.post(`groups/${this.groupId}/iou/settle-up`, {
       fromUserId: d.fromUserId,
@@ -249,8 +258,16 @@ export class IouComponent implements OnInit {
     });
   }
 
-  voidExpense(exp: any): void {
-    if (!confirm(`Void "${exp.description}"? This will reverse the debt splits.`)) return;
+  async voidExpense(exp: any): Promise<void> {
+    const confirmed = await this.popup.confirm({
+      title: 'Void Shared Expense',
+      message: `Void "${exp.description}"? This will reverse the debt splits for all participants.`,
+      confirmText: 'Void Expense',
+      cancelText: 'Keep Expense',
+      type: 'danger'
+    });
+    if (!confirmed) return;
+
     this.api.post(`groups/${this.groupId}/iou/expenses/${exp.id}/void`, { reason: 'Voided by user' }).subscribe({
       next: () => {
         this.showToast('🗑️ Shared expense voided');
@@ -297,10 +314,10 @@ export class IouComponent implements OnInit {
           dk = (r === 0 || r === 6 || c === 0 || c === 6) || (r >= 2 && r <= 4 && c >= 2 && c <= 4);
         } else if (tr) {
           const lr = r, lc = c - (m - 7);
-          dk = (lr === 0 || lr === 6 || lc === 0 || lc === 6) || (lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4);
+          dk = (lr === 0 || lr === 6 || lc === 0 || lc === 6) || (lr >= 2 && r <= 4 && c >= 2 && c <= 4);
         } else if (bl) {
           const lr = r - (m - 7), lc = c;
-          dk = (lr === 0 || lr === 6 || lc === 0 || lc === 6) || (lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4);
+          dk = (lr === 0 || lr === 6 || lc === 0 || lc === 6) || (lr >= 2 && r <= 4 && c >= 2 && c <= 4);
         } else {
           dk = r === 6 || c === 6 ? (r + c) % 2 === 0 : (rnd(r, c) & 1) === 1;
         }
@@ -335,8 +352,13 @@ export class IouComponent implements OnInit {
   }
 
   showToast(msg: string): void {
-    this.toastMessage.set(msg);
-    setTimeout(() => this.toastMessage.set(null), 3200);
+    if (msg.startsWith('❌')) {
+      this.popup.error(msg.replace(/^❌\s*/, ''));
+    } else if (msg.startsWith('🔔') || msg.startsWith('ℹ️')) {
+      this.popup.info(msg);
+    } else {
+      this.popup.success(msg);
+    }
   }
 
   goToDashboard(): void {

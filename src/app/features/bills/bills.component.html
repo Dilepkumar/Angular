@@ -128,7 +128,15 @@
                 {{ billIcon(bill.billName) }}
               </div>
               <div>
-                <div class="text-base font-extrabold" style="color: var(--text);">{{ bill.billName }}</div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <div class="text-base font-extrabold" style="color: var(--text);">{{ bill.billName }}</div>
+                  @if (bill.paidFromPool) {
+                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-sm"
+                          style="background: rgba(16, 185, 129, 0.16); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+                      🏊 Paid from Pool ✓
+                    </span>
+                  }
+                </div>
                 <div class="text-xs font-semibold" style="color: var(--t3);">{{ bill.dueDate }}</div>
               </div>
             </div>
@@ -159,8 +167,10 @@
                   <span class="font-bold text-[11px]" style="color: var(--t2);">(₹{{ s.shareAmount | number:'1.0-0' }})</span>
                 </span>
 
-                @if (s.isPaid) {
-                  <span class="pk">PAID ✓</span>
+                @if (bill.paidFromPool || s.isPaid) {
+                  <span class="pk" [style.background]="bill.paidFromPool ? 'rgba(16, 185, 129, 0.15)' : ''" [style.color]="bill.paidFromPool ? '#10b981' : ''">
+                    {{ bill.paidFromPool ? 'POOL PAID ✓' : 'PAID ✓' }}
+                  </span>
                 } @else {
                   <div class="flex items-center gap-1.5">
                     <span class="pp">PENDING</span>
@@ -279,32 +289,80 @@
           </div>
         </div>
 
-        <p class="text-[11px] font-semibold p-3 rounded-xl border"
-           style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
-          ℹ️ This bill will automatically be split equally among all active flatmates for {{ formattedMonth() }}.
-        </p>
+        <!-- FUNDING SOURCE SELECTOR (CASE 1 vs CASE 2) -->
+        <div class="space-y-2">
+          <label class="sl block">PAYMENT &amp; FUNDING SOURCE</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <!-- Option 1: Split Among Roommates (Standard) -->
+            <button type="button"
+                    (click)="payFromPool.set(false)"
+                    class="p-3 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between"
+                    [style.background]="!payFromPool() ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'var(--bg2)'"
+                    [style.border-color]="!payFromPool() ? 'var(--p1)' : 'var(--border)'">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-black" [style.color]="!payFromPool() ? 'var(--p1)' : 'var(--text)'">
+                  👥 Split Roommates
+                </span>
+                @if (!payFromPool()) {
+                  <span class="text-xs font-black" style="color: var(--p1);">●</span>
+                }
+              </div>
+              <div class="text-[11px] font-medium" style="color: var(--t2);">
+                Equal splits created with pending payment status
+              </div>
+            </button>
 
-        @if (error()) {
-          <p class="text-xs font-bold text-red-500">{{ error() }}</p>
+            <!-- Option 2: Pay from Central Room Pool -->
+            <button type="button"
+                    (click)="payFromPool.set(true)"
+                    class="p-3 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between"
+                    [style.background]="payFromPool() ? 'color-mix(in srgb, #10b981 14%, transparent)' : 'var(--bg2)'"
+                    [style.border-color]="payFromPool() ? '#10b981' : 'var(--border)'">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-black" [style.color]="payFromPool() ? '#10b981' : 'var(--text)'">
+                  🏊 Pay from Pool
+                </span>
+                @if (payFromPool()) {
+                  <span class="text-xs font-black" style="color: #10b981;">●</span>
+                }
+              </div>
+              <div class="text-[11px] font-bold" [style.color]="payFromPool() ? '#10b981' : 'var(--t2)'">
+                Pool Bal: ₹{{ currentPoolBalance() | number:'1.0-0' }}
+              </div>
+            </button>
+          </div>
+        </div>
+
+        @if (payFromPool()) {
+          <div class="text-[11px] font-semibold p-3 rounded-xl border space-y-1"
+               style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.25); color: #059669;">
+            <div class="font-bold flex items-center gap-1.5">
+              <span>🏊 Pay from Central Pool</span>
+            </div>
+            <div>
+              Amount will be deducted from current pool balance and recorded under Pool Expenses. All roommates will be automatically marked as <strong>Paid ✓</strong>.
+            </div>
+            @if (amount && amount > currentPoolBalance()) {
+              <div class="font-bold text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                ⚠️ Note: Amount (₹{{ amount }}) exceeds pool balance (₹{{ currentPoolBalance() | number:'1.0-0' }}).
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="text-[11px] font-semibold p-3 rounded-xl border"
+             style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
+            ℹ️ This bill will automatically be split equally among all active flatmates for {{ formattedMonth() }}.
+          </p>
         }
 
         <button type="button"
                 (click)="addBill()"
                 [disabled]="!billName.trim() || !amount || amount <= 0"
                 class="btn w-full py-3.5 text-sm font-black shadow-md disabled:opacity-50 cursor-pointer">
-          Create Bill &amp; Split
+          {{ payFromPool() ? 'Pay from Pool & Record Bill' : 'Create Bill & Split' }}
         </button>
       </div>
 
-    </div>
-  </div>
-}
-
-<!-- Toast Feedback Popup -->
-@if (toastMessage()) {
-  <div class="toast flex items-center gap-2">
-    <div style="font-size: 13px; font-weight: 800; color: var(--text);">
-      {{ toastMessage() }}
     </div>
   </div>
 }

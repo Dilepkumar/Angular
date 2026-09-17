@@ -51,6 +51,7 @@ export interface Bill {
   paidByUserId?: number;
   paidByName?: string;
   dueDate?: string;
+  paidFromPool?: boolean;
   splits: BillSplit[];
 }
 

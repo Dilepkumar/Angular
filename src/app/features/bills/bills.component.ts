@@ -1,15 +1,16 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PopupService } from '../../core/services/popup.service';
 import { MonthlyBillsOverview, BillSplit } from '../shared/models';
 
 @Component({
   selector: 'app-bills',
   standalone: true,
-  imports: [CommonModule, FormsModule, DecimalPipe],
+  imports: [CommonModule, FormsModule],
   templateUrl: './bills.component.html',
   styleUrls: ['./bills.component.scss']
 })
@@ -18,29 +19,42 @@ export class BillsComponent implements OnInit {
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private popup = inject(PopupService);
 
   groupId = '';
   groupName = signal('Apartment 402');
   overview = signal<MonthlyBillsOverview | null>(null);
   isAdmin = false;
   showAdd = false;
-  toastMessage = signal<string | null>(null);
 
+  // Add bill form state
   billName = '';
   amount: number | null = null;
   billingMonth = new Date().toISOString().slice(0, 7);
   dueDay = 5;
-  error = signal<string | null>(null);
+  payFromPool = signal<boolean>(false);
+  currentPoolBalance = signal<number>(0);
+
   loading = signal(false);
 
   ngOnInit(): void {
     this.groupId = this.route.snapshot.paramMap.get('groupId') || localStorage.getItem('rl_group_id') || '1';
     this.load();
+    this.loadPoolBalance();
 
     this.api.get<any>(`groups/${this.groupId}`).subscribe({
       next: (g) => {
         if (g?.groupName) this.groupName.set(g.groupName);
         this.isAdmin = g?.myRole === 'Admin';
+      },
+      error: () => {}
+    });
+  }
+
+  loadPoolBalance(): void {
+    this.api.get<any>(`groups/${this.groupId}/pool/balance`).subscribe({
+      next: (b) => {
+        this.currentPoolBalance.set(b?.currentBalance ?? 0);
       },
       error: () => {}
     });
@@ -74,6 +88,7 @@ export class BillsComponent implements OnInit {
               billName: b.billName,
               amount: b.totalAmount || b.amount,
               dueDate: b.dueDay ? `Due on ${b.dueDay}th of month` : 'Due this month',
+              paidFromPool: b.paidFromPool ?? false,
               splits: splitsMapped
             };
           });
@@ -139,23 +154,49 @@ export class BillsComponent implements OnInit {
     return '📋';
   }
 
-  addBill(): void {
-    if (!this.billName.trim() || !this.amount || this.amount <= 0) return;
-    
-    this.api.post(`groups/${this.groupId}/bills`, {
+  openAddModal(): void {
+    this.showAdd = true;
+    this.loadPoolBalance();
+  }
+
+  async addBill(): Promise<void> {
+    if (!this.billName.trim()) {
+      this.popup.warning('Please enter a bill name (e.g. Wi-Fi, Electricity, Maid).');
+      return;
+    }
+    if (!this.amount || this.amount <= 0) {
+      this.popup.warning('Please enter a valid bill amount greater than zero.');
+      return;
+    }
+
+    if (this.payFromPool() && this.amount > this.currentPoolBalance()) {
+      const proceed = await this.popup.confirm({
+        title: 'Low Pool Balance',
+        message: `The bill amount (₹${this.amount}) exceeds the current pool balance (₹${this.currentPoolBalance()}). Do you still want to deduct it from the pool?`,
+        confirmText: 'Pay from Pool Anyway',
+        cancelText: 'Cancel',
+        type: 'warning'
+      });
+      if (!proceed) return;
+    }
+
+    this.api.post<any>(`groups/${this.groupId}/bills`, {
       billName: this.billName.trim(),
       amount: this.amount,
       billingMonth: `${this.billingMonth}-01`,
-      dueDayOfMonth: this.dueDay || 5
+      dueDayOfMonth: this.dueDay || 5,
+      payFromPool: this.payFromPool()
     }).subscribe({
-      next: () => {
+      next: (res) => {
         this.showAdd = false;
         this.billName = '';
         this.amount = null;
-        this.showToast('✅ Bill created and split across roommates!');
+        this.payFromPool.set(false);
+        this.popup.success(res?.message || '✅ Bill successfully created!');
         this.load();
+        this.loadPoolBalance();
       },
-      error: (e) => this.error.set(e.error?.message ?? 'Failed to create bill')
+      error: (e) => this.popup.error(e.error?.message ?? 'Failed to create bill')
     });
   }
 
@@ -163,11 +204,11 @@ export class BillsComponent implements OnInit {
     if (!split.id) return;
     this.api.post(`groups/${this.groupId}/bills/splits/${split.id}/mark-paid`, {}).subscribe({
       next: () => {
-        this.showToast('✅ Payment status updated!');
+        this.popup.success('✅ Payment status updated!');
         this.load();
       },
       error: (e) => {
-        this.showToast(`❌ ${e.error?.message || 'Failed to update payment status'}`);
+        this.popup.error(`❌ ${e.error?.message || 'Failed to update payment status'}`);
       }
     });
   }
@@ -178,38 +219,55 @@ export class BillsComponent implements OnInit {
     this.api.post<any>(`groups/${this.groupId}/bills/${id}/remind`, {}).subscribe({
       next: (res) => {
         const count = res?.count ?? 0;
-        this.showToast(res?.message || `📨 Reminder sent to ${count} flatmate(s)!`);
+        this.popup.success(res?.message || `📨 Reminder sent to ${count} flatmate(s)!`);
       },
       error: (e) => {
-        this.showToast(e.error?.message || '📨 Reminder sent to pending flatmates!');
+        this.popup.error(e.error?.message || 'Failed to send reminder to pending flatmates.');
       }
     });
   }
 
-  deleteBill(bill: any): void {
-    if (!confirm(`Are you sure you want to deactivate "${bill.billName}"?`)) return;
+  async deleteBill(bill: any): Promise<void> {
+    const confirmed = await this.popup.confirm({
+      title: 'Deactivate Bill',
+      message: `Are you sure you want to deactivate "${bill.billName}"? This will stop recurring splits for future months.`,
+      confirmText: 'Deactivate',
+      cancelText: 'Keep Active',
+      type: 'danger'
+    });
+    if (!confirmed) return;
+
     const id = bill.id || bill.billId;
     this.api.delete<any>(`groups/${this.groupId}/bills/${id}`).subscribe({
       next: () => {
-        this.showToast(`🗑️ "${bill.billName}" deactivated`);
+        this.popup.success(`🗑️ "${bill.billName}" deactivated`);
         this.load();
       },
-      error: (e) => this.showToast(`❌ ${e.error?.message || 'Failed to deactivate bill'}`)
+      error: (e) => this.popup.error(`❌ ${e.error?.message || 'Failed to deactivate bill'}`)
     });
   }
 
-  generateNextMonth(): void {
-    if (!confirm("Generate next month's recurring bills?")) return;
+  async generateNextMonth(): Promise<void> {
+    const confirmed = await this.popup.confirm({
+      title: 'Generate Next Month Bills',
+      message: "Generate recurring bills and member splits for next month?",
+      confirmText: 'Generate Now',
+      cancelText: 'Cancel',
+      type: 'primary'
+    });
+    if (!confirmed) return;
+
     this.api.post(`groups/${this.groupId}/bills/generate-next-month`, {}).subscribe({
       next: () => {
-        this.showToast("✅ Next month's bills generated!");
+        this.popup.success("✅ Next month's bills generated!");
         this.nextMonth();
       },
-      error: (e) => this.showToast(`❌ ${e.error?.message || 'Failed to generate bills'}`)
+      error: (e) => this.popup.error(`❌ ${e.error?.message || 'Failed to generate bills'}`)
     });
   }
 
   progress(bill: any): number {
+    if (bill.paidFromPool) return 100;
     const splits = bill.splits ?? [];
     if (!splits.length) return 0;
     const paid = splits.filter((s: any) => s.isPaid).length;
@@ -222,11 +280,6 @@ export class BillsComponent implements OnInit {
 
   canMark(s: any): boolean {
     return this.isAdmin || this.isMine(s);
-  }
-
-  showToast(msg: string): void {
-    this.toastMessage.set(msg);
-    setTimeout(() => this.toastMessage.set(null), 3200);
   }
 
   goToDashboard(): void {

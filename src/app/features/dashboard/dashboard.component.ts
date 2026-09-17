@@ -341,7 +341,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   // ── Page Navigation & Expense Flow ──
   openExpenseModal(): void {
-    this.goToPool('expense');
+    this.router.navigate(['/g', this.groupId, 'log-expense']);
   }
 
   goToPool(action?: string): void {
@@ -350,6 +350,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     } else {
       this.router.navigate(['/g', this.groupId, 'pool']);
     }
+  }
+
+  goToHistory(): void {
+    this.router.navigate(['/g', this.groupId, 'history']);
   }
 
   goToBills(): void {

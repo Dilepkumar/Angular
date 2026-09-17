@@ -8,6 +8,11 @@
   font-weight: 900 !important;
   position: relative;
 
+  i {
+    filter: drop-shadow(0 2px 6px rgba(99, 230, 190, 0.6));
+    transform: scale(1.12);
+  }
+
   &::after {
     content: '';
     position: absolute;
@@ -15,6 +20,19 @@
     width: 28px;
     height: 3px;
     border-radius: 0 0 3px 3px;
-    background: var(--p1);
+    background: rgb(99, 230, 190);
+    box-shadow: 0 1px 6px rgba(99, 230, 190, 0.7);
+  }
+}
+
+.active-center-tab {
+  div {
+    transform: scale(1.08);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.6) !important;
+    border-color: rgb(99, 230, 190) !important;
+  }
+  span {
+    color: rgb(99, 230, 190) !important;
+    font-weight: 900 !important;
   }
 }

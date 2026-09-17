@@ -1,6 +1,13 @@
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
+export interface NavTab {
+  path: string;
+  label: string;
+  iconClass: string;
+  isCenter?: boolean;
+}
+
 @Component({
   selector: 'app-tabs',
   standalone: true,
@@ -9,10 +16,11 @@ import { RouterModule } from '@angular/router';
   styleUrls: ['./tabs.component.scss']
 })
 export class TabsComponent {
-  tabs = [
-    { path: 'dashboard', icon: '🏠', label: 'Home' },
-    { path: 'iou', icon: '🤝', label: 'Settle' },
-    { path: 'bills', icon: '📋', label: 'Bills' },
-    { path: 'pool', icon: '🛒', label: 'Pool' },
+  tabs: NavTab[] = [
+    { path: 'dashboard', label: 'Home', iconClass: 'fa-solid fa-house' },
+    { path: 'iou', label: 'Settle', iconClass: 'fa-solid fa-handshake' },
+    { path: 'log-expense', label: 'Add', iconClass: 'fa-solid fa-plus', isCenter: true },
+    { path: 'bills', label: 'Bills', iconClass: 'fa-solid fa-receipt' },
+    { path: 'pool', label: 'Pool', iconClass: 'fa-solid fa-wallet' },
   ];
 }

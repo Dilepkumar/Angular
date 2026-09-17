@@ -3,21 +3,38 @@
     <router-outlet />
   </main>
 
-  <!-- PWA Bottom Navigation Bar (4 icons: Home, Settle, Bills, Pool) -->
-  <nav class="fixed bottom-0 inset-x-0 grid grid-cols-4 z-40 shadow-lg border-t"
+  <!-- PWA Bottom Navigation Bar (5 items: Home, Settle, Center Plus, Bills, Pool) -->
+  <nav class="fixed bottom-0 inset-x-0 grid grid-cols-5 z-40 shadow-lg border-t"
        style="background: var(--card); border-color: var(--border); padding-bottom: max(env(safe-area-inset-bottom, 0px), 6px);">
     @for (tab of tabs; track tab.path) {
-      <a [routerLink]="tab.path"
-         routerLinkActive="active-tab"
-         class="flex flex-col items-center justify-center h-16 sm:h-18 transition-all group select-none no-underline"
-         style="color: var(--t3);">
-        <span class="text-2xl transition-transform group-hover:scale-110 group-active:scale-95 leading-none mb-1">
-          {{ tab.icon }}
-        </span>
-        <span class="text-[11px] font-extrabold tracking-tight">
-          {{ tab.label }}
-        </span>
-      </a>
+      @if (tab.isCenter) {
+        <!-- Center Action Plus Button -->
+        <a [routerLink]="tab.path"
+           routerLinkActive="active-center-tab"
+           class="flex flex-col items-center justify-center relative select-none no-underline group -mt-3.5"
+           title="Log New Pool Expense">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform group-hover:scale-105 group-active:scale-95"
+               style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45); border: 3px solid var(--card);">
+            <i class="fa-solid fa-plus text-white text-lg font-black"></i>
+          </div>
+          <span class="text-[10px] font-extrabold tracking-tight mt-0.5" style="color: var(--t3);">
+            {{ tab.label }}
+          </span>
+        </a>
+      } @else {
+        <!-- Standard Tab Items -->
+        <a [routerLink]="tab.path"
+           routerLinkActive="active-tab"
+           class="flex flex-col items-center justify-center h-16 sm:h-18 transition-all group select-none no-underline"
+           style="color: var(--t3);">
+          <span class="text-xl transition-transform group-hover:scale-110 group-active:scale-95 leading-none mb-1">
+            <i [class]="tab.iconClass" style="color: rgb(99, 230, 190);"></i>
+          </span>
+          <span class="text-[11px] font-extrabold tracking-tight">
+            {{ tab.label }}
+          </span>
+        </a>
+      }
     }
   </nav>
 </div>

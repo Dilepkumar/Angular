@@ -1,0 +1,503 @@
+<div class="min-h-screen pb-28" style="background: var(--bg);">
+
+  <!-- ═══════════════════════════════════════════
+       TOP BAR (Header with Back Button)
+  ═══════════════════════════════════════════ -->
+  <header class="sticky top-0 z-20 backdrop-blur-md border-b px-4 sm:px-6 py-3.5 flex items-center justify-between"
+          style="background: color-mix(in srgb, var(--bg) 85%, transparent); border-color: var(--border);">
+    <div class="flex items-center gap-3">
+      <button type="button"
+              (click)="backToPool()"
+              class="w-10 h-10 rounded-2xl flex items-center justify-center border shadow-sm transition active:scale-95 cursor-pointer select-none group"
+              style="background: var(--card); border-color: var(--border); color: var(--text);"
+              title="Back to Pool">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="transition-transform group-hover:-translate-x-0.5">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="text-base sm:text-lg font-black leading-tight flex items-center gap-2" style="color: var(--text);">
+          <span>Log New Pool Expense</span>
+        </h1>
+        <p class="text-[11px] font-semibold" style="color: var(--t3);">
+          Itemized receipt ledger with live balance check
+        </p>
+      </div>
+    </div>
+
+    <!-- Quick Back Link -->
+    <button type="button"
+            (click)="backToPool()"
+            class="text-xs font-bold px-3 py-1.5 rounded-xl border transition hover:opacity-80 cursor-pointer hidden sm:flex items-center gap-1.5"
+            style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
+      <span>Cancel</span>
+    </button>
+  </header>
+
+  <!-- ═══════════════════════════════════════════
+       PAGE CONTENT CONTAINER
+  ═══════════════════════════════════════════ -->
+  <main class="max-w-3xl mx-auto px-4 sm:px-6 pt-5">
+
+    <div class="card p-5 sm:p-7 rounded-3xl shadow-lg border"
+         style="background: var(--card); border-color: var(--border);">
+
+      <div class="space-y-5">
+        
+        <!-- 1. Who Paid? -->
+        <div>
+          <label class="sl block">1. WHO PAID?</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Central Pool Option -->
+            <div (click)="expensePayer.set('pool')"
+                 class="p-4 rounded-2xl cursor-pointer border-2 transition select-none flex items-start gap-3.5"
+                 [style.background]="expensePayer() === 'pool' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'var(--bg2)'"
+                 [style.borderColor]="expensePayer() === 'pool' ? 'var(--p1)' : 'var(--border)'">
+              <div class="text-2xl mt-0.5">🏦</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <div class="text-sm font-black" [style.color]="expensePayer() === 'pool' ? 'var(--p1)' : 'var(--text)'">
+                    Central Pool
+                  </div>
+                  @if (expensePayer() === 'pool') {
+                    <span class="text-xs font-black px-2 py-0.5 rounded-full text-white" style="background: var(--p1);">✓ Selected</span>
+                  }
+                </div>
+                <div class="text-xs font-medium mt-1" style="color: var(--t2);">
+                  Direct deduction from flat room pool
+                </div>
+                <div class="text-[11px] font-bold mt-1.5" style="color: var(--p1);">
+                  Logged by: {{ me?.fullName || 'You' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Paid by Member (Out of pocket) Option -->
+            <div (click)="expensePayer.set('me')"
+                 class="p-4 rounded-2xl cursor-pointer border-2 transition select-none flex items-start gap-3.5"
+                 [style.background]="expensePayer() === 'me' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'var(--bg2)'"
+                 [style.borderColor]="expensePayer() === 'me' ? 'var(--p1)' : 'var(--border)'">
+              <div class="text-2xl mt-0.5">👤</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <div class="text-sm font-black" [style.color]="expensePayer() === 'me' ? 'var(--p1)' : 'var(--text)'">
+                    Paid by Roommate
+                  </div>
+                  @if (expensePayer() === 'me') {
+                    <span class="text-xs font-black px-2 py-0.5 rounded-full text-white" style="background: var(--p1);">✓ Selected</span>
+                  }
+                </div>
+                <div class="text-xs font-medium mt-1" style="color: var(--t2);">
+                  Used personal money · Reimbursed from pool
+                </div>
+                <div class="text-[11px] font-bold mt-1.5" style="color: var(--ok);">
+                  Reimbursement will be granted from pool
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- If Paid by Roommate is selected, show selector for who paid out of pocket -->
+          @if (expensePayer() === 'me') {
+            <div class="mt-3.5 p-4 rounded-2xl border fade-up" style="background: var(--bg2); border-color: var(--border);">
+              <label class="text-xs font-extrabold mb-1.5 block" style="color: var(--text);">
+                Select roommate who spent own money:
+              </label>
+              <select class="inp text-xs font-bold" [ngModel]="paidByMemberId()" (ngModelChange)="paidByMemberId.set($event)">
+                @for (m of memberStatuses(); track m.userId) {
+                  <option [ngValue]="m.userId">
+                    {{ m.userName }} {{ m.userId === me?.id ? '(You)' : '' }}
+                  </option>
+                }
+              </select>
+              <div class="text-[11px] font-semibold mt-2 flex items-start gap-2" style="color: var(--t2);">
+                <span>💡</span>
+                <span>
+                  <strong>{{ getPayerDisplayName() }}</strong> paid out-of-pocket. When logged, ₹{{ expenseTotal || 0 }} is deducted from pool and recorded as settled reimbursement.
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- 2. Expense Name & Dynamic Category -->
+        <div>
+          <label class="sl block">2. EXPENSE DETAILS</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label class="text-[11px] font-bold mb-1 block" style="color: var(--t3);">EXPENSE NAME</label>
+              <input class="inp font-semibold"
+                     type="text"
+                     [(ngModel)]="expenseName"
+                     placeholder="e.g. Zepto, Instamart, Blinkit, Supermarket..." />
+            </div>
+            <div>
+              <label class="text-[11px] font-bold mb-1 block" style="color: var(--t3);">CATEGORY</label>
+              <select class="inp font-semibold" [(ngModel)]="expenseCategory">
+                <option value="" disabled selected>-- Select Category --</option>
+                @for (c of categories; track c) {
+                  <option [value]="c">{{ c }}</option>
+                }
+              </select>
+              @if (expenseCategory === '📦 Other') {
+                <input class="inp mt-2 text-xs font-semibold"
+                       type="text"
+                       [(ngModel)]="customCategory"
+                       placeholder="Specify category (e.g. WiFi, Water cans, Gas...)" />
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Attach Receipt / Bill Photo -->
+        <div>
+          <label class="sl block">3. BILL / RECEIPT PHOTO (OPTIONAL)</label>
+          <div class="p-4 rounded-2xl border" style="background: var(--bg2); border-color: var(--border);">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold" style="color: var(--text);">Upload Bill or Receipt</span>
+              @if (uploadingReceipt()) {
+                <span class="text-[11px] font-bold text-amber-500 animate-pulse">⏳ Uploading bill photo…</span>
+              }
+            </div>
+
+            <input type="file"
+                   #receiptFileInput
+                   accept="image/*"
+                   class="hidden"
+                   (change)="onReceiptPicked($event)" />
+
+            @if (!receiptPreview()) {
+              <div (click)="receiptFileInput.click()"
+                   class="border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition hover:bg-white/70 select-none group"
+                   style="border-color: color-mix(in srgb, var(--p1) 40%, transparent);">
+                <div class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">📸</div>
+                <div class="text-xs sm:text-sm font-black" style="color: var(--p1);">
+                  Click or tap to upload receipt image
+                </div>
+                <div class="text-[11px] font-medium mt-1" style="color: var(--t3);">
+                  Supports JPG, PNG, WebP up to 5 MB (Stored securely via Cloudinary)
+                </div>
+              </div>
+            } @else {
+              <div class="flex items-center justify-between gap-3 p-3 rounded-2xl border"
+                   style="background: var(--card); border-color: var(--border);">
+                <div class="flex items-center gap-3.5">
+                  <img [src]="receiptPreview()"
+                       alt="Receipt Preview"
+                       (click)="viewReceipt(receiptUrl || receiptPreview())"
+                       class="w-16 h-16 object-cover rounded-xl border cursor-pointer hover:opacity-90 shadow-sm transition"
+                       style="border-color: var(--border);"
+                       title="Click to view full photo" />
+                  <div>
+                    <div class="text-xs sm:text-sm font-black flex items-center gap-1.5" style="color: var(--ok);">
+                      <span>✓ Receipt Attached</span>
+                    </div>
+                    <div class="text-[11px] font-semibold mt-0.5" style="color: var(--t3);">
+                      Attached to pool expense record
+                    </div>
+                    <button type="button"
+                            (click)="viewReceipt(receiptUrl || receiptPreview())"
+                            class="text-[11px] font-bold underline cursor-pointer mt-1"
+                            style="color: var(--p1);">
+                      🔍 View full photo
+                    </button>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <button type="button"
+                          (click)="receiptFileInput.click()"
+                          class="text-xs font-bold px-3 py-1.5 rounded-xl border cursor-pointer"
+                          style="background: var(--bg2); border-color: var(--border); color: var(--text);">
+                    Replace
+                  </button>
+                  <button type="button"
+                          (click)="removeReceipt()"
+                          class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold border cursor-pointer"
+                          style="background: color-mix(in srgb, var(--err) 12%, transparent); border-color: color-mix(in srgb, var(--err) 30%, transparent); color: var(--err);"
+                          title="Remove receipt">
+                    ✕
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- 4. Date & Total Spend Grid -->
+        <div>
+          <label class="sl block">4. DATE & TOTAL SPEND</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label class="text-[11px] font-bold mb-1 block" style="color: var(--t3);">EXPENSE DATE</label>
+              <input class="inp font-semibold"
+                     type="date"
+                     [(ngModel)]="expenseDate" />
+            </div>
+            <div>
+              <label class="text-[11px] font-bold mb-1 block" style="color: var(--t3);">TOTAL SPEND (₹)</label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-2xl font-black" style="color: var(--p1);">₹</span>
+                <input class="inp font-black text-2xl"
+                       style="padding-left: 36px;"
+                       type="number"
+                       min="0"
+                       step="any"
+                       [(ngModel)]="expenseTotal"
+                       (ngModelChange)="onTotalSpendChange()"
+                       placeholder="0.00" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Itemized Receipt Box (Live Sub-Items) OR Utility Mode -->
+        @if (!isUtilityBill()) {
+          <div>
+            <label class="sl block">5. ITEMIZED RECEIPT ITEMS</label>
+            <div class="rounded-2xl border overflow-hidden"
+                 style="background: var(--bg2); border-color: var(--border);">
+              <div class="p-3 px-4 border-b flex justify-between items-center" style="border-color: var(--border);">
+                <span class="text-xs font-extrabold" style="color: var(--text);">📋 Itemized Breakdown</span>
+                <span class="text-[10px] font-bold" style="color: var(--t3);">Item Name · Qty · Amount (₹)</span>
+              </div>
+
+              <div class="p-3 space-y-2.5">
+                @for (row of expenseRows; track row.id) {
+                  <div class="flex items-center gap-2 p-1.5 rounded-xl transition hover:bg-white/60">
+                    <div class="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-black shrink-0"
+                         style="background: color-mix(in srgb, var(--p1) 14%, transparent); color: var(--p1);">
+                      {{ row.id < 10 ? '0' + row.id : row.id }}
+                    </div>
+                    <input class="inp py-2 px-2.5 text-xs font-semibold flex-1 min-w-[110px]"
+                           type="text"
+                           [(ngModel)]="row.name"
+                           placeholder="Item name (e.g. Milk, Eggs, Bread)" />
+                    <div class="relative w-20 sm:w-24 shrink-0">
+                      <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold" style="color: var(--t3);">Qty</span>
+                      <input class="inp py-2 pl-8 pr-2 text-xs font-black text-center"
+                             type="number"
+                             min="1"
+                             step="1"
+                             [(ngModel)]="row.qty"
+                             (ngModelChange)="onRowQtyChange(row)"
+                             placeholder="1"
+                             title="Quantity" />
+                    </div>
+                    <div class="relative w-28 sm:w-32 shrink-0">
+                      <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-black" style="color: var(--p1);">₹</span>
+                      <input class="inp py-2 pl-6 pr-2 text-xs font-black"
+                             type="number"
+                             min="0"
+                             step="any"
+                             [(ngModel)]="row.price"
+                             (ngModelChange)="onRowPriceChange(row)"
+                             placeholder="0.00"
+                             title="Item Total Amount (₹)" />
+                    </div>
+                    <button type="button"
+                            (click)="removeRow(row.id)"
+                            class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black cursor-pointer border shrink-0"
+                            style="color: var(--err); border-color: color-mix(in srgb, var(--err) 25%, transparent);"
+                            title="Remove Item">
+                      ✕
+                    </button>
+                  </div>
+                }
+              </div>
+
+              <div class="p-3 pt-0 pb-3.5">
+                <button type="button"
+                        (click)="addRow()"
+                        [disabled]="!canAddSubItem"
+                        class="w-full py-2.5 rounded-xl text-xs font-black border border-dashed cursor-pointer transition hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                        style="border-color: var(--border); color: var(--p1);"
+                        [title]="!canAddSubItem ? 'Please enter current item name and amount first' : 'Add another sub-item'">
+                  + Add Another Sub-item
+                </button>
+              </div>
+            </div>
+
+            <!-- Receipt Live Balance Status Banner -->
+            @if (expenseRows.length > 0) {
+              <div class="mt-2.5">
+                @if (isReceiptBalanced) {
+                  <div class="p-3 rounded-2xl text-xs font-extrabold flex items-center gap-2"
+                       style="background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); border: 1px solid color-mix(in srgb, var(--ok) 30%, transparent);">
+                    <span>✅ Perfectly Balanced! Items sum ₹{{ itemsSum }} matches Total Spend ₹{{ expenseTotal }}</span>
+                  </div>
+                } @else {
+                  <div class="p-3 rounded-2xl text-xs font-extrabold flex items-center justify-between gap-2 flex-wrap"
+                       style="background: color-mix(in srgb, var(--err) 12%, transparent); color: var(--err); border: 1px solid color-mix(in srgb, var(--err) 30%, transparent);">
+                    <span>⚠️ Mismatch: Items sum ₹{{ itemsSum }} vs Total ₹{{ expenseTotal || 0 }} (Diff: ₹{{ receiptMismatchDiff }})</span>
+                    @if (itemsSum > 0) {
+                      <button type="button"
+                              (click)="syncTotalFromItems()"
+                              class="text-[11px] font-black underline cursor-pointer hover:opacity-80 px-2 py-0.5 rounded-lg bg-white/70 shadow-sm"
+                              title="Click to set Total Spend to match items sum">
+                        Set Total to ₹{{ itemsSum }}
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <!-- CASE 3: UTILITIES & BILLS SIMPLIFIED VIEW -->
+          <div class="fade-up space-y-3">
+            <label class="sl block">5. UTILITY &amp; RECURRING BILL DETAILS</label>
+            <div class="p-4 sm:p-5 rounded-2xl border space-y-3"
+                 style="background: color-mix(in srgb, var(--p1) 7%, transparent); border-color: color-mix(in srgb, var(--p1) 28%, transparent);">
+              
+              <div class="flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl">⚡</span>
+                  <div>
+                    <div class="text-xs sm:text-sm font-black" style="color: var(--text);">
+                      Direct Utility Bill Mode
+                    </div>
+                    <div class="text-[11px] font-medium" style="color: var(--t2);">
+                      Itemized breakdown is skipped for utility bills
+                    </div>
+                  </div>
+                </div>
+                <span class="text-[10px] font-black px-2.5 py-1 rounded-full uppercase shadow-sm"
+                      style="background: color-mix(in srgb, var(--p1) 16%, transparent); color: var(--p1); border: 1px solid color-mix(in srgb, var(--p1) 30%, transparent);">
+                  Single Total Spend Entry
+                </span>
+              </div>
+
+              <div class="text-xs font-semibold p-3 rounded-xl border flex items-center justify-between flex-wrap gap-2"
+                   style="background: var(--card); border-color: var(--border);">
+                <span style="color: var(--t2);">Amount to be deducted from Pool:</span>
+                <span class="text-base font-black" style="color: var(--p1);">₹{{ (expenseTotal || 0) | number:'1.0-2' }}</span>
+              </div>
+
+              <!-- Sync with Fixed Recurring Bills Checkbox -->
+              <label class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer select-none transition hover:bg-black/5"
+                     style="background: var(--card); border-color: var(--border);">
+                <input type="checkbox"
+                       class="mt-1 rounded accent-emerald-500 w-4 h-4 cursor-pointer"
+                       [ngModel]="recordInBills()"
+                       (ngModelChange)="recordInBills.set($event)" />
+                <div class="text-xs">
+                  <span class="font-black flex items-center gap-1.5" style="color: var(--text);">
+                    <span>📅 Also record under Fixed Recurring Bills</span>
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                      Recommended
+                    </span>
+                  </span>
+                  <p class="text-[11px] font-medium mt-0.5" style="color: var(--t2);">
+                    Shows in the <strong>Bills Checklist</strong> for this month as <strong>Paid from Pool ✓</strong> with equal splits automatically marked for all flatmates.
+                  </p>
+                </div>
+              </label>
+
+            </div>
+          </div>
+        }
+
+        <!-- 6. Split with Roommates (Dynamic Room Members) -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="sl mb-0">
+              6. SHARED AMONG FLAT ({{ splitWith().length }} {{ splitWith().length === 1 ? 'MEMBER' : 'MEMBERS' }})
+            </label>
+            @if (splitWith().length > 0) {
+              <div class="flex items-center gap-2">
+                <button type="button"
+                        (click)="selectAllSplit(true)"
+                        class="text-[11px] font-extrabold underline cursor-pointer"
+                        style="color: var(--p1);">
+                  Select All
+                </button>
+                <span class="text-[11px]" style="color: var(--border);">|</span>
+                <button type="button"
+                        (click)="selectAllSplit(false)"
+                        class="text-[11px] font-extrabold underline cursor-pointer"
+                        style="color: var(--t3);">
+                  Clear
+                </button>
+              </div>
+            }
+          </div>
+
+          @if (splitWith().length === 0) {
+            <div class="p-4 rounded-2xl text-xs font-semibold border text-center"
+                 style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
+              ⏳ Loading room members…
+            </div>
+          } @else {
+            <div class="flex flex-wrap gap-4 p-4 rounded-2xl border" style="background: var(--bg2); border-color: var(--border);">
+              @for (p of splitWith(); track p.id) {
+                <div (click)="toggleSplitParticipant(p.id)"
+                     class="text-center cursor-pointer select-none transition-all transform active:scale-95 group">
+                  <div class="w-12 h-12 rounded-full flex items-center justify-center text-xs font-black text-white mx-auto border-2 shadow-sm transition relative"
+                       [style.borderColor]="p.selected ? 'var(--ok)' : 'var(--border)'"
+                       [style.background]="getMemberBgColor(p.id)"
+                       [style.opacity]="p.selected ? '1' : '0.4'">
+                    {{ p.initials }}
+                    @if (p.selected) {
+                      <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-[9px] text-white">
+                        ✓
+                      </span>
+                    }
+                  </div>
+                  <div class="text-[11px] font-bold mt-1.5 max-w-[76px] truncate"
+                       [style.color]="p.selected ? 'var(--text)' : 'var(--t3)'">
+                    {{ p.name }}
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Submit & Cancel Buttons -->
+        <div class="pt-4 flex flex-col sm:flex-row items-center gap-3">
+          <button type="button"
+                  (click)="submitExpense()"
+                  [disabled]="savingExpense || !expenseTotal || expenseTotal <= 0 || (!isUtilityBill() && (expenseRows.length === 0 || !isReceiptBalanced))"
+                  class="btn w-full sm:flex-1 py-4 text-sm font-black shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            @if (savingExpense) {
+              <span class="inline-block animate-spin mr-1">⏳</span>
+              <span>Saving to Pool…</span>
+            } @else {
+              <span>Log Expense to Pool (₹{{ expenseTotal || 0 }})</span>
+            }
+          </button>
+
+          <button type="button"
+                  (click)="backToPool()"
+                  class="w-full sm:w-auto px-6 py-4 rounded-2xl text-xs font-bold border cursor-pointer transition hover:opacity-80"
+                  style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
+            Cancel
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       FULLSCREEN RECEIPT IMAGE MODAL
+  ═══════════════════════════════════════════ -->
+  @if (selectedReceiptImage()) {
+    <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+         (click)="closeReceiptModal()">
+      <div class="relative max-w-xl max-h-[85vh] w-full bg-white rounded-3xl overflow-hidden shadow-2xl p-2"
+           (click)="$event.stopPropagation()">
+        <button type="button"
+                (click)="closeReceiptModal()"
+                class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/60 text-white flex items-center justify-center font-bold text-sm hover:bg-black/80 transition cursor-pointer">
+          ✕
+        </button>
+        <img [src]="selectedReceiptImage()"
+             alt="Attached Bill"
+             class="w-full max-h-[78vh] object-contain rounded-2xl" />
+      </div>
+    </div>
+  }
+
+</div>

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PopupService } from '../../core/services/popup.service';
 import { PendingContribution, MemberStatus } from '../shared/models';
 import { environment } from '../../../environments/environment';
 
@@ -46,6 +47,7 @@ export interface CategoryBreakdownItem {
   percentage: number;
   itemCount?: number;
   items?: CategoryItemDetail[];
+  icon?: string;
 }
 
 export interface OverallItemBreakdown {
@@ -109,6 +111,7 @@ export class PoolComponent implements OnInit {
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private popup = inject(PopupService);
 
   groupId!: string;
   groupName = signal('Apartment 402');
@@ -161,7 +164,7 @@ export class PoolComponent implements OnInit {
   } | null>(null);
 
   // ── Embedded "Log New Expense" State ──
-  showExpenseForm = signal(true);
+  showExpenseForm = signal(false);
   expensePayer = signal<'pool' | 'me'>('pool');
   paidByMemberId = signal<number | null>(null);
 
@@ -313,6 +316,10 @@ export class PoolComponent implements OnInit {
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
     return name.slice(0, 2).toUpperCase();
+  }
+
+  goToLogExpense(): void {
+    this.router.navigate(['/g', this.groupId, 'log-expense']);
   }
 
   toggleExpenseForm(): void {
@@ -802,8 +809,7 @@ export class PoolComponent implements OnInit {
 
   // ── Ledger History Methods ──
   openHistory(): void {
-    this.showHistory.set(true);
-    this.loadHistory();
+    this.router.navigate(['/g', this.groupId, 'history']);
   }
 
   closeHistory(): void {
@@ -962,8 +968,15 @@ export class PoolComponent implements OnInit {
   }
 
   showToast(msg: string): void {
-    this.toastMessage.set(msg);
-    setTimeout(() => this.toastMessage.set(null), 3200);
+    if (msg.startsWith('❌')) {
+      this.popup.error(msg.replace(/^❌\s*/, ''));
+    } else if (msg.startsWith('⚠️')) {
+      this.popup.warning(msg.replace(/^⚠️\s*/, ''));
+    } else if (msg.startsWith('ℹ️') || msg.startsWith('🔔')) {
+      this.popup.info(msg);
+    } else {
+      this.popup.success(msg);
+    }
   }
 
   goToDashboard(): void {
