@@ -1,7 +1,9 @@
 <div class="min-h-dvh bg-slate-50 p-5 pt-10 flex flex-col">
 
   <div class="mb-6">
-    <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-2xl mb-4">🏠</div>
+    <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-xl text-emerald-600 mb-4">
+      <i class="fa-solid fa-house"></i>
+    </div>
     <h1 class="text-2xl font-extrabold">Create your account</h1>
     <p class="text-slate-500 text-sm mt-1">Split rent, bills &amp; pool with your flatmates</p>
   </div>
@@ -52,7 +54,9 @@
                class="w-full border rounded-xl px-4 py-3 pr-12"
                [class.border-red-400]="touched() && passwordError()" [class.bg-red-50]="touched() && passwordError()" />
         <button type="button" (click)="showPw = !showPw"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-lg">{{ showPw ? '🙈' : '👁️' }}</button>
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+          <i class="fa-solid" [class.fa-eye-slash]="showPw" [class.fa-eye]="!showPw"></i>
+        </button>
       </div>
       @if (touched() && passwordError()) {
         <p class="text-xs text-red-600 mt-1">{{ passwordError() }}</p>
@@ -79,7 +83,9 @@
                [class.border-red-400]="touched() && confirmPasswordError()"
                [class.bg-red-50]="touched() && confirmPasswordError()" />
         <button type="button" (click)="showCpw = !showCpw"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-lg">{{ showCpw ? '🙈' : '👁️' }}</button>
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+          <i class="fa-solid" [class.fa-eye-slash]="showCpw" [class.fa-eye]="!showCpw"></i>
+        </button>
       </div>
       @if (touched() && confirmPasswordError()) { <p class="text-xs text-red-600 mt-1">{{ confirmPasswordError() }}</p> }
     </div>

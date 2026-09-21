@@ -51,7 +51,10 @@
       <div class="mt-4 flex flex-col gap-2 relative z-10 fade-up">
         <div class="p-2.5 px-3 rounded-xl flex items-center gap-2.5 shadow-sm"
              style="background: rgba(255, 255, 255, 0.16); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.25);">
-          <div class="text-base">✅</div>
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0"
+               style="background: rgba(255, 255, 255, 0.2); color: #6ee7b7;">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
           <div class="flex-1">
             <div class="text-xs font-bold text-white">Dileep settled ₹450 via UPI</div>
             <div class="text-[10px] text-white/65">● Just now · Apartment 402</div>
@@ -60,7 +63,10 @@
 
         <div class="p-2.5 px-3 rounded-xl flex items-center gap-2.5 shadow-sm"
              style="background: rgba(255, 255, 255, 0.16); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.25);">
-          <div class="text-base">🛒</div>
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0"
+               style="background: rgba(255, 255, 255, 0.2); color: #c7d2fe;">
+            <i class="fa-solid fa-wallet"></i>
+          </div>
           <div class="flex-1">
             <div class="flex justify-between text-xs font-bold text-white">
               <span>Daily Pool Fund</span>
@@ -74,7 +80,10 @@
 
         <div class="p-2.5 px-3 rounded-xl flex items-center gap-2.5 shadow-sm"
              style="background: rgba(255, 255, 255, 0.16); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.25);">
-          <div class="text-base">⚡</div>
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0"
+               style="background: rgba(255, 255, 255, 0.2); color: #fde047;">
+            <i class="fa-solid fa-bolt"></i>
+          </div>
           <div class="flex-1">
             <div class="text-xs font-bold text-white">Electricity bill due in 3 days</div>
             <div class="text-[10px] text-white/65">₹4,500 · 3 of 7 paid</div>
@@ -132,9 +141,9 @@
         <!-- Card 1: Dileep settled -->
         <div class="float-a p-2.5 lg:p-3 px-3.5 rounded-xl flex items-center gap-3 shadow-sm"
              style="background: rgba(255, 255, 255, 0.14); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.22);">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
-               style="background: rgba(255, 255, 255, 0.2);">
-            ✅
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
+               style="background: rgba(255, 255, 255, 0.2); color: #6ee7b7;">
+            <i class="fa-solid fa-circle-check"></i>
           </div>
           <div>
             <div class="text-xs lg:text-[13px] font-bold text-white">Dileep settled ₹450 via UPI</div>
@@ -145,9 +154,9 @@
         <!-- Card 2: Daily Pool Fund -->
         <div class="float-b p-2.5 lg:p-3 px-3.5 rounded-xl flex items-center gap-3 shadow-sm"
              style="background: rgba(255, 255, 255, 0.14); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.22);">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
-               style="background: rgba(255, 255, 255, 0.2);">
-            🛒
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
+               style="background: rgba(255, 255, 255, 0.2); color: #c7d2fe;">
+            <i class="fa-solid fa-wallet"></i>
           </div>
           <div class="flex-1">
             <div class="text-xs lg:text-[13px] font-bold text-white">Daily Pool Fund</div>
@@ -162,9 +171,9 @@
         <!-- Card 3: Electricity bill -->
         <div class="float-c p-2.5 lg:p-3 px-3.5 rounded-xl flex items-center gap-3 shadow-sm"
              style="background: rgba(255, 255, 255, 0.14); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.22);">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
-               style="background: rgba(255, 255, 255, 0.2);">
-            ⚡
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
+               style="background: rgba(255, 255, 255, 0.2); color: #fde047;">
+            <i class="fa-solid fa-bolt"></i>
           </div>
           <div>
             <div class="text-xs lg:text-[13px] font-bold text-white">Electricity bill due in 3 days</div>
@@ -206,7 +215,7 @@
 
       <!-- Header Title & Subtitle -->
       <h2 style="font-size: 24px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px;">
-        {{ activeTab() === 'login' ? 'Welcome back 👋' : 'Create account 🚀' }}
+        {{ activeTab() === 'login' ? 'Welcome back' : 'Create account' }}
       </h2>
       <p style="color: var(--t2); font-size: 13px; margin-bottom: 16px; line-height: 1.4;">
         {{ activeTab() === 'login' ? 'Sign in to manage your room\'s shared expenses.' : 'Join your room and start splitting expenses with zero confusion.' }}
@@ -234,7 +243,7 @@
       @if (error()) {
         <div class="fade-up p-2.5 rounded-xl text-xs font-bold mb-3 flex items-start gap-2"
              style="background: color-mix(in srgb, var(--err) 10%, transparent); color: var(--err); border: 1.5px solid color-mix(in srgb, var(--err) 25%, transparent);">
-          <span>⚠️</span>
+          <i class="fa-solid fa-triangle-exclamation text-rose-500 text-xs mt-0.5"></i>
           <span class="flex-1">{{ error() }}</span>
         </div>
       }
@@ -251,15 +260,17 @@
                     (click)="setLoginMode('email')"
                     [style.background]="loginMode() === 'email' ? 'var(--btn)' : 'transparent'"
                     [style.color]="loginMode() === 'email' ? '#fff' : 'var(--t3)'"
-                    style="flex: 1; padding: 6px 10px; border-radius: 7px; border: none; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: var(--font);">
-              📧 Email
+                    style="flex: 1; padding: 6px 10px; border-radius: 7px; border: none; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: var(--font); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+              <i class="fa-solid fa-envelope text-[11px]"></i>
+              <span>Email</span>
             </button>
             <button type="button"
                     (click)="setLoginMode('phone')"
                     [style.background]="loginMode() === 'phone' ? 'var(--btn)' : 'transparent'"
                     [style.color]="loginMode() === 'phone' ? '#fff' : 'var(--t3)'"
-                    style="flex: 1; padding: 6px 10px; border-radius: 7px; border: none; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: var(--font);">
-              📱 Mobile
+                    style="flex: 1; padding: 6px 10px; border-radius: 7px; border: none; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: var(--font); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+              <i class="fa-solid fa-mobile-screen-button text-[11px]"></i>
+              <span>Mobile</span>
             </button>
           </div>
 
@@ -325,8 +336,8 @@
                      [class.border-red-400]="loginTouched() && loginPasswordError" />
               <button type="button"
                       (click)="showLoginPw = !showLoginPw"
-                      style="position: absolute; right: 13px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px; line-height: 1;">
-                {{ showLoginPw ? '🙈' : '👁' }}
+                      style="position: absolute; right: 13px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--t2); font-size: 14px; line-height: 1;">
+                <i class="fa-solid" [ngClass]="showLoginPw ? 'fa-eye-slash' : 'fa-eye'"></i>
               </button>
             </div>
             @if (loginTouched() && loginPasswordError) {
@@ -447,8 +458,8 @@
                      [class.border-red-400]="regTouched() && regPasswordError" />
               <button type="button"
                       (click)="showRegPw = !showRegPw"
-                      style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px; line-height: 1;">
-                {{ showRegPw ? '🙈' : '👁' }}
+                      style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--t2); font-size: 14px; line-height: 1;">
+                <i class="fa-solid" [ngClass]="showRegPw ? 'fa-eye-slash' : 'fa-eye'"></i>
               </button>
             </div>
 
@@ -487,9 +498,10 @@
                      maxlength="8"
                      placeholder="e.g. APT402" />
               @if (hasValidRoomCode) {
-                <div class="fade-up"
+                <div class="fade-up inline-flex items-center gap-1"
                      style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 2px 8px; border-radius: 6px; font-size: 9px; font-weight: 800; background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); border: 1.5px solid color-mix(in srgb, var(--ok) 28%, transparent); pointer-events: none;">
-                  ✓ Apt 402
+                  <span>Apt 402</span>
+                  <i class="fa-solid fa-check text-[9px]"></i>
                 </div>
               }
             </div>

@@ -49,8 +49,8 @@ export class HistoryComponent implements OnInit {
 
   groupId = '1';
 
-  // Period state
-  historyPeriod = signal<'daily' | 'weekly' | 'monthly' | 'custom'>('monthly');
+  // Period state (default: weekly / last 7 days)
+  historyPeriod = signal<'daily' | 'weekly' | 'monthly' | 'custom'>('weekly');
   historyFromDate = '';
   historyToDate = '';
 
@@ -80,11 +80,12 @@ export class HistoryComponent implements OnInit {
                    this.route.parent?.snapshot.paramMap.get('groupId') ||
                    localStorage.getItem('rl_group_id') || '1';
 
-    // Set default custom dates if needed
+    // Set default custom dates (last 7 days)
     const today = new Date();
     this.historyToDate = today.toISOString().slice(0, 10);
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    this.historyFromDate = firstDay.toISOString().slice(0, 10);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 7);
+    this.historyFromDate = sevenDaysAgo.toISOString().slice(0, 10);
 
     this.loadHistory();
     this.checkAdminStatus();

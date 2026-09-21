@@ -503,7 +503,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   }
 
   switchFlat(): void {
-    this.router.navigate(['/']);
+    this.router.navigate(['/groups']);
   }
 
   getInitials(name?: string): string {

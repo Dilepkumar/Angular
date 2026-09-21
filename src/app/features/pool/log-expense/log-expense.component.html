@@ -11,9 +11,7 @@
               class="w-10 h-10 rounded-2xl flex items-center justify-center border shadow-sm transition active:scale-95 cursor-pointer select-none group"
               style="background: var(--card); border-color: var(--border); color: var(--text);"
               title="Back to Pool">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="transition-transform group-hover:-translate-x-0.5">
-          <path d="M15 18l-6-6 6-6"/>
-        </svg>
+        <i class="fa-solid fa-arrow-left text-sm transition-transform group-hover:-translate-x-0.5"></i>
       </button>
       <div>
         <h1 class="text-base sm:text-lg font-black leading-tight flex items-center gap-2" style="color: var(--text);">
@@ -53,14 +51,19 @@
                  class="p-4 rounded-2xl cursor-pointer border-2 transition select-none flex items-start gap-3.5"
                  [style.background]="expensePayer() === 'pool' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'var(--bg2)'"
                  [style.borderColor]="expensePayer() === 'pool' ? 'var(--p1)' : 'var(--border)'">
-              <div class="text-2xl mt-0.5">🏦</div>
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0 mt-0.5"
+                   style="background: color-mix(in srgb, var(--p1) 16%, transparent); color: var(--p1);">
+                <i class="fa-solid fa-building-columns"></i>
+              </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between">
                   <div class="text-sm font-black" [style.color]="expensePayer() === 'pool' ? 'var(--p1)' : 'var(--text)'">
                     Central Pool
                   </div>
                   @if (expensePayer() === 'pool') {
-                    <span class="text-xs font-black px-2 py-0.5 rounded-full text-white" style="background: var(--p1);">✓ Selected</span>
+                    <span class="text-xs font-black px-2 py-0.5 rounded-full text-white flex items-center gap-1" style="background: var(--p1);">
+                      <i class="fa-solid fa-check text-[10px]"></i> Selected
+                    </span>
                   }
                 </div>
                 <div class="text-xs font-medium mt-1" style="color: var(--t2);">
@@ -77,14 +80,19 @@
                  class="p-4 rounded-2xl cursor-pointer border-2 transition select-none flex items-start gap-3.5"
                  [style.background]="expensePayer() === 'me' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'var(--bg2)'"
                  [style.borderColor]="expensePayer() === 'me' ? 'var(--p1)' : 'var(--border)'">
-              <div class="text-2xl mt-0.5">👤</div>
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0 mt-0.5"
+                   style="background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok);">
+                <i class="fa-solid fa-user"></i>
+              </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between">
                   <div class="text-sm font-black" [style.color]="expensePayer() === 'me' ? 'var(--p1)' : 'var(--text)'">
                     Paid by Roommate
                   </div>
                   @if (expensePayer() === 'me') {
-                    <span class="text-xs font-black px-2 py-0.5 rounded-full text-white" style="background: var(--p1);">✓ Selected</span>
+                    <span class="text-xs font-black px-2 py-0.5 rounded-full text-white flex items-center gap-1" style="background: var(--p1);">
+                      <i class="fa-solid fa-check text-[10px]"></i> Selected
+                    </span>
                   }
                 </div>
                 <div class="text-xs font-medium mt-1" style="color: var(--t2);">
@@ -111,7 +119,7 @@
                 }
               </select>
               <div class="text-[11px] font-semibold mt-2 flex items-start gap-2" style="color: var(--t2);">
-                <span>💡</span>
+                <i class="fa-solid fa-lightbulb text-amber-500 text-xs mt-0.5 shrink-0"></i>
                 <span>
                   <strong>{{ getPayerDisplayName() }}</strong> paid out-of-pocket. When logged, ₹{{ expenseTotal || 0 }} is deducted from pool and recorded as settled reimbursement.
                 </span>
@@ -156,7 +164,10 @@
             <div class="flex items-center justify-between mb-2">
               <span class="text-xs font-bold" style="color: var(--text);">Upload Bill or Receipt</span>
               @if (uploadingReceipt()) {
-                <span class="text-[11px] font-bold text-amber-500 animate-pulse">⏳ Uploading bill photo…</span>
+                <span class="text-[11px] font-bold text-amber-500 flex items-center gap-1.5">
+                  <i class="fa-solid fa-spinner fa-spin text-xs"></i>
+                  <span>Uploading bill photo…</span>
+                </span>
               }
             </div>
 
@@ -170,7 +181,9 @@
               <div (click)="receiptFileInput.click()"
                    class="border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition hover:bg-white/70 select-none group"
                    style="border-color: color-mix(in srgb, var(--p1) 40%, transparent);">
-                <div class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">📸</div>
+                <div class="text-3xl mb-1.5 group-hover:scale-110 transition-transform" style="color: var(--p1);">
+                  <i class="fa-solid fa-camera"></i>
+                </div>
                 <div class="text-xs sm:text-sm font-black" style="color: var(--p1);">
                   Click or tap to upload receipt image
                 </div>
@@ -190,16 +203,18 @@
                        title="Click to view full photo" />
                   <div>
                     <div class="text-xs sm:text-sm font-black flex items-center gap-1.5" style="color: var(--ok);">
-                      <span>✓ Receipt Attached</span>
+                      <i class="fa-solid fa-circle-check text-sm"></i>
+                      <span>Receipt Attached</span>
                     </div>
                     <div class="text-[11px] font-semibold mt-0.5" style="color: var(--t3);">
                       Attached to pool expense record
                     </div>
                     <button type="button"
                             (click)="viewReceipt(receiptUrl || receiptPreview())"
-                            class="text-[11px] font-bold underline cursor-pointer mt-1"
+                            class="text-[11px] font-bold underline cursor-pointer mt-1 flex items-center gap-1"
                             style="color: var(--p1);">
-                      🔍 View full photo
+                      <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
+                      <span>View full photo</span>
                     </button>
                   </div>
                 </div>
@@ -216,7 +231,7 @@
                           class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold border cursor-pointer"
                           style="background: color-mix(in srgb, var(--err) 12%, transparent); border-color: color-mix(in srgb, var(--err) 30%, transparent); color: var(--err);"
                           title="Remove receipt">
-                    ✕
+                    <i class="fa-solid fa-xmark text-xs"></i>
                   </button>
                 </div>
               </div>
@@ -258,24 +273,27 @@
             <div class="rounded-2xl border overflow-hidden"
                  style="background: var(--bg2); border-color: var(--border);">
               <div class="p-3 px-4 border-b flex justify-between items-center" style="border-color: var(--border);">
-                <span class="text-xs font-extrabold" style="color: var(--text);">📋 Itemized Breakdown</span>
+                <span class="text-xs font-extrabold flex items-center gap-1.5" style="color: var(--text);">
+                  <i class="fa-solid fa-receipt text-xs" style="color: var(--p1);"></i>
+                  <span>Itemized Breakdown</span>
+                </span>
                 <span class="text-[10px] font-bold" style="color: var(--t3);">Item Name · Qty · Amount (₹)</span>
               </div>
 
-              <div class="p-3 space-y-2.5">
+              <div class="p-2 sm:p-3 space-y-2">
                 @for (row of expenseRows; track row.id) {
-                  <div class="flex items-center gap-2 p-1.5 rounded-xl transition hover:bg-white/60">
-                    <div class="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-black shrink-0"
+                  <div class="flex items-center gap-1.5 sm:gap-2 p-1.5 rounded-xl transition hover:bg-white/60">
+                    <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-md flex items-center justify-center text-[9px] sm:text-[10px] font-black shrink-0"
                          style="background: color-mix(in srgb, var(--p1) 14%, transparent); color: var(--p1);">
                       {{ row.id < 10 ? '0' + row.id : row.id }}
                     </div>
-                    <input class="inp py-2 px-2.5 text-xs font-semibold flex-1 min-w-[110px]"
+                    <input class="inp py-1.5 sm:py-2 px-2.5 text-xs font-semibold flex-1 min-w-[100px] sm:min-w-[140px]"
                            type="text"
                            [(ngModel)]="row.name"
-                           placeholder="Item name (e.g. Milk, Eggs, Bread)" />
-                    <div class="relative w-20 sm:w-24 shrink-0">
-                      <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold" style="color: var(--t3);">Qty</span>
-                      <input class="inp py-2 pl-8 pr-2 text-xs font-black text-center"
+                           placeholder="Item name" />
+                    <div class="relative w-14 sm:w-16 shrink-0">
+                      <span class="absolute left-1.5 top-1/2 -translate-y-1/2 text-[9px] sm:text-[10px] font-bold pointer-events-none select-none" style="color: var(--t3);">Qty</span>
+                      <input class="inp py-1.5 sm:py-2 pl-6 sm:pl-7 pr-1 text-xs font-black text-center"
                              type="number"
                              min="1"
                              step="1"
@@ -284,9 +302,9 @@
                              placeholder="1"
                              title="Quantity" />
                     </div>
-                    <div class="relative w-28 sm:w-32 shrink-0">
-                      <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-black" style="color: var(--p1);">₹</span>
-                      <input class="inp py-2 pl-6 pr-2 text-xs font-black"
+                    <div class="relative w-16 sm:w-22 shrink-0">
+                      <span class="absolute left-1.5 top-1/2 -translate-y-1/2 text-[11px] sm:text-xs font-black pointer-events-none select-none" style="color: var(--p1);">₹</span>
+                      <input class="inp py-1.5 sm:py-2 pl-4 sm:pl-5 pr-1 text-xs font-black"
                              type="number"
                              min="0"
                              step="any"
@@ -295,41 +313,48 @@
                              placeholder="0.00"
                              title="Item Total Amount (₹)" />
                     </div>
-                    <button type="button"
-                            (click)="removeRow(row.id)"
-                            class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black cursor-pointer border shrink-0"
-                            style="color: var(--err); border-color: color-mix(in srgb, var(--err) 25%, transparent);"
-                            title="Remove Item">
-                      ✕
-                    </button>
+                    @if (expenseRows.length > 1) {
+                      <button type="button"
+                              (click)="removeRow(row.id)"
+                              class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-xs font-black cursor-pointer border shrink-0"
+                              style="color: var(--err); border-color: color-mix(in srgb, var(--err) 25%, transparent);"
+                              title="Remove Item">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                      </button>
+                    }
                   </div>
                 }
               </div>
 
-              <div class="p-3 pt-0 pb-3.5">
+              <div class="p-3 pt-0 pb-3">
                 <button type="button"
                         (click)="addRow()"
                         [disabled]="!canAddSubItem"
-                        class="w-full py-2.5 rounded-xl text-xs font-black border border-dashed cursor-pointer transition hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                        class="w-full py-2.5 rounded-xl text-xs font-black border border-dashed cursor-pointer transition hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                         style="border-color: var(--border); color: var(--p1);"
                         [title]="!canAddSubItem ? 'Please enter current item name and amount first' : 'Add another sub-item'">
-                  + Add Another Sub-item
+                  <i class="fa-solid fa-plus text-xs"></i>
+                  <span>Add Another Sub-item</span>
                 </button>
               </div>
             </div>
 
             <!-- Receipt Live Balance Status Banner -->
-            @if (expenseRows.length > 0) {
+            @if (expenseRows.length > 0 && ((expenseTotal && expenseTotal > 0) || itemsSum > 0)) {
               <div class="mt-2.5">
                 @if (isReceiptBalanced) {
-                  <div class="p-3 rounded-2xl text-xs font-extrabold flex items-center gap-2"
+                  <div class="p-3 rounded-2xl text-xs font-extrabold flex items-center gap-2 fade-up"
                        style="background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); border: 1px solid color-mix(in srgb, var(--ok) 30%, transparent);">
-                    <span>✅ Perfectly Balanced! Items sum ₹{{ itemsSum }} matches Total Spend ₹{{ expenseTotal }}</span>
+                    <i class="fa-solid fa-circle-check text-sm shrink-0"></i>
+                    <span>Perfectly Balanced! Items sum ₹{{ itemsSum }} matches Total Spend ₹{{ expenseTotal }}</span>
                   </div>
-                } @else {
-                  <div class="p-3 rounded-2xl text-xs font-extrabold flex items-center justify-between gap-2 flex-wrap"
+                } @else if (hasReceiptMismatch) {
+                  <div class="p-3 rounded-2xl text-xs font-extrabold flex items-center justify-between gap-2 flex-wrap fade-up"
                        style="background: color-mix(in srgb, var(--err) 12%, transparent); color: var(--err); border: 1px solid color-mix(in srgb, var(--err) 30%, transparent);">
-                    <span>⚠️ Mismatch: Items sum ₹{{ itemsSum }} vs Total ₹{{ expenseTotal || 0 }} (Diff: ₹{{ receiptMismatchDiff }})</span>
+                    <div class="flex items-center gap-2 min-w-0">
+                      <i class="fa-solid fa-triangle-exclamation text-sm shrink-0"></i>
+                      <span>Mismatch: Items sum ₹{{ itemsSum }} vs Total ₹{{ expenseTotal || 0 }} (Diff: ₹{{ receiptMismatchDiff }})</span>
+                    </div>
                     @if (itemsSum > 0) {
                       <button type="button"
                               (click)="syncTotalFromItems()"
@@ -352,7 +377,10 @@
               
               <div class="flex items-center justify-between flex-wrap gap-2">
                 <div class="flex items-center gap-2">
-                  <span class="text-2xl">⚡</span>
+                  <div class="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0"
+                       style="background: color-mix(in srgb, var(--p1) 16%, transparent); color: var(--p1);">
+                    <i class="fa-solid fa-bolt"></i>
+                  </div>
                   <div>
                     <div class="text-xs sm:text-sm font-black" style="color: var(--text);">
                       Direct Utility Bill Mode
@@ -383,7 +411,8 @@
                        (ngModelChange)="recordInBills.set($event)" />
                 <div class="text-xs">
                   <span class="font-black flex items-center gap-1.5" style="color: var(--text);">
-                    <span>📅 Also record under Fixed Recurring Bills</span>
+                    <i class="fa-solid fa-calendar-days text-xs" style="color: var(--p1);"></i>
+                    <span>Also record under Fixed Recurring Bills</span>
                     <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                       Recommended
                     </span>
@@ -426,7 +455,8 @@
           @if (splitWith().length === 0) {
             <div class="p-4 rounded-2xl text-xs font-semibold border text-center"
                  style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
-              ⏳ Loading room members…
+              <i class="fa-solid fa-spinner fa-spin mr-1.5" style="color: var(--p1);"></i>
+              Loading room members…
             </div>
           } @else {
             <div class="flex flex-wrap gap-4 p-4 rounded-2xl border" style="background: var(--bg2); border-color: var(--border);">
@@ -440,7 +470,7 @@
                     {{ p.initials }}
                     @if (p.selected) {
                       <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-[9px] text-white">
-                        ✓
+                        <i class="fa-solid fa-check text-[8px]"></i>
                       </span>
                     }
                   </div>
@@ -461,9 +491,10 @@
                   [disabled]="savingExpense || !expenseTotal || expenseTotal <= 0 || (!isUtilityBill() && (expenseRows.length === 0 || !isReceiptBalanced))"
                   class="btn w-full sm:flex-1 py-4 text-sm font-black shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
             @if (savingExpense) {
-              <span class="inline-block animate-spin mr-1">⏳</span>
+              <i class="fa-solid fa-spinner fa-spin mr-1 text-sm"></i>
               <span>Saving to Pool…</span>
             } @else {
+              <i class="fa-solid fa-receipt mr-1 text-xs"></i>
               <span>Log Expense to Pool (₹{{ expenseTotal || 0 }})</span>
             }
           </button>
@@ -491,7 +522,7 @@
         <button type="button"
                 (click)="closeReceiptModal()"
                 class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/60 text-white flex items-center justify-center font-bold text-sm hover:bg-black/80 transition cursor-pointer">
-          ✕
+          <i class="fa-solid fa-xmark text-sm"></i>
         </button>
         <img [src]="selectedReceiptImage()"
              alt="Attached Bill"

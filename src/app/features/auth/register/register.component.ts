@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
+import { AuthService, LoginResponse } from '../../../core/services/auth.service';
 
 const PHONE_RE = /^(\+91[\s-]?)?[6-9]\d{9}$/;
 
@@ -13,6 +14,7 @@ const PHONE_RE = /^(\+91[\s-]?)?[6-9]\d{9}$/;
 })
 export class RegisterComponent {
   private api = inject(ApiService);
+  private auth = inject(AuthService);
   private router = inject(Router);
 
   fullName = ''; email = ''; phone = ''; password = ''; confirmPassword = '';
@@ -85,14 +87,20 @@ export class RegisterComponent {
     if (!this.formValid || this.loading()) return;
 
     this.loading.set(true);
-    this.api.post<{ message: string }>('auth/register', {
+    this.api.post<LoginResponse>('auth/register', {
       fullName: this.fullName.trim(),
       email: this.email.trim().toLowerCase(),
       phone: this.phone.replace(/[\s-]/g, ''),
       password: this.password
     }).subscribe({
-      next: () => this.router.navigate(['/auth/verify-otp'],
-        { queryParams: { email: this.email.trim().toLowerCase(), purpose: 'Registration' } }),
+      next: (res) => {
+        if (res && res.token) {
+          this.auth.saveSession(res);
+          this.router.navigate(['/']);
+        } else {
+          this.router.navigate(['/auth/login']);
+        }
+      },
       error: e => {
         this.error.set(e.error?.message ?? 'Registration failed');
         this.loading.set(false);

@@ -188,6 +188,25 @@ select.inp {
   appearance: none;
 }
 
+/* ══ PREVENT MOBILE / IOS SAFARI ZOOM ON INPUT FOCUS ══ */
+@media screen and (max-width: 768px) {
+  input,
+  select,
+  textarea,
+  .inp,
+  input.inp,
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="date"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"] {
+    font-size: 16px !important;
+  }
+}
+
 /* ══ BUTTONS ══ */
 .btn {
   padding: 12px 20px;

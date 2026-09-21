@@ -40,6 +40,15 @@ export class ProfileComponent implements OnInit, AfterViewInit {
   inviteCode = signal('');
   groupId = signal<number | null>(null);
 
+  // Roommates Modal State
+  roommates = signal<any[]>([]);
+  showRoommatesModal = signal<boolean>(false);
+
+  // Invite Modal State
+  showInviteModal = signal<boolean>(false);
+  inviteCodeCopied = signal<boolean>(false);
+  inviteLinkCopied = signal<boolean>(false);
+
   // Notification Toggles
   pushEnabled = signal(true);
   whatsappEnabled = signal(true);
@@ -55,6 +64,7 @@ export class ProfileComponent implements OnInit, AfterViewInit {
   saving = signal(false);
   changingPw = signal(false);
   showPwSection = signal(false);
+  showUpiSection = signal(false);
   toastMessage = signal<string | null>(null);
   currentPassword = '';
   newPassword = '';
@@ -115,6 +125,7 @@ export class ProfileComponent implements OnInit, AfterViewInit {
         this.roomAddress.set(p.roomAddress ?? '');
         this.roomRole.set(p.roomRole ?? 'Member');
         this.memberCount.set(p.memberCount ?? 0);
+        this.roommates.set(p.members || []);
         this.owedToYou.set(p.owedToYou ?? 0);
         this.inviteCode.set(p.inviteCode ?? '');
         this.groupId.set(p.groupId ?? (savedGroupId ? Number(savedGroupId) : null));
@@ -140,7 +151,7 @@ export class ProfileComponent implements OnInit, AfterViewInit {
     });
   }
 
-  private getInitials(name: string): string {
+  getInitials(name: string): string {
     if (!name?.trim()) return 'DK';
     const parts = name.trim().split(/\s+/);
     if (parts.length > 1) {
@@ -245,19 +256,101 @@ export class ProfileComponent implements OnInit, AfterViewInit {
     }
   }
 
+  // ═══════════════════════════════════════════
+  // ROOMMATES MODAL
+  // ═══════════════════════════════════════════
+  openRoommatesModal(): void {
+    if (this.roommates().length === 0 && this.groupId()) {
+      this.api.get<any>(`groups/${this.groupId()}`).subscribe({
+        next: (g) => {
+          if (g?.members) {
+            this.roommates.set(g.members);
+          }
+          this.showRoommatesModal.set(true);
+        },
+        error: () => {
+          this.showRoommatesModal.set(true);
+        }
+      });
+    } else {
+      this.showRoommatesModal.set(true);
+    }
+  }
+
+  closeRoommatesModal(): void {
+    this.showRoommatesModal.set(false);
+  }
+
+  // ═══════════════════════════════════════════
+  // ROOM NAVIGATION & SHARE INVITE MODAL
+  // ═══════════════════════════════════════════
+  goToRoom(): void {
+    const gid = this.groupId() || localStorage.getItem('rl_group_id');
+    if (gid) {
+      this.router.navigate(['/g', gid, 'dashboard']);
+    } else {
+      this.router.navigate(['/']);
+    }
+  }
+
+  toggleUpiSection(): void {
+    const next = !this.showUpiSection();
+    this.showUpiSection.set(next);
+    if (next) {
+      setTimeout(() => this.drawQrCode(), 80);
+    }
+  }
+
+  getInviteUrl(): string {
+    const code = this.inviteCode();
+    return code ? `${window.location.origin}/join/${code}` : '';
+  }
+
+  getWhatsAppShareUrl(): string {
+    const text = encodeURIComponent(
+      `Hey! Join our flat "${this.roomName()}" on RoomLedger to split expenses and bills easily:\n\nJoin Link: ${this.getInviteUrl()}\nInvite Code: ${this.inviteCode()}`
+    );
+    return `https://api.whatsapp.com/send?text=${text}`;
+  }
+
   shareInvite(): void {
     const code = this.inviteCode();
     if (!code) {
       this.showToast('⚠️ No active invite code for this room');
       return;
     }
-    const inviteUrl = `${window.location.origin}/join/${code}`;
+    this.inviteCodeCopied.set(false);
+    this.inviteLinkCopied.set(false);
+    this.showInviteModal.set(true);
+  }
+
+  closeInviteModal(): void {
+    this.showInviteModal.set(false);
+  }
+
+  copyInviteCode(): void {
+    const code = this.inviteCode();
+    if (!code) return;
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(inviteUrl).then(() => {
-        this.showToast(`🔗 Invite copied: ${inviteUrl}`);
+      navigator.clipboard.writeText(code).then(() => {
+        this.inviteCodeCopied.set(true);
+        setTimeout(() => this.inviteCodeCopied.set(false), 2500);
       });
     } else {
-      this.showToast(`🔗 Invite: ${inviteUrl}`);
+      this.showToast(`🔑 Code: ${code}`);
+    }
+  }
+
+  copyInviteLink(): void {
+    const url = this.getInviteUrl();
+    if (!url) return;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => {
+        this.inviteLinkCopied.set(true);
+        setTimeout(() => this.inviteLinkCopied.set(false), 2500);
+      });
+    } else {
+      this.showToast(`🔗 Link: ${url}`);
     }
   }
 

@@ -143,15 +143,15 @@ export class BillsComponent implements OnInit {
 
   billIcon(name: string): string {
     const n = (name || '').toLowerCase();
-    if (n.includes('rent') || n.includes('room') || n.includes('flat')) return '🏠';
-    if (n.includes('wifi') || n.includes('wi-fi') || n.includes('internet') || n.includes('fiber') || n.includes('broadband')) return '📶';
-    if (n.includes('elect') || n.includes('power') || n.includes('current') || n.includes('eb')) return '⚡';
-    if (n.includes('maid') || n.includes('clean') || n.includes('sweep')) return '🧹';
-    if (n.includes('water') || n.includes('aqua')) return '💧';
-    if (n.includes('gas') || n.includes('cylinder') || n.includes('lpg')) return '🔥';
-    if (n.includes('cook') || n.includes('food') || n.includes('grocer') || n.includes('kitchen') || n.includes('milk')) return '🍳';
-    if (n.includes('tv') || n.includes('dth') || n.includes('netflix') || n.includes('prime') || n.includes('stream')) return '📺';
-    return '📋';
+    if (n.includes('rent') || n.includes('room') || n.includes('flat')) return 'fa-solid fa-house';
+    if (n.includes('wifi') || n.includes('wi-fi') || n.includes('internet') || n.includes('fiber') || n.includes('broadband')) return 'fa-solid fa-wifi';
+    if (n.includes('elect') || n.includes('power') || n.includes('current') || n.includes('eb')) return 'fa-solid fa-bolt';
+    if (n.includes('maid') || n.includes('clean') || n.includes('sweep')) return 'fa-solid fa-broom';
+    if (n.includes('water') || n.includes('aqua')) return 'fa-solid fa-droplet';
+    if (n.includes('gas') || n.includes('cylinder') || n.includes('lpg')) return 'fa-solid fa-fire';
+    if (n.includes('cook') || n.includes('food') || n.includes('grocer') || n.includes('kitchen') || n.includes('milk')) return 'fa-solid fa-utensils';
+    if (n.includes('tv') || n.includes('dth') || n.includes('netflix') || n.includes('prime') || n.includes('stream')) return 'fa-solid fa-tv';
+    return 'fa-solid fa-receipt';
   }
 
   openAddModal(): void {

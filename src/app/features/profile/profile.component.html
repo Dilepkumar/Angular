@@ -90,9 +90,16 @@
             <div class="text-[9px] text-white/60 font-extrabold uppercase tracking-widest mt-0.5">OWED TO YOU</div>
           </div>
           <div class="w-px h-7" style="background: rgba(255, 255, 255, 0.25);"></div>
-          <div>
-            <div class="text-xl sm:text-2xl font-black text-white">{{ memberCount() }}</div>
-            <div class="text-[9px] text-white/60 font-extrabold uppercase tracking-widest mt-0.5">{{ memberCount() === 1 ? 'ROOMMATE' : 'ROOMMATES' }}</div>
+          <div (click)="openRoommatesModal()"
+               class="cursor-pointer hover:opacity-85 transition active:scale-95 group text-left"
+               title="View roommates in this flat">
+            <div class="text-xl sm:text-2xl font-black text-white flex items-center gap-1.5">
+              <span>{{ memberCount() }}</span>
+              <span class="text-xs opacity-75 group-hover:translate-x-0.5 transition">👥</span>
+            </div>
+            <div class="text-[9px] text-white/70 font-extrabold uppercase tracking-widest mt-0.5 underline decoration-dotted underline-offset-2">
+              {{ memberCount() === 1 ? 'ROOMMATE' : 'ROOMMATES' }} ↗
+            </div>
           </div>
         </div>
       </div>
@@ -333,110 +340,124 @@
     ───────────────────────────────────────── -->
     <div class="flex flex-col gap-5">
       
-      <!-- Card 4: UPI / VPA Settings Card -->
+      <!-- Card 4: UPI / VPA Settings Card (Collapsible) -->
       <div class="card" style="border-color: var(--border2);">
-        <div class="sl">UPI / VPA Settings</div>
+        <button type="button"
+                (click)="toggleUpiSection()"
+                class="w-full flex items-center justify-between bg-transparent border-none cursor-pointer p-0 text-left">
+          <span class="sl mb-0">💳 UPI / VPA Settings</span>
+          <span class="text-xs font-bold" style="color: var(--p1);">
+            {{ showUpiSection() ? '▲ Hide' : '▼ Manage UPI' }}
+          </span>
+        </button>
 
-        <!-- UPI ID Input with Copy Button -->
-        <div class="mb-4">
-          <label style="font-size: 10px; font-weight: 800; color: var(--t3); display: block; margin-bottom: 5px; letter-spacing: 0.06em;">
-            YOUR UPI ID
-          </label>
-          <div class="relative">
-            <input class="inp font-mono text-xs font-bold"
-                   style="padding-right: 70px;"
-                   type="text"
-                   name="upiId"
-                   [ngModel]="upiId()"
-                   (ngModelChange)="onUpiIdChange($event)"
-                   placeholder="username@okhdfcbank" />
-            <button type="button"
-                    (click)="copyUpiId()"
-                    style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--btn); border: none; color: #fff; border-radius: 8px; padding: 5px 11px; font-size: 11px; font-weight: 800; cursor: pointer; font-family: var(--font);">
-              Copy
-            </button>
-          </div>
-        </div>
-
-        <!-- Generated QR Code Canvas Box -->
-        <div class="rounded-2xl p-4 text-center border flex flex-col items-center gap-2 mb-4"
-             style="background: #F9FAFB; border-color: #E5E7EB;">
-          <div style="font-size: 9px; font-weight: 800; color: #374151; letter-spacing: 0.1em; text-transform: uppercase;">
-            YOUR PAYMENT QR CODE
-          </div>
-          
-          <canvas #qrCanvas width="130" height="130" class="rounded-lg shadow-sm"></canvas>
-          
-          <div class="font-mono text-xs font-extrabold" style="color: #1F2937;">
-            {{ upiId() || 'username@okhdfcbank' }}
-          </div>
-          <div class="text-[10px] font-medium" style="color: #9CA3AF;">
-            Scan with any UPI app to settle instantly
-          </div>
-        </div>
-
-        <!-- Connected UPI Apps Grid -->
-        <div>
-          <div class="sl">Connected UPI Apps</div>
-          <div class="grid grid-cols-2 gap-2">
-            
-            <!-- GPay -->
-            <div class="flex items-center gap-2 p-2.5 rounded-xl border"
-                 style="background: var(--bg2); border-color: color-mix(in srgb, var(--ok) 28%, transparent);">
-              <span class="text-xl">📱</span>
-              <div>
-                <div class="text-xs font-bold" style="color: var(--text);">GPay</div>
-                <div class="text-[9px] font-bold" style="color: var(--ok);">Connected ✓</div>
+        @if (showUpiSection()) {
+          <div class="mt-4 space-y-4 fade-up">
+            <!-- UPI ID Input with Copy Button -->
+            <div>
+              <label style="font-size: 10px; font-weight: 800; color: var(--t3); display: block; margin-bottom: 5px; letter-spacing: 0.06em;">
+                YOUR UPI ID
+              </label>
+              <div class="relative">
+                <input class="inp font-mono text-xs font-bold"
+                       style="padding-right: 70px;"
+                       type="text"
+                       name="upiId"
+                       [ngModel]="upiId()"
+                       (ngModelChange)="onUpiIdChange($event)"
+                       placeholder="username@okhdfcbank" />
+                <button type="button"
+                        (click)="copyUpiId()"
+                        style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--btn); border: none; color: #fff; border-radius: 8px; padding: 5px 11px; font-size: 11px; font-weight: 800; cursor: pointer; font-family: var(--font);">
+                  Copy
+                </button>
               </div>
             </div>
 
-            <!-- PhonePe -->
-            <div class="flex items-center gap-2 p-2.5 rounded-xl border"
-                 style="background: var(--bg2); border-color: color-mix(in srgb, var(--ok) 28%, transparent);">
-              <span class="text-xl">💸</span>
-              <div>
-                <div class="text-xs font-bold" style="color: var(--text);">PhonePe</div>
-                <div class="text-[9px] font-bold" style="color: var(--ok);">Connected ✓</div>
+            <!-- Generated QR Code Canvas Box -->
+            <div class="rounded-2xl p-4 text-center border flex flex-col items-center gap-2"
+                 style="background: #F9FAFB; border-color: #E5E7EB;">
+              <div style="font-size: 9px; font-weight: 800; color: #374151; letter-spacing: 0.1em; text-transform: uppercase;">
+                YOUR PAYMENT QR CODE
+              </div>
+              
+              <canvas #qrCanvas width="130" height="130" class="rounded-lg shadow-sm"></canvas>
+              
+              <div class="font-mono text-xs font-extrabold" style="color: #1F2937;">
+                {{ upiId() || 'username@okhdfcbank' }}
+              </div>
+              <div class="text-[10px] font-medium" style="color: #9CA3AF;">
+                Scan with any UPI app to settle instantly
               </div>
             </div>
 
-            <!-- BHIM -->
-            <div class="flex items-center gap-2 p-2.5 rounded-xl border"
-                 style="background: var(--bg2); border-color: var(--border);">
-              <span class="text-xl">🏦</span>
-              <div>
-                <div class="text-xs font-bold" style="color: var(--text);">BHIM</div>
-                <div class="text-[9px] font-bold" style="color: var(--t3);">+ Connect</div>
+            <!-- Connected UPI Apps Grid -->
+            <div>
+              <div class="sl">Connected UPI Apps</div>
+              <div class="grid grid-cols-2 gap-2">
+                <!-- GPay -->
+                <div class="flex items-center gap-2 p-2.5 rounded-xl border"
+                     style="background: var(--bg2); border-color: color-mix(in srgb, var(--ok) 28%, transparent);">
+                  <span class="text-xl">📱</span>
+                  <div>
+                    <div class="text-xs font-bold" style="color: var(--text);">GPay</div>
+                    <div class="text-[9px] font-bold" style="color: var(--ok);">Connected ✓</div>
+                  </div>
+                </div>
+
+                <!-- PhonePe -->
+                <div class="flex items-center gap-2 p-2.5 rounded-xl border"
+                     style="background: var(--bg2); border-color: color-mix(in srgb, var(--ok) 28%, transparent);">
+                  <span class="text-xl">💸</span>
+                  <div>
+                    <div class="text-xs font-bold" style="color: var(--text);">PhonePe</div>
+                    <div class="text-[9px] font-bold" style="color: var(--ok);">Connected ✓</div>
+                  </div>
+                </div>
+
+                <!-- BHIM -->
+                <div class="flex items-center gap-2 p-2.5 rounded-xl border"
+                     style="background: var(--bg2); border-color: var(--border);">
+                  <span class="text-xl">🏦</span>
+                  <div>
+                    <div class="text-xs font-bold" style="color: var(--text);">BHIM</div>
+                    <div class="text-[9px] font-bold" style="color: var(--t3);">+ Connect</div>
+                  </div>
+                </div>
+
+                <!-- Paytm -->
+                <div class="flex items-center gap-2 p-2.5 rounded-xl border"
+                     style="background: var(--bg2); border-color: color-mix(in srgb, var(--ok) 28%, transparent);">
+                  <span class="text-xl">🪷</span>
+                  <div>
+                    <div class="text-xs font-bold" style="color: var(--text);">Paytm</div>
+                    <div class="text-[9px] font-bold" style="color: var(--ok);">Connected ✓</div>
+                  </div>
+                </div>
               </div>
             </div>
-
-            <!-- Paytm -->
-            <div class="flex items-center gap-2 p-2.5 rounded-xl border"
-                 style="background: var(--bg2); border-color: color-mix(in srgb, var(--ok) 28%, transparent);">
-              <span class="text-xl">🪷</span>
-              <div>
-                <div class="text-xs font-bold" style="color: var(--text);">Paytm</div>
-                <div class="text-[9px] font-bold" style="color: var(--ok);">Connected ✓</div>
-              </div>
-            </div>
-
           </div>
-        </div>
+        }
       </div>
 
       <!-- Card 5: Room Membership -->
       <div class="card">
         <div class="sl">Room Membership</div>
 
-        <div class="flex items-center gap-3 p-3.5 rounded-2xl border mb-3.5"
-             style="background: var(--bg2); border-color: var(--border);">
-          <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl text-white shadow-sm"
+        <div (click)="goToRoom()"
+             class="flex items-center gap-3 p-3.5 rounded-2xl border mb-3.5 cursor-pointer hover:shadow-md transition active:scale-[0.99] group"
+             style="background: var(--bg2); border-color: var(--border);"
+             title="Open flat dashboard">
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl text-white shadow-sm shrink-0"
                style="background: var(--btn);">
             🏠
           </div>
-          <div class="flex-1">
-            <div class="text-sm font-extrabold" style="color: var(--text);">{{ roomName() || 'No Flat Joined' }}</div>
-            <div class="text-xs font-medium" style="color: var(--t3);">
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-extrabold flex items-center gap-1.5" style="color: var(--text);">
+              <span class="truncate">{{ roomName() || 'No Flat Joined' }}</span>
+              <span class="text-xs opacity-75 group-hover:translate-x-0.5 transition">›</span>
+            </div>
+            <div class="text-xs font-medium truncate" style="color: var(--t3);">
               @if (roomAddress()) { {{ roomAddress() }} · } {{ memberCount() }} {{ memberCount() === 1 ? 'member' : 'members' }}
             </div>
           </div>
@@ -524,6 +545,206 @@
           <span>Log Out</span>
         </button>
       </div>
+
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════
+     ROOMMATES LIST MODAL POPUP
+═══════════════════════════════════════════ -->
+@if (showRoommatesModal()) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-up"
+       (click)="closeRoommatesModal()">
+    <div class="w-full max-w-md rounded-3xl p-6 shadow-2xl relative"
+         style="background: var(--card); border: 1.5px solid var(--border);"
+         (click)="$event.stopPropagation()">
+
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-lg shadow-sm"
+               style="background: color-mix(in srgb, var(--p1) 15%, transparent); color: var(--p1);">
+            👥
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-black" style="color: var(--text);">Roommates</h3>
+              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full"
+                    style="background: color-mix(in srgb, var(--p1) 12%, transparent); color: var(--p1);">
+                {{ roommates().length || memberCount() }} in Flat
+              </span>
+            </div>
+            <p class="text-[11px] font-medium" style="color: var(--t3);">{{ roomName() || 'Current Flat' }}</p>
+          </div>
+        </div>
+        <button type="button"
+                (click)="closeRoommatesModal()"
+                class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border transition cursor-pointer hover:opacity-80"
+                style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
+          ✕
+        </button>
+      </div>
+
+      <!-- Roommates List -->
+      <div class="space-y-2.5 max-h-[55vh] overflow-y-auto pr-1 mb-5">
+        @for (m of roommates(); track m.id || m.name) {
+          <div class="p-3 rounded-2xl border flex items-center justify-between gap-3 transition"
+               style="background: var(--bg2); border-color: var(--border);">
+            <div class="flex items-center gap-3 min-w-0">
+              <!-- Avatar / Initials -->
+              @if (m.avatarUrl) {
+                <img [src]="m.avatarUrl" alt="" class="w-9 h-9 rounded-full object-cover shrink-0 border" style="border-color: var(--border);" />
+              } @else {
+                <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0"
+                     style="background: var(--btn);">
+                  {{ getInitials(m.name) }}
+                </div>
+              }
+
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-xs font-bold truncate" style="color: var(--text);">{{ m.name }}</span>
+                  @if (m.name === fullName() || m.id === 1) {
+                    <span class="text-[9px] font-extrabold px-1.5 py-0.2 rounded"
+                          style="background: color-mix(in srgb, var(--p1) 20%, transparent); color: var(--p1);">
+                      You
+                    </span>
+                  }
+                  @if (m.isAlias) {
+                    <span class="text-[9px] px-1.5 py-0.2 rounded-full" style="background: var(--bg3); color: var(--t3);">
+                      alias
+                    </span>
+                  }
+                </div>
+                <div class="text-[10px] font-medium truncate mt-0.5" style="color: var(--t3);">
+                  {{ m.email || m.phone || 'Roommate' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Role Badge -->
+            <span class="text-[10px] font-black px-2 py-0.5 rounded-lg border shrink-0"
+                  [style.background]="m.role === 'Admin' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'var(--bg3)'"
+                  [style.color]="m.role === 'Admin' ? 'var(--p1)' : 'var(--t2)'"
+                  [style.borderColor]="m.role === 'Admin' ? 'color-mix(in srgb, var(--p1) 25%, transparent)' : 'var(--border)'">
+              {{ m.role === 'Admin' ? '👑 Admin' : '👤 Member' }}
+            </span>
+          </div>
+        } @empty {
+          <div class="p-6 text-center rounded-2xl border" style="background: var(--bg2); border-color: var(--border);">
+            <div class="text-2xl mb-1.5">🏠</div>
+            <div class="text-xs font-bold" style="color: var(--text);">No roommates found</div>
+            <div class="text-[11px] font-medium mt-1" style="color: var(--t3);">Share your flat invite code to add roommates.</div>
+          </div>
+        }
+      </div>
+
+      <!-- Action Footer -->
+      <div class="flex gap-2">
+        <button type="button"
+                (click)="shareInvite(); closeRoommatesModal()"
+                class="btns flex-1 py-2.5 text-xs font-black cursor-pointer">
+          🔗 Invite Flatmates
+        </button>
+        <button type="button"
+                (click)="closeRoommatesModal()"
+                class="btn flex-1 py-2.5 text-xs font-black cursor-pointer">
+          Done
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════
+     SHARE INVITE MODAL POPUP
+═══════════════════════════════════════════ -->
+@if (showInviteModal()) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-up"
+       (click)="closeInviteModal()">
+    <div class="w-full max-w-md rounded-3xl p-6 sm:p-7 shadow-2xl relative"
+         style="background: var(--card); border: 1.5px solid var(--border);"
+         (click)="$event.stopPropagation()">
+
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-lg shadow-sm"
+               style="background: color-mix(in srgb, var(--p1) 15%, transparent); color: var(--p1);">
+            🔗
+          </div>
+          <div>
+            <h3 class="text-base font-black" style="color: var(--text);">Invite Roommates</h3>
+            <p class="text-[11px] font-medium" style="color: var(--t3);">Share code or link to join {{ roomName() }}</p>
+          </div>
+        </div>
+        <button type="button"
+                (click)="closeInviteModal()"
+                class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border transition cursor-pointer hover:opacity-80"
+                style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
+          ✕
+        </button>
+      </div>
+
+      <!-- Invite Code Display Card -->
+      <div class="p-4 rounded-2xl border text-center mb-4"
+           style="background: color-mix(in srgb, var(--p1) 8%, var(--bg2)); border-color: color-mix(in srgb, var(--p1) 25%, transparent);">
+        <div class="text-[9px] font-extrabold uppercase tracking-widest mb-1" style="color: var(--t3);">
+          ROOM INVITE CODE
+        </div>
+        <div class="text-2xl font-black font-mono tracking-widest my-1 select-all" style="color: var(--p1);">
+          {{ inviteCode() }}
+        </div>
+        <button type="button"
+                (click)="copyInviteCode()"
+                class="mt-2 text-xs font-black px-4 py-1.5 rounded-xl border transition cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+                [style.background]="inviteCodeCopied() ? 'var(--ok)' : 'var(--p1)'"
+                style="color: white; border-color: transparent;">
+          {{ inviteCodeCopied() ? '✓ Code Copied!' : 'Copy Code' }}
+        </button>
+      </div>
+
+      <!-- Full Join Link Input -->
+      <div class="mb-4">
+        <label style="font-size: 10px; font-weight: 800; color: var(--t3); display: block; margin-bottom: 5px; letter-spacing: 0.06em;">
+          DIRECT JOIN LINK
+        </label>
+        <div class="relative">
+          <input class="inp font-mono text-xs"
+                 style="padding-right: 88px;"
+                 type="text"
+                 [value]="getInviteUrl()"
+                 readonly />
+          <button type="button"
+                  (click)="copyInviteLink()"
+                  class="cursor-pointer transition active:scale-95"
+                  [style.background]="inviteLinkCopied() ? 'var(--ok)' : 'var(--btn)'"
+                  style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: none; color: #fff; border-radius: 8px; padding: 5px 10px; font-size: 11px; font-weight: 800; font-family: var(--font);">
+            {{ inviteLinkCopied() ? '✓ Copied' : 'Copy Link' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- WhatsApp Share Button -->
+      <div class="mb-5">
+        <a [href]="getWhatsAppShareUrl()"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="w-full py-3 px-4 rounded-xl text-xs font-black text-white flex items-center justify-center gap-2 shadow-md hover:opacity-90 active:scale-98 transition"
+           style="background: #25D366; text-decoration: none;">
+          <i class="fa-brands fa-whatsapp text-base"></i>
+          <span>Share via WhatsApp</span>
+        </a>
+      </div>
+
+      <!-- Close Button -->
+      <button type="button"
+              (click)="closeInviteModal()"
+              class="btns w-full py-2.5 text-xs font-black cursor-pointer">
+        Done
+      </button>
 
     </div>
   </div>

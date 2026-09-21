@@ -19,7 +19,8 @@
       </button>
       <div>
         <div class="text-xl font-black tracking-tight flex items-center gap-2 flex-wrap" style="color: var(--text);">
-          <span>🤝 Group Split &amp; IOUs</span>
+          <i class="fa-solid fa-handshake mr-1 text-lg" style="color: var(--ok);"></i>
+          <span>Group Split &amp; IOUs</span>
           <span class="text-xs font-black px-2.5 py-0.5 rounded-full uppercase"
                 style="background: color-mix(in srgb, var(--p1) 14%, transparent); color: var(--p1);">
             {{ groupName() }}
@@ -37,13 +38,15 @@
               (click)="openMyQrModal()"
               class="btns py-2 px-3 text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-sm"
               title="Show my UPI QR code to flatmates">
-        <span>📱 My QR</span>
+        <i class="fa-solid fa-qrcode text-xs"></i>
+        <span>My QR</span>
       </button>
 
       <button type="button"
               (click)="showAdd = true"
               class="btn py-2 px-4 text-xs font-black shadow-md flex items-center gap-1.5 cursor-pointer">
-        <span>＋ Add Shared Expense</span>
+        <i class="fa-solid fa-plus text-xs"></i>
+        <span>Add Shared Expense</span>
       </button>
     </div>
   </div>
@@ -57,9 +60,9 @@
     
     <div class="flex justify-between items-center mb-2">
       <span class="sl mb-0">YOUR NET IOU POSITION</span>
-      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm"
            [style.background]="netBalance() > 0 ? 'color-mix(in srgb, var(--ok) 14%, transparent)' : (netBalance() < 0 ? 'color-mix(in srgb, var(--err) 14%, transparent)' : 'color-mix(in srgb, var(--p1) 14%, transparent)')">
-        {{ netBalance() > 0 ? '💚' : (netBalance() < 0 ? '❤️' : '🤝') }}
+        <i class="fa-solid" [ngClass]="netBalance() > 0 ? 'fa-arrow-trend-up text-emerald-500' : (netBalance() < 0 ? 'fa-arrow-trend-down text-rose-500' : 'fa-handshake text-teal-500')"></i>
       </div>
     </div>
 
@@ -94,9 +97,10 @@
         <span class="text-3xl sm:text-4xl font-black tracking-tight" style="color: var(--p1);">
           ₹0
         </span>
-        <span class="text-xs font-black px-2 py-0.5 rounded-full"
+        <span class="text-xs font-black px-2 py-0.5 rounded-full inline-flex items-center gap-1"
               style="background: color-mix(in srgb, var(--p1) 15%, transparent); color: var(--p1);">
-          All Settled Up ✓
+          <span>All Settled Up</span>
+          <i class="fa-solid fa-check text-[10px]"></i>
         </span>
       </div>
       <div class="text-xs font-semibold" style="color: var(--t2);">
@@ -113,7 +117,10 @@
     <!-- Column 1: They Owe You -->
     <div>
       <div class="sl flex justify-between items-center mb-3">
-        <span>💚 They Owe You</span>
+        <span class="flex items-center gap-1.5">
+          <i class="fa-solid fa-arrow-down-left text-xs" style="color: var(--ok);"></i>
+          <span>They Owe You</span>
+        </span>
         <span class="text-xs font-extrabold" style="color: var(--ok);">
           +₹{{ totalOwedToMe() | number:'1.0-0' }}
         </span>
@@ -141,23 +148,25 @@
               <div class="flex gap-2">
                 <button type="button"
                         (click)="markReceived(d)"
-                        class="btng flex-1 py-2 font-black cursor-pointer shadow-sm"
+                        class="btng flex-1 py-2 font-black cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
                         title="Record payment received from roommate">
-                  ✓ Mark Received
+                  <i class="fa-solid fa-check text-xs"></i>
+                  <span>Mark Received</span>
                 </button>
                 <button type="button"
                         (click)="sendReminder(d)"
-                        class="btns text-xs py-1.5 px-3 cursor-pointer"
+                        class="btns text-xs py-1.5 px-3 cursor-pointer flex items-center justify-center gap-1.5"
                         title="Send notification reminder">
-                  🔔 Remind
+                  <i class="fa-solid fa-bell text-xs"></i>
+                  <span>Remind</span>
                 </button>
               </div>
             </div>
           }
         } @else {
           <!-- Clean Empty State for They Owe You -->
-          <div class="card p-6 text-center rounded-2xl">
-            <div class="text-3xl mb-1.5">✨</div>
+          <div class="card p-6 text-center rounded-2xl flex flex-col items-center justify-center">
+            <i class="fa-solid fa-circle-check text-3xl mb-1.5 opacity-40" style="color: var(--ok);"></i>
             <div class="text-xs font-black tracking-tight" style="color: var(--text);">
               No one owes you right now
             </div>
@@ -173,7 +182,10 @@
     <div class="space-y-5">
       <div>
         <div class="sl flex justify-between items-center mb-3">
-          <span>❤️ You Owe Them</span>
+          <span class="flex items-center gap-1.5">
+            <i class="fa-solid fa-arrow-up-right text-xs" style="color: var(--err);"></i>
+            <span>You Owe Them</span>
+          </span>
           <span class="text-xs font-extrabold" style="color: var(--err);">
             −₹{{ totalIOwe() | number:'1.0-0' }}
           </span>
@@ -201,16 +213,17 @@
                 <div class="flex gap-2">
                   <button type="button"
                           (click)="openSettle(d)"
-                          class="btnr flex-1 py-2 font-black cursor-pointer shadow-sm">
-                    💸 Pay via UPI
+                          class="btnr flex-1 py-2 font-black cursor-pointer shadow-sm flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-indian-rupee-sign text-xs"></i>
+                    <span>Pay via UPI</span>
                   </button>
                 </div>
               </div>
             }
           } @else {
             <!-- Clean Empty State for You Owe Them -->
-            <div class="card p-6 text-center rounded-2xl">
-              <div class="text-3xl mb-1.5">🎉</div>
+            <div class="card p-6 text-center rounded-2xl flex flex-col items-center justify-center">
+              <i class="fa-solid fa-hands-clapping text-3xl mb-1.5 opacity-40" style="color: var(--ok);"></i>
               <div class="text-xs font-black tracking-tight" style="color: var(--text);">
                 You don't owe anyone
               </div>
@@ -257,16 +270,19 @@
        RECENT SHARED EXPENSES FEED
   ═══════════════════════════════════════════ -->
   <div class="mb-8">
-    <div class="sl mb-3">🧾 Recent Shared Expenses</div>
+    <div class="sl mb-3 flex items-center gap-1.5">
+      <i class="fa-solid fa-receipt text-xs"></i>
+      <span>Recent Shared Expenses</span>
+    </div>
 
     @if (expenses() && expenses().length > 0) {
       <div class="card p-0 rounded-2xl overflow-hidden divide-y" style="border-color: var(--border);">
         @for (exp of expenses(); track exp.id) {
           <div class="p-4 flex items-center justify-between flex-wrap gap-3 hover:bg-black/5 transition">
             <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-xl flex items-center justify-center text-base"
-                   style="background: color-mix(in srgb, var(--p1) 12%, transparent);">
-                🍽️
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm"
+                   style="background: color-mix(in srgb, var(--p1) 12%, transparent); color: var(--p1);">
+                <i class="fa-solid fa-receipt"></i>
               </div>
               <div>
                 <div class="text-xs sm:text-sm font-extrabold" style="color: var(--text);">
@@ -284,10 +300,10 @@
               </span>
               <button type="button"
                       (click)="voidExpense(exp)"
-                      class="text-xs p-1.5 rounded-lg border text-red-500 hover:bg-red-50 cursor-pointer"
+                      class="text-xs p-2 rounded-lg border text-red-500 hover:bg-red-50 cursor-pointer flex items-center justify-center"
                       style="border-color: color-mix(in srgb, var(--err) 30%, transparent);"
                       title="Void this shared expense">
-                🗑️
+                <i class="fa-solid fa-trash-can text-xs"></i>
               </button>
             </div>
           </div>
@@ -321,7 +337,7 @@
                 (click)="showSettle = false"
                 class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black cursor-pointer border"
                 style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
-          ✕
+          <i class="fa-solid fa-xmark text-xs"></i>
         </button>
       </div>
 
@@ -340,8 +356,9 @@
 
       <button type="button"
               (click)="settleUp()"
-              class="btng w-full py-3 text-xs font-black shadow-sm cursor-pointer">
-        Confirm Payment ✓
+              class="btng w-full py-3 text-xs font-black shadow-sm cursor-pointer flex items-center justify-center gap-1.5">
+        <span>Confirm Payment</span>
+        <i class="fa-solid fa-check text-xs"></i>
       </button>
 
       <div class="text-[10px] mt-2 font-medium" style="color: var(--t3);">
@@ -368,7 +385,7 @@
                 (click)="showMyQr = false"
                 class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black cursor-pointer border"
                 style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
-          ✕
+          <i class="fa-solid fa-xmark text-xs"></i>
         </button>
       </div>
 
@@ -415,8 +432,8 @@
         </div>
         <button type="button"
                 (click)="showAdd = false"
-                class="w-8 h-8 rounded-full flex items-center justify-center bg-white/20 border border-white/30 text-white cursor-pointer">
-          ✕
+                class="w-8 h-8 rounded-full flex items-center justify-center bg-white/20 border border-white/30 text-white cursor-pointer hover:bg-white/30 transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
         </button>
       </div>
 
@@ -467,11 +484,14 @@
               @for (m of groupMembers(); track m.id) {
                 <button type="button"
                         (click)="toggleMember(m.id)"
-                        class="px-3 py-1.5 rounded-full text-xs font-bold border transition cursor-pointer"
+                        class="px-3 py-1.5 rounded-full text-xs font-bold border transition cursor-pointer inline-flex items-center gap-1"
                         [style.background]="selectedMembers().has(m.id) ? 'var(--p1)' : 'transparent'"
                         [style.color]="selectedMembers().has(m.id) ? 'white' : 'var(--t2)'"
                         [style.borderColor]="selectedMembers().has(m.id) ? 'var(--p1)' : 'var(--border)'">
-                  {{ m.name }} {{ selectedMembers().has(m.id) ? '✓' : '' }}
+                  <span>{{ m.name }}</span>
+                  @if (selectedMembers().has(m.id)) {
+                    <i class="fa-solid fa-check text-[10px]"></i>
+                  }
                 </button>
               }
             </div>

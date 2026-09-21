@@ -55,7 +55,7 @@
       </div>
       
       <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight mb-1.5 leading-tight">
-        Hello, {{ firstName }} 👋
+        Hello, {{ firstName }}
       </h1>
       <p class="text-xs sm:text-sm text-white/75 font-medium leading-relaxed max-w-md">
         Choose a flat to continue tracking shared expenses, or create a new room with your flatmates.
@@ -78,9 +78,9 @@
              class="card cursor-pointer p-4 sm:p-5 flex items-center gap-4 active:scale-[0.99] transition hover:shadow-lg">
           
           <!-- Flat Icon -->
-          <div class="w-13 h-13 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-sm"
-               style="background: color-mix(in srgb, var(--p1) 12%, transparent); border: 1.5px solid color-mix(in srgb, var(--p1) 25%, transparent);">
-            🏠
+          <div class="w-13 h-13 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-sm"
+               style="background: color-mix(in srgb, var(--p1) 12%, transparent); border: 1.5px solid color-mix(in srgb, var(--p1) 25%, transparent); color: var(--p1);">
+            <i class="fa-solid fa-house"></i>
           </div>
 
           <!-- Flat Details -->
@@ -90,11 +90,12 @@
                 {{ g.groupName }}
               </h2>
               @if (g.myRole) {
-                <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-md border select-none"
+                <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-md border select-none inline-flex items-center gap-1"
                       [style.background]="g.myRole === 'Admin' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'var(--bg2)'"
                       [style.color]="g.myRole === 'Admin' ? 'var(--p1)' : 'var(--t2)'"
                       [style.borderColor]="g.myRole === 'Admin' ? 'color-mix(in srgb, var(--p1) 30%, transparent)' : 'var(--border)'">
-                  {{ g.myRole === 'Admin' ? '👑 Admin' : '👤 Member' }}
+                  <i class="fa-solid text-[9px]" [ngClass]="g.myRole === 'Admin' ? 'fa-crown text-amber-500' : 'fa-user'"></i>
+                  <span>{{ g.myRole }}</span>
                 </span>
               }
             </div>
@@ -108,7 +109,8 @@
             @if (g.inviteCode) {
               <div class="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold border"
                    style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
-                <span>🔑 Code:</span>
+                <i class="fa-solid fa-key text-[10px]" style="color: var(--p1);"></i>
+                <span>Code:</span>
                 <span class="font-mono font-black tracking-wider" style="color: var(--p1);">{{ g.inviteCode }}</span>
               </div>
             }
@@ -122,8 +124,8 @@
 
         </div>
       } @empty {
-        <div class="card text-center py-10 px-4">
-          <div class="text-4xl mb-3">🏡</div>
+        <div class="card text-center py-10 px-4 flex flex-col items-center justify-center">
+          <i class="fa-solid fa-house-chimney text-4xl mb-3 opacity-40" style="color: var(--p1);"></i>
           <h3 class="text-base font-black mb-1" style="color: var(--text);">No Flats Yet</h3>
           <p class="text-xs font-medium max-w-xs mx-auto mb-4" style="color: var(--t2);">
             You haven't joined or created a flat yet. Create one now or join using an invite code.
@@ -142,7 +144,7 @@
     <button type="button"
             (click)="openCreate()"
             class="btn py-4 text-xs sm:text-sm font-black flex items-center justify-center gap-2">
-      <span class="text-lg leading-none">+</span>
+      <i class="fa-solid fa-plus text-sm"></i>
       <span>Create New Flat</span>
     </button>
 
@@ -151,7 +153,7 @@
             (click)="openJoin()"
             class="btns py-4 text-xs sm:text-sm font-black flex items-center justify-center gap-2 bg-white"
             style="border-color: var(--border2); color: var(--p1);">
-      <span class="text-base leading-none">🔑</span>
+      <i class="fa-solid fa-key text-xs"></i>
       <span>Join with Invite Code</span>
     </button>
 
@@ -173,9 +175,9 @@
       <!-- Modal Header -->
       <div class="flex items-center justify-between mb-5">
         <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg text-white"
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm text-white"
                style="background: var(--btn);">
-            {{ modalMode() === 'create' ? '🏠' : '🔑' }}
+            <i class="fa-solid" [ngClass]="modalMode() === 'create' ? 'fa-house' : 'fa-key'"></i>
           </div>
           <div>
             <h2 class="text-lg font-black" style="color: var(--text);">
@@ -191,7 +193,7 @@
                 (click)="closeModal()"
                 class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black cursor-pointer border bg-transparent"
                 style="border-color: var(--border); color: var(--t2);">
-          ✕
+          <i class="fa-solid fa-xmark text-xs"></i>
         </button>
       </div>
 
@@ -201,15 +203,17 @@
                 (click)="modalMode.set('create'); error.set(null)"
                 [style.background]="modalMode() === 'create' ? 'var(--btn)' : 'transparent'"
                 [style.color]="modalMode() === 'create' ? '#fff' : 'var(--t3)'"
-                style="flex: 1; padding: 7px 10px; border-radius: 8px; border: none; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s;">
-          ➕ Create Flat
+                style="flex: 1; padding: 7px 10px; border-radius: 8px; border: none; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+          <i class="fa-solid fa-plus text-[10px]"></i>
+          <span>Create Flat</span>
         </button>
         <button type="button"
                 (click)="modalMode.set('join'); error.set(null)"
                 [style.background]="modalMode() === 'join' ? 'var(--btn)' : 'transparent'"
                 [style.color]="modalMode() === 'join' ? '#fff' : 'var(--t3)'"
-                style="flex: 1; padding: 7px 10px; border-radius: 8px; border: none; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s;">
-          🔑 Join with Code
+                style="flex: 1; padding: 7px 10px; border-radius: 8px; border: none; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+          <i class="fa-solid fa-key text-[10px]"></i>
+          <span>Join with Code</span>
         </button>
       </div>
 
@@ -217,7 +221,7 @@
       @if (error()) {
         <div class="p-3 rounded-xl text-xs font-bold mb-4 flex items-center gap-2"
              style="background: color-mix(in srgb, var(--err) 12%, transparent); color: var(--err); border: 1.5px solid color-mix(in srgb, var(--err) 25%, transparent);">
-          <span>⚠️</span>
+          <i class="fa-solid fa-triangle-exclamation text-rose-500"></i>
           <span>{{ error() }}</span>
         </div>
       }

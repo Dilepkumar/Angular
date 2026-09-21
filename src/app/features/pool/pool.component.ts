@@ -205,6 +205,13 @@ export class PoolComponent implements OnInit {
   contributing = false;
   contributeMembers = signal<{ userId: number; name: string; initials: string; selected: boolean }[]>([]);
 
+  // ── Single Member Quick Pay ("Mark as Paid") Modal ──
+  showQuickPayModal = signal<boolean>(false);
+  quickPayTarget = signal<any>(null);
+  quickPayAmount = 0;
+  quickPayNote = '';
+  quickPaying = signal<boolean>(false);
+
   // ── Admin: Shares & Target ──
   showShares = false;
   realMembers: { userId: number; name: string; monthlyShare: number }[] = [];
@@ -684,6 +691,55 @@ export class PoolComponent implements OnInit {
       error: (e) => {
         this.contributing = false;
         this.showToast(`❌ ${e.error?.message || 'Contribution failed'}`);
+      }
+    });
+  }
+
+  // ═══════════════════════════════════════════
+  // SINGLE-MEMBER QUICK PAY ("MARK AS PAID")
+  // ═══════════════════════════════════════════
+  openQuickPay(m: any): void {
+    this.quickPayTarget.set(m);
+    this.quickPayAmount = m.pendingAmount > 0 ? m.pendingAmount : (m.expectedThisMonth > 0 ? m.expectedThisMonth : 1000);
+    this.quickPayNote = `Monthly share - ${m.userName}`;
+    this.showQuickPayModal.set(true);
+  }
+
+  closeQuickPay(): void {
+    this.showQuickPayModal.set(false);
+    this.quickPayTarget.set(null);
+  }
+
+  submitQuickPay(): void {
+    const target = this.quickPayTarget();
+    if (!target) return;
+    const amt = Number(this.quickPayAmount);
+    if (!amt || amt <= 0) {
+      this.popup.error('Please enter a valid contribution amount');
+      return;
+    }
+
+    this.quickPaying.set(true);
+    const payload = {
+      amount: amt,
+      message: this.quickPayNote.trim() || `Monthly maintenance share - ${target.userName}`,
+      transactionRef: this.quickPayNote.trim() || `Pool Share`,
+      memberUserIds: [target.userId],
+      mode: 'per_person',
+      autoApprove: true
+    };
+
+    this.api.post<{ message: string }>(`groups/${this.groupId}/pool/contribute`, payload).subscribe({
+      next: (res) => {
+        this.quickPaying.set(false);
+        this.showQuickPayModal.set(false);
+        this.quickPayTarget.set(null);
+        this.popup.success(res.message || `✓ ₹${amt} marked as paid for ${target.userName}`);
+        this.load();
+      },
+      error: (e) => {
+        this.quickPaying.set(false);
+        this.popup.error(e.error?.message || 'Failed to record contribution');
       }
     });
   }

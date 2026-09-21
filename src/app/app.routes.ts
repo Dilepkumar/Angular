@@ -9,6 +9,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/group-picker/group-picker.component').then(m => m.GroupPickerComponent)
   },
   {
+    path: 'groups',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/group-picker/group-picker.component').then(m => m.GroupPickerComponent)
+  },
+  {
     path: 'g/:groupId',
     canActivate: [authGuard],
     loadComponent: () => import('./features/tabs/tabs.component').then(m => m.TabsComponent),

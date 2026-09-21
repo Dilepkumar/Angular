@@ -53,9 +53,10 @@ export class ForgotPasswordComponent {
           this.step.set(2);
           if (res?.devOtp) {
             this.code = res.devOtp;
-            this.popup.success(`Password reset code sent! (Dev Code: ${res.devOtp})`);
+            this.popup.success(`Password reset code sent! (Dev Auto-filled: ${res.devOtp})`);
           } else {
-            this.popup.success(res?.message || 'Password reset code sent to your email.');
+            this.code = '';
+            this.popup.success(res?.message || 'Password reset code sent to your email. Please check your inbox.');
           }
         },
         error: (e) => {

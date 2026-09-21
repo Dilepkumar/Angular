@@ -234,18 +234,27 @@ export class LogExpenseComponent implements OnInit {
   }
 
   get itemsSum(): number {
-    return this.expenseRows.reduce((acc, r) => acc + (r.price || 0), 0);
+    return Number(this.expenseRows.reduce((acc, r) => acc + (r.price || 0), 0).toFixed(2));
+  }
+
+  get hasReceiptMismatch(): boolean {
+    const total = this.expenseTotal || 0;
+    const sum = this.itemsSum;
+    if (total <= 0 && sum <= 0) return false;
+    return Math.abs(total - sum) >= 0.01;
   }
 
   get isReceiptBalanced(): boolean {
-    if (this.expenseRows.length === 0) return true;
-    if (this.expenseTotal === null) return false;
-    return Math.abs(this.expenseTotal - this.itemsSum) < 0.01;
+    const total = this.expenseTotal || 0;
+    const sum = this.itemsSum;
+    if (total <= 0 || sum <= 0) return false;
+    return Math.abs(total - sum) < 0.01;
   }
 
   get receiptMismatchDiff(): number {
-    if (this.expenseTotal === null) return 0;
-    return Math.abs(this.expenseTotal - this.itemsSum);
+    const total = this.expenseTotal || 0;
+    const sum = this.itemsSum;
+    return Number(Math.abs(total - sum).toFixed(2));
   }
 
   toggleSplitParticipant(id: string): void {

@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -24,6 +24,7 @@ export interface MyGroup {
 export class GroupPickerComponent implements OnInit {
   private api = inject(ApiService);
   private auth = inject(AuthService);
+  private route = inject(ActivatedRoute);
   private router = inject(Router);
 
   groups = signal<MyGroup[]>([]);
@@ -40,7 +41,27 @@ export class GroupPickerComponent implements OnInit {
   newGroupTarget: number | null = 20000;
   inviteCode = '';
 
+  get isSwitching(): boolean {
+    return this.router.url.includes('/groups') || this.route.snapshot.queryParamMap.get('switch') === 'true';
+  }
+
   ngOnInit(): void {
+    const cached = localStorage.getItem('rl_user_groups');
+    const savedGroupId = localStorage.getItem('rl_group_id');
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          this.groups.set(parsed);
+          // Instant restore on normal app launch, but allow staying on groups picker when switching flats
+          if (!this.isSwitching && savedGroupId && parsed.some((g: MyGroup) => g.id === Number(savedGroupId))) {
+            this.enter(Number(savedGroupId));
+            return;
+          }
+        }
+      } catch {}
+    }
+
     this.loadGroups();
   }
 
@@ -48,24 +69,24 @@ export class GroupPickerComponent implements OnInit {
     this.loading.set(true);
     this.api.get<MyGroup[]>('groups/my').subscribe({
       next: (data) => {
-        this.groups.set(data || []);
+        const list = data || [];
+        this.groups.set(list);
         this.loading.set(false);
-      },
-      error: (err) => {
-        this.loading.set(false);
-        // Fallback demo flat if API returns empty
-        if (this.groups().length === 0) {
-          this.groups.set([
-            {
-              id: 1,
-              groupName: 'Apartment 402',
-              monthlyPoolTarget: 20000,
-              inviteCode: 'APT402',
-              memberCount: 7,
-              myRole: 'Admin'
-            }
-          ]);
+        try {
+          localStorage.setItem('rl_user_groups', JSON.stringify(list));
+        } catch {}
+
+        if (!this.isSwitching) {
+          const savedGroupId = localStorage.getItem('rl_group_id');
+          if (savedGroupId && list.some(g => g.id === Number(savedGroupId))) {
+            this.enter(Number(savedGroupId));
+          } else if (list.length === 1) {
+            this.enter(list[0].id);
+          }
         }
+      },
+      error: () => {
+        this.loading.set(false);
       }
     });
   }

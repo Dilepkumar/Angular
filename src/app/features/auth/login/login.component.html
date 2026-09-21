@@ -1,13 +1,18 @@
 <div class="min-h-dvh bg-slate-50 p-5 pt-16 flex flex-col">
 
   <div class="mb-10">
-    <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-2xl mb-4">🏠</div>
+    <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-xl text-emerald-600 mb-4">
+      <i class="fa-solid fa-house"></i>
+    </div>
     <h1 class="text-2xl font-extrabold">Welcome back</h1>
     <p class="text-slate-500 text-sm mt-1">Login with email or mobile number</p>
   </div>
 
   @if (error()) {
-    <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-2xl p-3 mb-4">⚠️ {{ error() }}</div>
+    <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-2xl p-3 mb-4 flex items-center gap-2">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span>{{ error() }}</span>
+    </div>
   }
 
   <form (ngSubmit)="submit()" class="space-y-4 flex-1">
@@ -15,7 +20,9 @@
     <div>
       <label class="text-xs font-semibold text-slate-500">EMAIL OR MOBILE</label>
       <div class="relative mt-1">
-        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm">{{ isPhone ? '📱' : '📧' }}</span>
+        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+          <i class="fa-solid" [class.fa-mobile-screen-button]="isPhone" [class.fa-envelope]="!isPhone"></i>
+        </span>
         <input [(ngModel)]="identifier" name="identifier" placeholder="you@mail.com or 98765 43210"
                autocomplete="username" spellcheck="false"
                class="w-full border rounded-xl pl-10 pr-4 py-3"
