@@ -19,7 +19,7 @@
               (click)="goBack()"
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-white cursor-pointer border transition hover:bg-white/20"
               style="background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.3);">
-        <span>←</span>
+        <i class="fa-solid fa-arrow-left text-xs"></i>
         <span>Dashboard</span>
       </button>
 
@@ -52,10 +52,7 @@
         <!-- Camera Upload Trigger -->
         <label class="absolute bottom-0 right-0 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer shadow-lg active:scale-95 transition"
                style="background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(6px); border: 2px solid rgba(255, 255, 255, 0.5);">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-            <circle cx="12" cy="13" r="4"/>
-          </svg>
+          <i class="fa-solid fa-camera text-xs text-white"></i>
           <input type="file"
                  accept="image/jpeg,image/png,image/webp"
                  class="hidden"
@@ -95,10 +92,11 @@
                title="View roommates in this flat">
             <div class="text-xl sm:text-2xl font-black text-white flex items-center gap-1.5">
               <span>{{ memberCount() }}</span>
-              <span class="text-xs opacity-75 group-hover:translate-x-0.5 transition">👥</span>
+              <i class="fa-solid fa-users text-xs opacity-80 group-hover:translate-x-0.5 transition"></i>
             </div>
-            <div class="text-[9px] text-white/70 font-extrabold uppercase tracking-widest mt-0.5 underline decoration-dotted underline-offset-2">
-              {{ memberCount() === 1 ? 'ROOMMATE' : 'ROOMMATES' }} ↗
+            <div class="text-[9px] text-white/70 font-extrabold uppercase tracking-widest mt-0.5 underline decoration-dotted underline-offset-2 flex items-center gap-1">
+              <span>{{ memberCount() === 1 ? 'ROOMMATE' : 'ROOMMATES' }}</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
             </div>
           </div>
         </div>
@@ -119,7 +117,10 @@
       
       <!-- Card 1: Personal Information -->
       <div class="card">
-        <div class="sl">Personal Information</div>
+        <div class="sl flex items-center gap-2">
+          <i class="fa-solid fa-user text-xs" style="color: var(--p1);"></i>
+          <span>Personal Information</span>
+        </div>
 
         <div class="space-y-3.5">
           <!-- Full Name -->
@@ -155,13 +156,14 @@
             </label>
             <div class="relative">
               <input class="inp"
-                     style="padding-right: 88px;"
+                     style="padding-right: 92px;"
                      type="email"
                      [value]="email()"
                      placeholder="your.email@example.com"
                      disabled />
-              <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: 800; background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); border: 1.5px solid color-mix(in srgb, var(--ok) 28%, transparent); border-radius: 6px; padding: 2px 7px;">
-                ✓ Verified
+              <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: 800; background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); border: 1.5px solid color-mix(in srgb, var(--ok) 28%, transparent); border-radius: 6px; padding: 2px 7px; display: inline-flex; align-items: center; gap: 4px;">
+                <i class="fa-solid fa-circle-check text-[10px]"></i>
+                <span>Verified</span>
               </span>
             </div>
           </div>
@@ -210,8 +212,14 @@
                         [style.background]="(gender().toLowerCase()) === (g.toLowerCase()) ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'var(--bg2)'"
                         [style.borderColor]="(gender().toLowerCase()) === (g.toLowerCase()) ? 'var(--p1)' : 'var(--border)'"
                         [style.color]="(gender().toLowerCase()) === (g.toLowerCase()) ? 'var(--p1)' : 'var(--t2)'"
-                        style="padding: 9px 8px; border: 1.5px solid; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px;">
-                  <span>{{ genderIcons[g] }}</span>
+                        style="padding: 9px 8px; border: 1.5px solid; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  @if (g === 'Male') {
+                    <i class="fa-solid fa-mars text-xs"></i>
+                  } @else if (g === 'Female') {
+                    <i class="fa-solid fa-venus text-xs"></i>
+                  } @else {
+                    <i class="fa-solid fa-genderless text-xs"></i>
+                  }
                   <span>{{ g }}</span>
                 </button>
               }
@@ -230,13 +238,19 @@
 
       <!-- Card 2: Notifications Preferences -->
       <div class="card">
-        <div class="sl">Notification Preferences</div>
+        <div class="sl flex items-center gap-2">
+          <i class="fa-solid fa-bell text-xs" style="color: var(--p1);"></i>
+          <span>Notification Preferences</span>
+        </div>
 
         <div class="space-y-3">
           <!-- Push Notifications -->
           <div class="flex items-center justify-between py-1">
             <div>
-              <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Push Notifications</div>
+              <div class="text-xs sm:text-[13px] font-bold flex items-center gap-1.5" style="color: var(--text);">
+                <i class="fa-solid fa-mobile-screen-button text-xs" style="color: var(--p1);"></i>
+                <span>Push Notifications</span>
+              </div>
               <div class="text-[11px] font-medium" style="color: var(--t3);">Real-time expense &amp; split alerts</div>
             </div>
             <div class="tog"
@@ -251,7 +265,10 @@
           <!-- WhatsApp Alerts -->
           <div class="flex items-center justify-between py-1">
             <div>
-              <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">WhatsApp Alerts</div>
+              <div class="text-xs sm:text-[13px] font-bold flex items-center gap-1.5" style="color: var(--text);">
+                <i class="fa-brands fa-whatsapp text-xs" style="color: #25D366;"></i>
+                <span>WhatsApp Alerts</span>
+              </div>
               <div class="text-[11px] font-medium" style="color: var(--t3);">Payment nudges &amp; reminders</div>
             </div>
             <div class="tog"
@@ -266,7 +283,10 @@
           <!-- Email Digest -->
           <div class="flex items-center justify-between py-1">
             <div>
-              <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">Weekly Email Digest</div>
+              <div class="text-xs sm:text-[13px] font-bold flex items-center gap-1.5" style="color: var(--text);">
+                <i class="fa-solid fa-envelope text-xs" style="color: var(--p1);"></i>
+                <span>Weekly Email Digest</span>
+              </div>
               <div class="text-[11px] font-medium" style="color: var(--t3);">Summary of room budget &amp; spends</div>
             </div>
             <div class="tog"
@@ -283,9 +303,13 @@
         <button type="button"
                 (click)="showPwSection.set(!showPwSection())"
                 class="w-full flex items-center justify-between bg-transparent border-none cursor-pointer p-0 text-left">
-          <span class="sl mb-0">🔒 Security &amp; Password</span>
-          <span class="text-xs font-bold" style="color: var(--p1);">
-            {{ showPwSection() ? '▲ Hide' : '▼ Change Password' }}
+          <span class="sl mb-0 flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved text-xs" style="color: var(--p1);"></i>
+            <span>Security &amp; Password</span>
+          </span>
+          <span class="text-xs font-bold flex items-center gap-1" style="color: var(--p1);">
+            <i class="fa-solid text-[10px]" [class.fa-chevron-up]="showPwSection()" [class.fa-chevron-down]="!showPwSection()"></i>
+            <span>{{ showPwSection() ? 'Hide' : 'Change Password' }}</span>
           </span>
         </button>
 
@@ -325,9 +349,14 @@
             <button type="button"
                     (click)="changePassword()"
                     [disabled]="changingPw()"
-                    class="btns w-full font-extrabold"
+                    class="btns w-full font-extrabold flex items-center justify-center gap-1.5"
                     style="border-color: var(--p1); color: var(--p1);">
-              {{ changingPw() ? 'Updating password…' : 'Update Password' }}
+              @if (changingPw()) {
+                <i class="fa-solid fa-spinner fa-spin text-xs"></i>
+              } @else {
+                <i class="fa-solid fa-key text-xs"></i>
+              }
+              <span>{{ changingPw() ? 'Updating password…' : 'Update Password' }}</span>
             </button>
           </div>
         }
@@ -345,9 +374,13 @@
         <button type="button"
                 (click)="toggleUpiSection()"
                 class="w-full flex items-center justify-between bg-transparent border-none cursor-pointer p-0 text-left">
-          <span class="sl mb-0">💳 UPI / VPA Settings</span>
-          <span class="text-xs font-bold" style="color: var(--p1);">
-            {{ showUpiSection() ? '▲ Hide' : '▼ Manage UPI' }}
+          <span class="sl mb-0 flex items-center gap-2">
+            <i class="fa-solid fa-credit-card text-xs" style="color: var(--p1);"></i>
+            <span>UPI / VPA Settings</span>
+          </span>
+          <span class="text-xs font-bold flex items-center gap-1" style="color: var(--p1);">
+            <i class="fa-solid text-[10px]" [class.fa-chevron-up]="showUpiSection()" [class.fa-chevron-down]="!showUpiSection()"></i>
+            <span>{{ showUpiSection() ? 'Hide' : 'Manage UPI' }}</span>
           </span>
         </button>
 
@@ -360,7 +393,7 @@
               </label>
               <div class="relative">
                 <input class="inp font-mono text-xs font-bold"
-                       style="padding-right: 70px;"
+                       style="padding-right: 76px;"
                        type="text"
                        name="upiId"
                        [ngModel]="upiId()"
@@ -368,8 +401,9 @@
                        placeholder="username@okhdfcbank" />
                 <button type="button"
                         (click)="copyUpiId()"
-                        style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--btn); border: none; color: #fff; border-radius: 8px; padding: 5px 11px; font-size: 11px; font-weight: 800; cursor: pointer; font-family: var(--font);">
-                  Copy
+                        style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--btn); border: none; color: #fff; border-radius: 8px; padding: 5px 11px; font-size: 11px; font-weight: 800; cursor: pointer; font-family: var(--font); display: inline-flex; align-items: center; gap: 4px;">
+                  <i class="fa-regular fa-copy text-[11px]"></i>
+                  <span>Copy</span>
                 </button>
               </div>
             </div>
@@ -393,45 +427,60 @@
 
             <!-- Connected UPI Apps Grid -->
             <div>
-              <div class="sl">Connected UPI Apps</div>
+              <div class="sl flex items-center gap-2">
+                <i class="fa-solid fa-mobile-screen text-xs" style="color: var(--p1);"></i>
+                <span>Connected UPI Apps</span>
+              </div>
               <div class="grid grid-cols-2 gap-2">
                 <!-- GPay -->
                 <div class="flex items-center gap-2 p-2.5 rounded-xl border"
                      style="background: var(--bg2); border-color: color-mix(in srgb, var(--ok) 28%, transparent);">
-                  <span class="text-xl">📱</span>
+                  <i class="fa-brands fa-google text-lg" style="color: #4285F4;"></i>
                   <div>
                     <div class="text-xs font-bold" style="color: var(--text);">GPay</div>
-                    <div class="text-[9px] font-bold" style="color: var(--ok);">Connected ✓</div>
+                    <div class="text-[9px] font-bold flex items-center gap-1" style="color: var(--ok);">
+                      <i class="fa-solid fa-circle-check text-[8px]"></i>
+                      <span>Connected</span>
+                    </div>
                   </div>
                 </div>
 
                 <!-- PhonePe -->
                 <div class="flex items-center gap-2 p-2.5 rounded-xl border"
                      style="background: var(--bg2); border-color: color-mix(in srgb, var(--ok) 28%, transparent);">
-                  <span class="text-xl">💸</span>
+                  <i class="fa-solid fa-money-bill-transfer text-lg" style="color: #5f259f;"></i>
                   <div>
                     <div class="text-xs font-bold" style="color: var(--text);">PhonePe</div>
-                    <div class="text-[9px] font-bold" style="color: var(--ok);">Connected ✓</div>
+                    <div class="text-[9px] font-bold flex items-center gap-1" style="color: var(--ok);">
+                      <i class="fa-solid fa-circle-check text-[8px]"></i>
+                      <span>Connected</span>
+                    </div>
                   </div>
                 </div>
 
                 <!-- BHIM -->
                 <div class="flex items-center gap-2 p-2.5 rounded-xl border"
                      style="background: var(--bg2); border-color: var(--border);">
-                  <span class="text-xl">🏦</span>
+                  <i class="fa-solid fa-building-columns text-lg" style="color: #008080;"></i>
                   <div>
                     <div class="text-xs font-bold" style="color: var(--text);">BHIM</div>
-                    <div class="text-[9px] font-bold" style="color: var(--t3);">+ Connect</div>
+                    <div class="text-[9px] font-bold flex items-center gap-1" style="color: var(--t3);">
+                      <i class="fa-solid fa-plus text-[8px]"></i>
+                      <span>Connect</span>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Paytm -->
                 <div class="flex items-center gap-2 p-2.5 rounded-xl border"
                      style="background: var(--bg2); border-color: color-mix(in srgb, var(--ok) 28%, transparent);">
-                  <span class="text-xl">🪷</span>
+                  <i class="fa-solid fa-wallet text-lg" style="color: #002e6e;"></i>
                   <div>
                     <div class="text-xs font-bold" style="color: var(--text);">Paytm</div>
-                    <div class="text-[9px] font-bold" style="color: var(--ok);">Connected ✓</div>
+                    <div class="text-[9px] font-bold flex items-center gap-1" style="color: var(--ok);">
+                      <i class="fa-solid fa-circle-check text-[8px]"></i>
+                      <span>Connected</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -442,20 +491,23 @@
 
       <!-- Card 5: Room Membership -->
       <div class="card">
-        <div class="sl">Room Membership</div>
+        <div class="sl flex items-center gap-2">
+          <i class="fa-solid fa-people-roof text-xs" style="color: var(--p1);"></i>
+          <span>Room Membership</span>
+        </div>
 
         <div (click)="goToRoom()"
              class="flex items-center gap-3 p-3.5 rounded-2xl border mb-3.5 cursor-pointer hover:shadow-md transition active:scale-[0.99] group"
              style="background: var(--bg2); border-color: var(--border);"
              title="Open flat dashboard">
-          <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl text-white shadow-sm shrink-0"
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center text-lg text-white shadow-sm shrink-0"
                style="background: var(--btn);">
-            🏠
+            <i class="fa-solid fa-house"></i>
           </div>
           <div class="flex-1 min-w-0">
             <div class="text-sm font-extrabold flex items-center gap-1.5" style="color: var(--text);">
               <span class="truncate">{{ roomName() || 'No Flat Joined' }}</span>
-              <span class="text-xs opacity-75 group-hover:translate-x-0.5 transition">›</span>
+              <i class="fa-solid fa-chevron-right text-[11px] opacity-75 group-hover:translate-x-0.5 transition"></i>
             </div>
             <div class="text-xs font-medium truncate" style="color: var(--t3);">
               @if (roomAddress()) { {{ roomAddress() }} · } {{ memberCount() }} {{ memberCount() === 1 ? 'member' : 'members' }}
@@ -471,13 +523,16 @@
         <div class="flex gap-2">
           <button type="button"
                   (click)="shareInvite()"
-                  class="btns flex-1 text-xs">
-            🔗 Share Invite
+                  class="btns flex-1 text-xs flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-user-plus text-xs"></i>
+            <span>Share Invite</span>
           </button>
           <button type="button"
                   (click)="leaveRoom()"
-                  style="flex: 1; padding: 9px 12px; background: color-mix(in srgb, var(--err) 8%, transparent); color: var(--err); border: 1.5px solid color-mix(in srgb, var(--err) 25%, transparent); border-radius: 12px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s;">
-            Switch Flat
+                  class="flex-1 text-xs flex items-center justify-center gap-1.5"
+                  style="padding: 9px 12px; background: color-mix(in srgb, var(--err) 8%, transparent); color: var(--err); border: 1.5px solid color-mix(in srgb, var(--err) 25%, transparent); border-radius: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s;">
+            <i class="fa-solid fa-arrow-right-arrow-left text-xs"></i>
+            <span>Switch Flat</span>
           </button>
         </div>
       </div>
@@ -565,7 +620,7 @@
         <div class="flex items-center gap-2.5">
           <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-lg shadow-sm"
                style="background: color-mix(in srgb, var(--p1) 15%, transparent); color: var(--p1);">
-            👥
+            <i class="fa-solid fa-users text-base"></i>
           </div>
           <div>
             <div class="flex items-center gap-2">
@@ -582,7 +637,7 @@
                 (click)="closeRoommatesModal()"
                 class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border transition cursor-pointer hover:opacity-80"
                 style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
-          ✕
+          <i class="fa-solid fa-xmark text-sm"></i>
         </button>
       </div>
 
@@ -628,12 +683,16 @@
                   [style.background]="m.role === 'Admin' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'var(--bg3)'"
                   [style.color]="m.role === 'Admin' ? 'var(--p1)' : 'var(--t2)'"
                   [style.borderColor]="m.role === 'Admin' ? 'color-mix(in srgb, var(--p1) 25%, transparent)' : 'var(--border)'">
-              {{ m.role === 'Admin' ? '👑 Admin' : '👤 Member' }}
+              @if (m.role === 'Admin') {
+                <span class="inline-flex items-center gap-1"><i class="fa-solid fa-crown text-[9px] text-amber-500"></i> Admin</span>
+              } @else {
+                <span class="inline-flex items-center gap-1"><i class="fa-solid fa-user text-[9px]"></i> Member</span>
+              }
             </span>
           </div>
         } @empty {
-          <div class="p-6 text-center rounded-2xl border" style="background: var(--bg2); border-color: var(--border);">
-            <div class="text-2xl mb-1.5">🏠</div>
+          <div class="p-6 text-center rounded-2xl border flex flex-col items-center justify-center" style="background: var(--bg2); border-color: var(--border);">
+            <i class="fa-solid fa-people-roof text-3xl mb-2 opacity-40" style="color: var(--p1);"></i>
             <div class="text-xs font-bold" style="color: var(--text);">No roommates found</div>
             <div class="text-[11px] font-medium mt-1" style="color: var(--t3);">Share your flat invite code to add roommates.</div>
           </div>
@@ -644,8 +703,9 @@
       <div class="flex gap-2">
         <button type="button"
                 (click)="shareInvite(); closeRoommatesModal()"
-                class="btns flex-1 py-2.5 text-xs font-black cursor-pointer">
-          🔗 Invite Flatmates
+                class="btns flex-1 py-2.5 text-xs font-black cursor-pointer flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-user-plus text-xs"></i>
+          <span>Invite Flatmates</span>
         </button>
         <button type="button"
                 (click)="closeRoommatesModal()"
@@ -673,7 +733,7 @@
         <div class="flex items-center gap-2.5">
           <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-lg shadow-sm"
                style="background: color-mix(in srgb, var(--p1) 15%, transparent); color: var(--p1);">
-            🔗
+            <i class="fa-solid fa-link text-base"></i>
           </div>
           <div>
             <h3 class="text-base font-black" style="color: var(--text);">Invite Roommates</h3>
@@ -684,7 +744,7 @@
                 (click)="closeInviteModal()"
                 class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border transition cursor-pointer hover:opacity-80"
                 style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
-          ✕
+          <i class="fa-solid fa-xmark text-sm"></i>
         </button>
       </div>
 
@@ -699,10 +759,11 @@
         </div>
         <button type="button"
                 (click)="copyInviteCode()"
-                class="mt-2 text-xs font-black px-4 py-1.5 rounded-xl border transition cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+                class="mt-2 text-xs font-black px-4 py-1.5 rounded-xl border transition cursor-pointer shadow-sm hover:scale-105 active:scale-95 inline-flex items-center gap-1.5"
                 [style.background]="inviteCodeCopied() ? 'var(--ok)' : 'var(--p1)'"
                 style="color: white; border-color: transparent;">
-          {{ inviteCodeCopied() ? '✓ Code Copied!' : 'Copy Code' }}
+          <i class="fa-solid text-xs" [class.fa-check]="inviteCodeCopied()" [class.fa-copy]="!inviteCodeCopied()"></i>
+          <span>{{ inviteCodeCopied() ? 'Code Copied!' : 'Copy Code' }}</span>
         </button>
       </div>
 
@@ -713,16 +774,17 @@
         </label>
         <div class="relative">
           <input class="inp font-mono text-xs"
-                 style="padding-right: 88px;"
+                 style="padding-right: 92px;"
                  type="text"
                  [value]="getInviteUrl()"
                  readonly />
           <button type="button"
                   (click)="copyInviteLink()"
-                  class="cursor-pointer transition active:scale-95"
+                  class="cursor-pointer transition active:scale-95 inline-flex items-center gap-1"
                   [style.background]="inviteLinkCopied() ? 'var(--ok)' : 'var(--btn)'"
                   style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: none; color: #fff; border-radius: 8px; padding: 5px 10px; font-size: 11px; font-weight: 800; font-family: var(--font);">
-            {{ inviteLinkCopied() ? '✓ Copied' : 'Copy Link' }}
+            <i class="fa-solid text-[10px]" [class.fa-check]="inviteLinkCopied()" [class.fa-link]="!inviteLinkCopied()"></i>
+            <span>{{ inviteLinkCopied() ? 'Copied' : 'Copy Link' }}</span>
           </button>
         </div>
       </div>

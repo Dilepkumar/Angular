@@ -287,13 +287,13 @@
                          style="background: color-mix(in srgb, var(--p1) 14%, transparent); color: var(--p1);">
                       {{ row.id < 10 ? '0' + row.id : row.id }}
                     </div>
-                    <input class="inp py-1.5 sm:py-2 px-2.5 text-xs font-semibold flex-1 min-w-[100px] sm:min-w-[140px]"
+                    <input class="inp py-1.5 sm:py-2 px-2.5 text-xs font-semibold flex-1 min-w-[90px] sm:min-w-[130px]"
                            type="text"
                            [(ngModel)]="row.name"
                            placeholder="Item name" />
-                    <div class="relative w-14 sm:w-16 shrink-0">
+                    <div class="relative w-13 sm:w-15 shrink-0">
                       <span class="absolute left-1.5 top-1/2 -translate-y-1/2 text-[9px] sm:text-[10px] font-bold pointer-events-none select-none" style="color: var(--t3);">Qty</span>
-                      <input class="inp py-1.5 sm:py-2 pl-6 sm:pl-7 pr-1 text-xs font-black text-center"
+                      <input class="inp py-1.5 sm:py-2 pl-5 sm:pl-6 pr-1 text-xs font-black text-center"
                              type="number"
                              min="1"
                              step="1"
@@ -302,9 +302,9 @@
                              placeholder="1"
                              title="Quantity" />
                     </div>
-                    <div class="relative w-16 sm:w-22 shrink-0">
+                    <div class="relative w-20 sm:w-26 shrink-0">
                       <span class="absolute left-1.5 top-1/2 -translate-y-1/2 text-[11px] sm:text-xs font-black pointer-events-none select-none" style="color: var(--p1);">₹</span>
-                      <input class="inp py-1.5 sm:py-2 pl-4 sm:pl-5 pr-1 text-xs font-black"
+                      <input class="inp py-1.5 sm:py-2 pl-4 sm:pl-5 pr-1.5 text-xs font-black"
                              type="number"
                              min="0"
                              step="any"

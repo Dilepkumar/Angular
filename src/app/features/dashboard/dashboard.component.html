@@ -67,18 +67,19 @@
         </div>
       </div>
 
-      <!-- Log Expense Primary Action Button -->
-      <button type="button"
-              (click)="openExpenseModal()"
-              class="btn py-2.5 sm:py-3 px-4 sm:px-5 text-xs sm:text-sm font-black shadow-md">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M12 5v14M5 12h14"/>
-        </svg>
-        <span>Log Expense</span>
-      </button>
-
     </div>
   </div>
+
+  @if (loading()) {
+    <div class="py-24 text-center flex flex-col items-center justify-center fade-up" style="color: var(--t3);">
+      <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 shadow-md"
+           style="background: color-mix(in srgb, var(--p1) 15%, transparent); color: var(--p1); border: 1.5px solid color-mix(in srgb, var(--p1) 30%, transparent);">
+        <i class="fa-solid fa-circle-notch fa-spin text-2xl"></i>
+      </div>
+      <div class="text-base font-black tracking-tight" style="color: var(--text);">Loading Dashboard…</div>
+      <div class="text-xs font-medium mt-1" style="color: var(--t3);">Fetching expenses, balances &amp; bills</div>
+    </div>
+  } @else {
 
   <!-- ═══════════════════════════════════════════
        3 KPI CARDS
@@ -1000,6 +1001,8 @@
       </div>
 
     </div>
+  }
+
   }
 
 </div>

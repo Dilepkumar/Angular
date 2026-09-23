@@ -51,6 +51,17 @@
     </div>
   </div>
 
+  @if (loading()) {
+    <div class="py-24 text-center flex flex-col items-center justify-center fade-up" style="color: var(--t3);">
+      <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 shadow-md"
+           style="background: color-mix(in srgb, var(--p1) 15%, transparent); color: var(--p1); border: 1.5px solid color-mix(in srgb, var(--p1) 30%, transparent);">
+        <i class="fa-solid fa-circle-notch fa-spin text-2xl"></i>
+      </div>
+      <div class="text-base font-black tracking-tight" style="color: var(--text);">Loading Group Split &amp; IOUs…</div>
+      <div class="text-xs font-medium mt-1" style="color: var(--t3);">Calculating shared balances &amp; who owes whom</div>
+    </div>
+  } @else {
+
   <!-- ═══════════════════════════════════════════
        NET BALANCE HERO CARD
   ═══════════════════════════════════════════ -->
@@ -317,6 +328,8 @@
       </div>
     }
   </div>
+
+  }
 
 </div>
 

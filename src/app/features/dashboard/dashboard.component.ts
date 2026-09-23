@@ -124,6 +124,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   groupId!: string;
   me = computed(() => this.auth.user());
 
+  // Loading state
+  loading = signal<boolean>(true);
+
   // Active Bucket Tab: 'daily' | 'bills' | 'iou'
   activeBucket = signal<'daily' | 'bills' | 'iou'>('daily');
 
@@ -253,8 +256,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   loadDashboardData(): void {
     if (!this.groupId) return;
+    this.loading.set(true);
     this.api.get<any>(`groups/${this.groupId}/dashboard`).subscribe({
       next: (d) => {
+        this.loading.set(false);
         if (d) {
           if (d.groupName) this.groupName.set(d.groupName);
           if (d.groupAddress !== undefined) this.groupAddress.set(d.groupAddress);
@@ -291,6 +296,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         }
       },
       error: (err) => {
+        this.loading.set(false);
         console.error('Failed to load dashboard data', err);
       }
     });

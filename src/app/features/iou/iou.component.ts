@@ -39,7 +39,7 @@ export class IouComponent implements OnInit {
   showSettle = false;
   showMyQr = false;
   toastMessage = signal<string | null>(null);
-  loading = signal(false);
+  loading = signal(true);
 
   description = '';
   amount: number | null = null;
