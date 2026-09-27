@@ -1,11 +1,12 @@
 import { Component, OnInit, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PopupService } from '../../core/services/popup.service';
 import { MyBalance, DebtPair } from '../shared/models';
+import * as QRCode from 'qrcode';
 
 interface GroupMemberVm {
   id: string;
@@ -16,7 +17,7 @@ interface GroupMemberVm {
 @Component({
   selector: 'app-iou',
   standalone: true,
-  imports: [CommonModule, FormsModule, DecimalPipe],
+  imports: [CommonModule, FormsModule, DecimalPipe, RouterLink],
   templateUrl: './iou.component.html',
   styleUrls: ['./iou.component.scss']
 })
@@ -49,21 +50,24 @@ export class IouComponent implements OnInit {
   settleTarget: DebtPair | null = null;
   settleAmount: number | null = null;
   settleNote = '';
-  settleUpiId = 'roommate@upi';
+  settleUpiId = '';
   error = signal<string | null>(null);
 
-  myUpiId = 'myflat@upi';
+  myUpiId = '';
   me = this.auth.user;
 
   ngOnInit(): void {
     this.groupId = this.route.snapshot.paramMap.get('groupId') || localStorage.getItem('rl_group_id') || '1';
     
-    // Generate my UPI ID from logged in user email / name
-    const user = this.auth.user();
-    if (user) {
-      const userPrefix = user.email ? user.email.split('@')[0] : (user.name || 'flatmate').toLowerCase().replace(/\s+/g, '');
-      this.myUpiId = `${userPrefix}@okhdfcbank`;
-    }
+    // Load my real UPI ID from Profile
+    this.api.get<any>('profile').subscribe({
+      next: (p) => {
+        if (p?.upiId) {
+          this.myUpiId = p.upiId;
+        }
+      },
+      error: () => {}
+    });
 
     this.load();
     this.loadExpenses();
@@ -185,10 +189,38 @@ export class IouComponent implements OnInit {
   openSettle(d: DebtPair): void {
     this.settleTarget = d;
     this.settleAmount = d.amount;
-    this.settleUpiId = (d as any).upiId || (d.toUserName.toLowerCase().replace(/\s+/g, '') + '@okhdfcbank');
+    this.settleUpiId = d.upiId || '';
+    this.settleNote = `Settling shared expense of ₹${d.amount}`;
     this.showSettle = true;
     this.error.set(null);
-    setTimeout(() => this.drawQrCode(this.iouQrCanvasRef, this.settleUpiId), 100);
+    const uri = this.getUpiUri(this.settleUpiId, d.toUserName, d.amount);
+    setTimeout(() => this.drawQrCode(this.iouQrCanvasRef, uri), 100);
+  }
+
+  onSettleUpiChange(val: string): void {
+    this.settleUpiId = val;
+    if (this.settleTarget && this.settleAmount) {
+      const uri = this.getUpiUri(val, this.settleTarget.toUserName, this.settleAmount);
+      this.drawQrCode(this.iouQrCanvasRef, uri);
+    }
+  }
+
+  getUpiUri(upiId: string, payeeName: string, amount: number): string {
+    const vpa = upiId.trim();
+    if (!vpa) return 'upi://pay';
+    const name = encodeURIComponent(payeeName.trim() || 'Flatmate');
+    const amt = amount ? amount.toFixed(2) : '0.00';
+    const note = encodeURIComponent('RoomLedger Settle Up');
+    return `upi://pay?pa=${encodeURIComponent(vpa)}&pn=${name}&am=${amt}&cu=INR&tn=${note}`;
+  }
+
+  payViaUpiApp(): void {
+    if (!this.settleUpiId || !this.settleTarget || !this.settleAmount) {
+      this.showToast('⚠️ Recipient has no UPI ID. Enter their UPI ID to launch app.');
+      return;
+    }
+    const uri = this.getUpiUri(this.settleUpiId, this.settleTarget.toUserName, this.settleAmount);
+    window.location.href = uri;
   }
 
   settleUp(): void {
@@ -242,7 +274,11 @@ export class IouComponent implements OnInit {
 
   openMyQrModal(): void {
     this.showMyQr = true;
-    setTimeout(() => this.drawQrCode(this.myQrCanvasRef, this.myUpiId), 100);
+    const myName = this.auth.user()?.fullName || this.auth.user()?.name || 'Flatmate';
+    const uri = this.myUpiId 
+      ? `upi://pay?pa=${encodeURIComponent(this.myUpiId)}&pn=${encodeURIComponent(myName)}&cu=INR` 
+      : 'upi://pay';
+    setTimeout(() => this.drawQrCode(this.myQrCanvasRef, uri), 100);
   }
 
   sendReminder(d: DebtPair): void {
@@ -278,65 +314,29 @@ export class IouComponent implements OnInit {
     });
   }
 
-  drawQrCode(canvasRef?: ElementRef<HTMLCanvasElement>, text: string = 'roommate@upi'): void {
+  drawQrCode(canvasRef?: ElementRef<HTMLCanvasElement>, text: string = ''): void {
     const cv = canvasRef?.nativeElement;
     if (!cv) return;
-    const ctx = cv.getContext('2d');
-    if (!ctx) return;
 
-    const sz = cv.width;
-    const m = 21;
-    const mod = sz / m;
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, sz, sz);
-
-    let seed = 0;
-    for (let i = 0; i < text.length; i++) {
-      seed = (seed * 31 + text.charCodeAt(i)) & 0xffffff;
+    if (!text || text === 'upi://pay') {
+      const ctx = cv.getContext('2d');
+      if (ctx) ctx.clearRect(0, 0, cv.width, cv.height);
+      return;
     }
 
-    function rnd(x: number, y: number) {
-      let s = seed ^ (x * 374761393) ^ (y * 1274126177);
-      s = ((s >> 16) ^ s) * 0x45d9f3b;
-      s = ((s >> 16) ^ s) * 0x45d9f3b;
-      return (s >> 16) ^ s;
-    }
-
-    ctx.fillStyle = '#1A3330';
-    for (let r = 0; r < m; r++) {
-      for (let c = 0; c < m; c++) {
-        const tl = r < 7 && c < 7;
-        const tr = r < 7 && c >= m - 7;
-        const bl = r >= m - 7 && c < 7;
-        let dk = false;
-        if (tl) {
-          dk = (r === 0 || r === 6 || c === 0 || c === 6) || (r >= 2 && r <= 4 && c >= 2 && c <= 4);
-        } else if (tr) {
-          const lr = r, lc = c - (m - 7);
-          dk = (lr === 0 || lr === 6 || lc === 0 || lc === 6) || (lr >= 2 && r <= 4 && c >= 2 && c <= 4);
-        } else if (bl) {
-          const lr = r - (m - 7), lc = c;
-          dk = (lr === 0 || lr === 6 || lc === 0 || lc === 6) || (lr >= 2 && r <= 4 && c >= 2 && c <= 4);
-        } else {
-          dk = r === 6 || c === 6 ? (r + c) % 2 === 0 : (rnd(r, c) & 1) === 1;
-        }
-        if (dk) {
-          ctx.fillRect(c * mod + 0.5, r * mod + 0.5, mod - 0.5, mod - 0.5);
-        }
+    QRCode.toCanvas(cv, text, {
+      width: 150,
+      margin: 1,
+      color: {
+        dark: '#111827',
+        light: '#ffffff'
+      },
+      errorCorrectionLevel: 'M'
+    }, (err: any) => {
+      if (err) {
+        console.error('Failed to generate IOU QR code:', err);
       }
-    }
-
-    ctx.fillStyle = '#1ABC9C';
-    ctx.beginPath();
-    ctx.arc(sz / 2, sz / 2, 13, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 10px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('RL', sz / 2, sz / 2);
+    });
   }
 
   resetForm(): void {

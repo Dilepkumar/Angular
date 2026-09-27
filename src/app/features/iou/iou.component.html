@@ -336,13 +336,16 @@
 <!-- ═══════════════════════════════════════════
      MODAL: PAY VIA UPI (QR & CONFIRMATION)
 ═══════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════
+     MODAL: PAY VIA UPI (QR & CONFIRMATION)
+═══════════════════════════════════════════ -->
 @if (showSettle && settleTarget) {
-  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-up"
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-up"
        (click)="showSettle = false">
-    <div class="card max-w-xs w-full p-6 text-center shadow-2xl relative"
+    <div class="card max-w-sm w-full p-6 text-center shadow-2xl relative"
          (click)="$event.stopPropagation()">
       
-      <div class="flex justify-between items-center mb-4">
+      <div class="flex justify-between items-center mb-3">
         <span class="text-sm font-black" style="color: var(--text);">
           Settle with {{ settleTarget.toUserName }}
         </span>
@@ -354,29 +357,69 @@
         </button>
       </div>
 
-      <!-- Dynamic QR Canvas -->
-      <div class="p-3 rounded-2xl border mb-3 flex justify-center"
-           style="background: #FFFFFF; border-color: #E5E7EB;">
-        <canvas #iouQrCanvas width="160" height="160" class="rounded-lg shadow-sm"></canvas>
-      </div>
-
-      <div class="font-mono text-xs font-black mb-1" style="color: var(--p1);">
-        {{ settleUpiId }}
-      </div>
-      <div class="text-2xl font-black mb-4" style="color: var(--ok);">
+      <div class="text-2xl font-black mb-3" style="color: var(--err);">
         ₹{{ settleAmount }}
       </div>
 
-      <button type="button"
-              (click)="settleUp()"
-              class="btng w-full py-3 text-xs font-black shadow-sm cursor-pointer flex items-center justify-center gap-1.5">
-        <span>Confirm Payment</span>
-        <i class="fa-solid fa-check text-xs"></i>
-      </button>
+      @if (settleUpiId) {
+        <!-- Instant 1-Click UPI Intent Launch (Mobile Apps) -->
+        <button type="button"
+                (click)="payViaUpiApp()"
+                class="btn w-full py-3.5 text-xs font-black shadow-md flex items-center justify-center gap-2 mb-3 cursor-pointer">
+          <i class="fa-solid fa-bolt text-sm"></i>
+          <span>Pay ₹{{ settleAmount }} via UPI App</span>
+        </button>
+        <div class="text-[10px] -mt-1.5 mb-3 font-medium text-gray-500">
+          Opens Google Pay, PhonePe, Paytm, or BHIM
+        </div>
 
-      <div class="text-[10px] mt-2 font-medium" style="color: var(--t3);">
-        Scan with any UPI app (GPay, PhonePe, Paytm)
-      </div>
+        <div class="div my-2"></div>
+
+        <!-- Dynamic QR Code for Mobile Scanning from Desktop -->
+        <div class="p-3 rounded-2xl border mb-3 flex flex-col items-center justify-center"
+             style="background: #FFFFFF; border-color: #E5E7EB;">
+          <canvas #iouQrCanvas width="150" height="150" class="rounded-lg shadow-sm"></canvas>
+          <div class="font-mono text-xs font-black mt-2" style="color: var(--p1);">
+            {{ settleUpiId }}
+          </div>
+          <div class="text-[10px] font-medium text-gray-400 mt-0.5">
+            Or scan QR with your phone's camera / UPI scanner
+          </div>
+        </div>
+
+        <!-- Confirm Ledger Record -->
+        <button type="button"
+                (click)="settleUp()"
+                class="btng w-full py-3 text-xs font-black shadow-sm cursor-pointer flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-circle-check text-xs"></i>
+          <span>I've Paid — Record Settlement</span>
+        </button>
+      } @else {
+        <!-- Fallback when recipient hasn't added UPI ID to profile -->
+        <div class="p-3.5 rounded-xl border mb-4 text-left"
+             style="background: color-mix(in srgb, var(--warn) 10%, var(--card)); border-color: color-mix(in srgb, var(--warn) 30%, transparent);">
+          <div class="text-xs font-bold flex items-center gap-1.5" style="color: var(--warn);">
+            <i class="fa-solid fa-triangle-exclamation text-xs"></i>
+            <span>Roommate hasn't set their UPI ID</span>
+          </div>
+          <div class="text-[11px] mt-1 leading-relaxed" style="color: var(--t2);">
+            {{ settleTarget.toUserName }} hasn't added their UPI ID in their Profile yet. If you know their UPI ID, you can enter it below to generate a QR code and pay:
+          </div>
+          <input class="inp font-mono text-xs font-bold mt-2.5 w-full"
+                 type="text"
+                 [ngModel]="settleUpiId"
+                 (ngModelChange)="onSettleUpiChange($event)"
+                 placeholder="e.g. mobile@upi or name@okaxis" />
+        </div>
+
+        <!-- Manual / Cash Settlement -->
+        <button type="button"
+                (click)="settleUp()"
+                class="btng w-full py-3 text-xs font-black shadow-sm cursor-pointer flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-handshake text-xs"></i>
+          <span>Record Offline / Cash Settlement</span>
+        </button>
+      }
     </div>
   </div>
 }
@@ -385,7 +428,7 @@
      MODAL: SHOW MY UPI QR CODE
 ═══════════════════════════════════════════ -->
 @if (showMyQr) {
-  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-up"
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-up"
        (click)="showMyQr = false">
     <div class="card max-w-xs w-full p-6 text-center shadow-2xl relative"
          (click)="$event.stopPropagation()">
@@ -402,28 +445,43 @@
         </button>
       </div>
 
-      <!-- Dynamic QR Canvas for Current User -->
-      <div class="p-3 rounded-2xl border mb-3 flex justify-center"
-           style="background: #FFFFFF; border-color: #E5E7EB;">
-        <canvas #myQrCanvas width="160" height="160" class="rounded-lg shadow-sm"></canvas>
-      </div>
+      @if (myUpiId) {
+        <!-- Dynamic QR Canvas for Current User -->
+        <div class="p-3 rounded-2xl border mb-3 flex justify-center"
+             style="background: #FFFFFF; border-color: #E5E7EB;">
+          <canvas #myQrCanvas width="160" height="160" class="rounded-lg shadow-sm"></canvas>
+        </div>
 
-      <div class="font-mono text-xs font-black mb-1" style="color: var(--p1);">
-        {{ myUpiId }}
-      </div>
-      <div class="text-xs font-bold mb-4" style="color: var(--t2);">
-        {{ auth.user()?.name || auth.user()?.fullName || 'Flatmate' }}
-      </div>
+        <div class="font-mono text-xs font-black mb-1" style="color: var(--p1);">
+          {{ myUpiId }}
+        </div>
+        <div class="text-xs font-bold mb-4" style="color: var(--t2);">
+          {{ auth.user()?.name || auth.user()?.fullName || 'Flatmate' }}
+        </div>
 
-      <button type="button"
-              (click)="showMyQr = false"
-              class="btn w-full py-2.5 text-xs font-black shadow-sm cursor-pointer">
-        Done
-      </button>
+        <button type="button"
+                (click)="showMyQr = false"
+                class="btn w-full py-2.5 text-xs font-black shadow-sm cursor-pointer">
+          Done
+        </button>
 
-      <div class="text-[10px] mt-2 font-medium" style="color: var(--t3);">
-        Have flatmates scan this QR to pay you directly
-      </div>
+        <div class="text-[10px] mt-2 font-medium" style="color: var(--t3);">
+          Have flatmates scan this QR to pay you directly
+        </div>
+      } @else {
+        <div class="py-4 text-center">
+          <i class="fa-solid fa-qrcode text-3xl mb-2 text-gray-400"></i>
+          <div class="text-xs font-bold mb-1" style="color: var(--text);">No UPI ID Configured</div>
+          <div class="text-[11px] mb-4 text-gray-500">
+            You haven't set your UPI ID in your Profile yet. Add it so flatmates can scan to pay you back.
+          </div>
+          <a routerLink="/profile"
+             (click)="showMyQr = false"
+             class="btn block w-full py-2.5 text-xs font-black text-center text-white cursor-pointer">
+            Go to Profile &amp; Add UPI
+          </a>
+        </div>
+      }
     </div>
   </div>
 }

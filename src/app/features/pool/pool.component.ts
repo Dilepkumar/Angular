@@ -80,6 +80,8 @@ export interface PoolBalance {
   pendingItems: PendingContribution[] | null;
   currentBalance: number;
   monthlyTarget: number;
+  isLowBalance?: boolean;
+  lowThreshold?: number;
   totalContributions: number;
   totalSpent: number;
   pendingReimbursementsTotal?: number;

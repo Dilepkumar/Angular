@@ -386,43 +386,166 @@
 
         @if (showUpiSection()) {
           <div class="mt-4 space-y-4 fade-up">
-            <!-- UPI ID Input with Copy Button -->
-            <div>
-              <label style="font-size: 10px; font-weight: 800; color: var(--t3); display: block; margin-bottom: 5px; letter-spacing: 0.06em;">
-                YOUR UPI ID
-              </label>
-              <div class="relative">
-                <input class="inp font-mono text-xs font-bold"
-                       style="padding-right: 76px;"
-                       type="text"
-                       name="upiId"
-                       [ngModel]="upiId()"
-                       (ngModelChange)="onUpiIdChange($event)"
-                       placeholder="username@okhdfcbank" />
-                <button type="button"
-                        (click)="copyUpiId()"
-                        style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--btn); border: none; color: #fff; border-radius: 8px; padding: 5px 11px; font-size: 11px; font-weight: 800; cursor: pointer; font-family: var(--font); display: inline-flex; align-items: center; gap: 4px;">
-                  <i class="fa-regular fa-copy text-[11px]"></i>
-                  <span>Copy</span>
-                </button>
+            <!-- Informational Banner -->
+            <div class="p-3 rounded-xl border flex items-start gap-2.5"
+                 style="background: color-mix(in srgb, var(--p1) 8%, var(--card)); border-color: color-mix(in srgb, var(--p1) 25%, transparent);">
+              <i class="fa-solid fa-circle-info text-sm mt-0.5" style="color: var(--p1);"></i>
+              <div class="text-xs leading-relaxed" style="color: var(--text);">
+                <strong class="font-extrabold">Instant Roommate Settlement:</strong> Flatmates will use this UPI ID to pay you back directly via Google Pay, PhonePe, or Paytm with 1 click.
               </div>
             </div>
 
+            <!-- UPI ID: View vs Edit Mode -->
+            @if (!isEditingUpi()) {
+              @if (upiId()) {
+                <!-- View Mode (Configured) -->
+                <div class="p-3.5 rounded-2xl border flex items-center justify-between gap-3"
+                     style="background: var(--bg2); border-color: var(--border);">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0"
+                         style="background: color-mix(in srgb, var(--p1) 15%, transparent); color: var(--p1);">
+                      <i class="fa-solid fa-at"></i>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-2">
+                        <span style="font-size: 10px; font-weight: 800; color: var(--t3); letter-spacing: 0.06em;">
+                          YOUR PERSONAL UPI ID / VPA
+                        </span>
+                        <span class="text-[9px] font-black px-1.5 py-0.5 rounded-full inline-flex items-center gap-1"
+                              style="background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok);">
+                          <i class="fa-solid fa-circle-check text-[8px]"></i> Active
+                        </span>
+                      </div>
+                      <div class="font-mono text-xs sm:text-sm font-black truncate mt-0.5" style="color: var(--text);">
+                        {{ upiId() }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <button type="button"
+                            (click)="copyUpiId()"
+                            class="w-8 h-8 rounded-xl border flex items-center justify-center cursor-pointer transition hover:bg-black/5"
+                            style="background: var(--card); border-color: var(--border); color: var(--t2);"
+                            title="Copy UPI ID">
+                      <i class="fa-regular fa-copy text-xs"></i>
+                    </button>
+                    <button type="button"
+                            (click)="startEditingUpi()"
+                            class="px-3 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-black cursor-pointer transition shadow-sm hover:opacity-90"
+                            style="background: var(--card); border-color: var(--p1); color: var(--p1);"
+                            title="Edit UPI ID">
+                      <i class="fa-solid fa-pen-to-square text-[11px]"></i>
+                      <span>Edit</span>
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <!-- View Mode (Not Configured) -->
+                <div class="p-3.5 rounded-2xl border flex items-center justify-between gap-3 overflow-hidden"
+                     style="background: var(--bg2); border-color: var(--border);">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0"
+                         style="background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn);">
+                      <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="text-xs font-bold truncate" style="color: var(--text);">No UPI ID Configured</div>
+                      <div class="text-[11px] font-medium truncate" style="color: var(--t3);">Add your UPI ID to receive payments with 1-click</div>
+                    </div>
+                  </div>
+
+                  <button type="button"
+                          (click)="startEditingUpi()"
+                          class="px-3.5 py-2 text-xs font-black text-white rounded-xl shadow-sm cursor-pointer shrink-0 inline-flex items-center gap-1.5 transition hover:opacity-90 active:scale-95 whitespace-nowrap"
+                          style="background: var(--btn); border: none;">
+                    <i class="fa-solid fa-plus text-[10px]"></i>
+                    <span>Add UPI</span>
+                  </button>
+                </div>
+              }
+            } @else {
+              <!-- Edit Mode (Input with Email-Style Placeholder & Actions) -->
+              <div class="p-4 rounded-2xl border space-y-3"
+                   style="background: var(--card); border-color: var(--p1);">
+                <div class="flex items-center justify-between">
+                  <label style="font-size: 10px; font-weight: 800; color: var(--p1); letter-spacing: 0.06em;">
+                    ENTER YOUR PERSONAL UPI ID / VPA
+                  </label>
+                  <span class="text-[10px] font-semibold" style="color: var(--t3);">
+                    Google Pay / PhonePe / Paytm
+                  </span>
+                </div>
+
+                <div class="relative">
+                  <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs" style="color: var(--p1);">
+                    <i class="fa-solid fa-at"></i>
+                  </div>
+                  <input class="inp font-mono text-xs font-bold w-full"
+                         style="padding-left: 36px;"
+                         type="text"
+                         name="upiId"
+                         [ngModel]="tempUpiId()"
+                         (ngModelChange)="onUpiIdChange($event)"
+                         placeholder="e.g. yourname@okhdfcbank or 9876543210@paytm" />
+                </div>
+
+                <div class="text-[11px] font-medium" style="color: var(--t3);">
+                  Format like an email address: e.g. <span class="font-mono font-bold text-gray-700">name@oksbi</span>, <span class="font-mono font-bold text-gray-700">phone@paytm</span>, or <span class="font-mono font-bold text-gray-700">user@ybl</span>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-1">
+                  <button type="button"
+                          (click)="cancelEditingUpi()"
+                          [disabled]="savingUpi()"
+                          class="px-3.5 py-2 text-xs font-bold rounded-xl border cursor-pointer transition hover:bg-black/5"
+                          style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
+                    Cancel
+                  </button>
+                  <button type="button"
+                          (click)="saveUpiId()"
+                          [disabled]="savingUpi() || !tempUpiId().trim()"
+                          class="px-4 py-2 text-xs font-black text-white rounded-xl shadow-sm cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5 transition hover:opacity-90 active:scale-95 whitespace-nowrap"
+                          style="background: var(--btn); border: none;">
+                    @if (savingUpi()) {
+                      <i class="fa-solid fa-circle-notch fa-spin text-xs"></i>
+                      <span>Saving...</span>
+                    } @else {
+                      <i class="fa-solid fa-check text-xs"></i>
+                      <span>Save UPI ID</span>
+                    }
+                  </button>
+                </div>
+              </div>
+            }
+
             <!-- Generated QR Code Canvas Box -->
             <div class="rounded-2xl p-4 text-center border flex flex-col items-center gap-2"
-                 style="background: #F9FAFB; border-color: #E5E7EB;">
+                 style="background: #FFFFFF; border-color: #E5E7EB;">
               <div style="font-size: 9px; font-weight: 800; color: #374151; letter-spacing: 0.1em; text-transform: uppercase;">
-                YOUR PAYMENT QR CODE
+                YOUR OFFICIAL UPI PAYMENT QR CODE
               </div>
               
-              <canvas #qrCanvas width="130" height="130" class="rounded-lg shadow-sm"></canvas>
-              
-              <div class="font-mono text-xs font-extrabold" style="color: #1F2937;">
-                {{ upiId() || 'username@okhdfcbank' }}
-              </div>
-              <div class="text-[10px] font-medium" style="color: #9CA3AF;">
-                Scan with any UPI app to settle instantly
-              </div>
+              @if (upiId()) {
+                <div class="p-2 rounded-2xl border bg-white shadow-sm inline-flex justify-center" style="border-color: #E5E7EB;">
+                  <canvas #qrCanvas width="160" height="160" class="rounded-lg"></canvas>
+                </div>
+                <div class="font-mono text-xs font-extrabold" style="color: #1F2937;">
+                  {{ upiId() }}
+                </div>
+                <div class="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                  <i class="fa-solid fa-circle-check text-[10px]"></i>
+                  <span>100% Scannable with PhonePe, Google Pay, Paytm &amp; Google Lens</span>
+                </div>
+              } @else {
+                <div class="py-6 flex flex-col items-center justify-center text-center">
+                  <i class="fa-solid fa-qrcode text-3xl mb-2 text-gray-300"></i>
+                  <div class="text-xs font-bold text-gray-700">No QR Code Generated</div>
+                  <div class="text-[10px] text-gray-400 max-w-[220px] mt-1">
+                    Save your UPI ID above to display your scannable payment QR code.
+                  </div>
+                </div>
+              }
             </div>
 
             <!-- Connected UPI Apps Grid -->
@@ -497,7 +620,7 @@
         </div>
 
         <div (click)="goToRoom()"
-             class="flex items-center gap-3 p-3.5 rounded-2xl border mb-3.5 cursor-pointer hover:shadow-md transition active:scale-[0.99] group"
+             class="flex items-center gap-3 p-3.5 rounded-2xl border mb-3 cursor-pointer hover:shadow-md transition active:scale-[0.99] group"
              style="background: var(--bg2); border-color: var(--border);"
              title="Open flat dashboard">
           <div class="w-11 h-11 rounded-xl flex items-center justify-center text-lg text-white shadow-sm shrink-0"
@@ -520,6 +643,21 @@
           }
         </div>
 
+        <!-- Roommates & Roles quick button -->
+        <button type="button"
+                (click)="openRoommatesModal()"
+                class="w-full p-2.5 rounded-xl border mb-3 text-xs font-extrabold flex items-center justify-between cursor-pointer transition hover:bg-black/5"
+                style="background: var(--bg2); border-color: var(--border); color: var(--text);">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-users text-xs" style="color: var(--p1);"></i>
+            <span>View Flatmates &amp; Roles</span>
+          </div>
+          <div class="flex items-center gap-1.5 text-[11px]" style="color: var(--t3);">
+            <span>{{ memberCount() }} {{ memberCount() === 1 ? 'member' : 'members' }}</span>
+            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+          </div>
+        </button>
+
         <div class="flex gap-2">
           <button type="button"
                   (click)="shareInvite()"
@@ -535,6 +673,17 @@
             <span>Switch Flat</span>
           </button>
         </div>
+
+        @if (roomRole() === 'Admin' || roomRole() === 'Room Admin') {
+          <button type="button"
+                  (click)="openInactivateModal()"
+                  class="w-full mt-2.5 p-2.5 rounded-xl border text-xs font-black cursor-pointer transition flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-98"
+                  style="background: color-mix(in srgb, var(--err) 8%, transparent); border-color: color-mix(in srgb, var(--err) 25%, transparent); color: var(--err);"
+                  title="Safely inactivate and archive this flat (verifies all debts and bills are settled first)">
+            <i class="fa-solid fa-box-archive text-xs"></i>
+            <span>Inactivate / Archive Flat</span>
+          </button>
+        }
       </div>
 
       <!-- Card 6: Quick Actions / Logout -->
@@ -598,6 +747,77 @@
                 class="flex-1 py-3 px-4 rounded-xl text-xs font-black text-white shadow-md cursor-pointer transition hover:opacity-90 active:scale-95 flex items-center justify-center gap-1.5"
                 style="background: #ef4444;">
           <span>Log Out</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════
+     INACTIVATE / ARCHIVE FLAT MODAL POPUP
+═══════════════════════════════════════════ -->
+@if (showInactivateModal()) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-up"
+       (click)="closeInactivateModal()">
+    <div class="w-full max-w-sm rounded-3xl p-6 sm:p-7 shadow-2xl relative text-center"
+         style="background: var(--card); border: 1.5px solid var(--border);"
+         (click)="$event.stopPropagation()">
+      
+      <!-- Icon -->
+      <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl shadow-sm"
+           style="background: color-mix(in srgb, var(--err) 15%, transparent); border: 1.5px solid color-mix(in srgb, var(--err) 30%, transparent); color: var(--err);">
+        <i class="fa-solid fa-box-archive text-xl"></i>
+      </div>
+
+      <!-- Content -->
+      <h3 class="text-lg font-black mb-1.5" style="color: var(--text);">
+        Inactivate {{ roomName() }}?
+      </h3>
+      <p class="text-xs font-medium mb-4 leading-relaxed" style="color: var(--t3);">
+        Deactivating will archive this flat and remove it from active dashboards. All financial records and receipts will be safely preserved.
+      </p>
+
+      <!-- Pre-check alert -->
+      <div class="p-3 rounded-xl border text-left text-[11px] mb-4 space-y-1"
+           style="background: var(--bg2); border-color: var(--border);">
+        <div class="font-bold flex items-center gap-1 text-amber-600">
+          <i class="fa-solid fa-shield-halved text-xs"></i>
+          <span>Financial Safety Verification</span>
+        </div>
+        <div class="text-[10px] leading-relaxed" style="color: var(--t3);">
+          The system verifies that all IOUs, recurring bills, and pool expenses are completely settled before closing.
+        </div>
+      </div>
+
+      @if (inactivateError()) {
+        <div class="p-3 rounded-xl text-left text-xs mb-4 font-bold border"
+             style="background: color-mix(in srgb, var(--err) 15%, transparent); border-color: var(--err); color: var(--err);">
+          {{ inactivateError() }}
+        </div>
+      }
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-3">
+        <button type="button"
+                (click)="closeInactivateModal()"
+                [disabled]="inactivatingFlat()"
+                class="flex-1 py-3 px-4 rounded-xl text-xs font-extrabold border cursor-pointer transition hover:opacity-90 active:scale-95"
+                style="background: var(--bg2); border-color: var(--border); color: var(--text);">
+          Cancel
+        </button>
+        <button type="button"
+                (click)="confirmInactivateFlat()"
+                [disabled]="inactivatingFlat()"
+                class="flex-1 py-3 px-4 rounded-xl text-xs font-black text-white shadow-md cursor-pointer transition hover:opacity-90 active:scale-95 flex items-center justify-center gap-1.5"
+                style="background: #ef4444;">
+          @if (inactivatingFlat()) {
+            <i class="fa-solid fa-spinner fa-spin text-xs"></i>
+            <span>Verifying…</span>
+          } @else {
+            <i class="fa-solid fa-box-archive text-xs"></i>
+            <span>Inactivate Flat</span>
+          }
         </button>
       </div>
 
@@ -678,17 +898,31 @@
               </div>
             </div>
 
-            <!-- Role Badge -->
-            <span class="text-[10px] font-black px-2 py-0.5 rounded-lg border shrink-0"
-                  [style.background]="m.role === 'Admin' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'var(--bg3)'"
-                  [style.color]="m.role === 'Admin' ? 'var(--p1)' : 'var(--t2)'"
-                  [style.borderColor]="m.role === 'Admin' ? 'color-mix(in srgb, var(--p1) 25%, transparent)' : 'var(--border)'">
-              @if (m.role === 'Admin') {
-                <span class="inline-flex items-center gap-1"><i class="fa-solid fa-crown text-[9px] text-amber-500"></i> Admin</span>
-              } @else {
-                <span class="inline-flex items-center gap-1"><i class="fa-solid fa-user text-[9px]"></i> Member</span>
+            <!-- Role Badge & Admin Remove Action -->
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span class="text-[10px] font-black px-2 py-0.5 rounded-lg border"
+                    [style.background]="m.role === 'Admin' ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'var(--bg3)'"
+                    [style.color]="m.role === 'Admin' ? 'var(--p1)' : 'var(--t2)'"
+                    [style.borderColor]="m.role === 'Admin' ? 'color-mix(in srgb, var(--p1) 25%, transparent)' : 'var(--border)'">
+                @if (m.role === 'Admin') {
+                  <span class="inline-flex items-center gap-1"><i class="fa-solid fa-crown text-[9px] text-amber-500"></i> Admin</span>
+                } @else {
+                  <span class="inline-flex items-center gap-1"><i class="fa-solid fa-user text-[9px]"></i> Member</span>
+                }
+              </span>
+
+              @if ((roomRole() === 'Admin' || roomRole() === 'Room Admin') && m.name !== fullName() && m.role !== 'Admin') {
+                <button type="button"
+                        (click)="$event.stopPropagation(); removeMember(m)"
+                        [disabled]="removingMember()"
+                        class="text-[10px] font-extrabold px-2 py-0.5 rounded-lg border transition cursor-pointer hover:scale-105 active:scale-95 flex items-center gap-1"
+                        style="background: color-mix(in srgb, var(--err) 12%, transparent); border-color: color-mix(in srgb, var(--err) 30%, transparent); color: var(--err);"
+                        title="Safely remove this flatmate from group (checks all debts first)">
+                  <i class="fa-solid fa-user-xmark text-[9px]"></i>
+                  <span class="hidden sm:inline">Remove</span>
+                </button>
               }
-            </span>
+            </div>
           </div>
         } @empty {
           <div class="p-6 text-center rounded-2xl border flex flex-col items-center justify-center" style="background: var(--bg2); border-color: var(--border);">

@@ -1,29 +1,213 @@
-<div class="min-h-dvh bg-slate-50">
-  <header class="bg-white border-b p-4 flex items-center gap-3 sticky top-0 z-10">
-    <button (click)="back()" class="text-xl">‹</button>
-    <h1 class="font-bold text-lg flex-1">Notifications</h1>
+<div class="min-h-screen pb-16" style="background: var(--bg);">
+  
+  <!-- Header Sticky Bar -->
+  <header class="sticky top-0 z-20 px-4 py-3.5 flex items-center justify-between border-b backdrop-blur-md"
+          style="background: color-mix(in srgb, var(--card) 85%, transparent); border-color: var(--border);">
+    <div class="flex items-center gap-3">
+      <button type="button" 
+              (click)="back()" 
+              class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer border transition hover:opacity-80"
+              style="background: var(--bg2); border-color: var(--border); color: var(--text);">
+        <i class="fa-solid fa-arrow-left text-xs"></i>
+      </button>
+      <div>
+        <h1 class="font-extrabold text-sm sm:text-base tracking-tight" style="color: var(--text);">
+          Notifications
+        </h1>
+        <p class="text-[11px] font-medium" style="color: var(--t3);">
+          Activity &amp; PWA Push Alerts
+        </p>
+      </div>
+    </div>
+
     @if (hasUnread()) {
-      <button (click)="markAllRead()" class="text-emerald-600 text-sm font-semibold">Mark all read</button>
+      <button type="button"
+              (click)="markAllRead()"
+              class="text-xs font-extrabold px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1.5"
+              style="background: color-mix(in srgb, var(--p1) 12%, transparent); border-color: color-mix(in srgb, var(--p1) 25%, transparent); color: var(--p1);">
+        <i class="fa-solid fa-check-double text-[11px]"></i>
+        <span>Mark all read</span>
+      </button>
     }
   </header>
 
-  <div class="divide-y divide-slate-100">
-    @for (n of items(); track n.id) {
-      <div class="flex gap-3 p-4 bg-white {{ n.isRead ? '' : 'bg-emerald-50/60' }}">
-        <span class="text-xl mt-0.5">{{ icon(n.type) }}</span>
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-semibold" [class.text-slate-900]="!n.isRead" [class.text-slate-500]="n.isRead">
-            {{ n.title }}
-          </p>
-          <p class="text-sm text-slate-600">{{ n.body }}</p>
-          <p class="text-xs text-slate-400 mt-1">{{ n.createdAt | date:'EEE, dd MMM · hh:mm a' }}</p>
+  <div class="max-w-2xl mx-auto p-4 sm:p-6 space-y-6">
+
+    <!-- ═══════════════════════════════════════════
+         PWA DEVICE PUSH NOTIFICATIONS CARD
+    ═══════════════════════════════════════════ -->
+    <div class="card p-5 sm:p-6 rounded-3xl border shadow-sm relative overflow-hidden"
+         style="background: var(--card); border-color: var(--border);">
+      
+      <!-- Top Header & Status Indicator -->
+      <div class="flex items-start justify-between gap-3 mb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-base shadow-sm"
+               [style.background]="push.isSubscribed() ? 'color-mix(in srgb, var(--ok) 15%, transparent)' : 'color-mix(in srgb, var(--p1) 12%, transparent)'"
+               [style.color]="push.isSubscribed() ? 'var(--ok)' : 'var(--p1)'">
+            <i class="fa-solid" [class.fa-bell]="push.isSubscribed()" [class.fa-bell-slash]="!push.isSubscribed()"></i>
+          </div>
+          <div>
+            <div class="text-xs font-black tracking-wide uppercase" style="color: var(--t3);">
+              PWA Instant Push
+            </div>
+            <h2 class="text-sm sm:text-base font-extrabold" style="color: var(--text);">
+              Device Notifications
+            </h2>
+          </div>
         </div>
-        @if (!n.isRead) {
-          <span class="w-2 h-2 rounded-full bg-emerald-500 mt-2 shrink-0"></span>
+
+        <!-- Status Badges -->
+        @if (push.isSubscribed()) {
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-black inline-flex items-center gap-1.5 border"
+                style="background: color-mix(in srgb, var(--ok) 12%, transparent); border-color: color-mix(in srgb, var(--ok) 25%, transparent); color: var(--ok);">
+            <span class="w-2 h-2 rounded-full animate-pulse" style="background: var(--ok);"></span>
+            <span>Active on Device</span>
+          </span>
+        } @else if (push.permission() === 'denied') {
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-black inline-flex items-center gap-1.5 border"
+                style="background: color-mix(in srgb, var(--err) 12%, transparent); border-color: color-mix(in srgb, var(--err) 25%, transparent); color: var(--err);">
+            <i class="fa-solid fa-ban text-[10px]"></i>
+            <span>Permission Denied</span>
+          </span>
+        } @else if (!push.isSupported()) {
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-black inline-flex items-center gap-1.5 border"
+                style="background: color-mix(in srgb, var(--warn) 12%, transparent); border-color: color-mix(in srgb, var(--warn) 25%, transparent); color: var(--warn);">
+            <i class="fa-solid fa-triangle-exclamation text-[10px]"></i>
+            <span>Unsupported</span>
+          </span>
+        } @else {
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-black inline-flex items-center gap-1.5 border"
+                style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
+            <i class="fa-regular fa-circle text-[9px]"></i>
+            <span>Inactive</span>
+          </span>
         }
       </div>
-    } @empty {
-      <p class="p-10 text-center text-slate-400 text-sm">🔕 No notifications yet</p>
-    }
+
+      <!-- Description / Explanation -->
+      <p class="text-xs font-medium leading-relaxed mb-4" style="color: var(--t2);">
+        @if (push.isSubscribed()) {
+          This device is registered to receive instant push alerts when flatmates log pool expenses, settle IOU debts, or send reminders—even if RoomLedger is minimized or closed.
+        } @else if (push.permission() === 'denied') {
+          Notifications were blocked for this site. To enable them, click the padlock icon in your browser address bar, change Notification permission to <strong>Allow</strong>, and refresh the page.
+        } @else {
+          Stay in the loop with your flatmates. Subscribe this device to receive real-time alerts when money is added to the pool, debts are settled, or bills are due.
+        }
+      </p>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap gap-2.5 pt-1">
+        @if (push.isSupported() && push.permission() !== 'denied') {
+          <button type="button"
+                  (click)="togglePush()"
+                  [disabled]="push.loading()"
+                  [class]="push.isSubscribed() ? 'btnr' : 'btn'"
+                  class="px-4 py-2.5 text-xs font-black rounded-xl cursor-pointer disabled:opacity-50 inline-flex items-center gap-2 shadow-sm">
+            @if (push.loading()) {
+              <i class="fa-solid fa-circle-notch fa-spin text-xs"></i>
+              <span>Processing...</span>
+            } @else if (push.isSubscribed()) {
+              <i class="fa-regular fa-bell-slash text-xs"></i>
+              <span>Disable Push on This Device</span>
+            } @else {
+              <i class="fa-solid fa-bell text-xs"></i>
+              <span>Enable Push Notifications</span>
+            }
+          </button>
+        }
+
+        @if (push.isSubscribed()) {
+          <button type="button"
+                  (click)="sendTestPush()"
+                  [disabled]="sendingTest()"
+                  class="px-3.5 py-2.5 text-xs font-bold rounded-xl border transition cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+                  style="background: var(--bg2); border-color: var(--border); color: var(--text);">
+            @if (sendingTest()) {
+              <i class="fa-solid fa-circle-notch fa-spin text-xs"></i>
+              <span>Sending...</span>
+            } @else {
+              <i class="fa-solid fa-paper-plane text-xs" style="color: var(--p1);"></i>
+              <span>Send Test Notification</span>
+            }
+          </button>
+        }
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         IN-APP NOTIFICATIONS FEED
+    ═══════════════════════════════════════════ -->
+    <div>
+      <div class="flex items-center justify-between mb-3 px-1">
+        <div class="sl flex items-center gap-1.5">
+          <i class="fa-solid fa-list-check text-xs"></i>
+          <span>Recent Activity &amp; Alerts</span>
+        </div>
+        <span class="text-[11px] font-bold" style="color: var(--t3);">
+          {{ items().length }} items
+        </span>
+      </div>
+
+      @if (loading()) {
+        <div class="card p-8 text-center rounded-2xl border" style="border-color: var(--border);">
+          <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2" style="color: var(--p1);"></i>
+          <p class="text-xs font-bold" style="color: var(--t3);">Loading notifications...</p>
+        </div>
+      } @else if (items().length > 0) {
+        <div class="card p-0 rounded-2xl overflow-hidden divide-y border shadow-sm"
+             style="background: var(--card); border-color: var(--border);">
+          @for (n of items(); track n.id) {
+            <div class="p-4 flex items-start gap-3.5 transition hover:bg-black/5"
+                 [style.background]="n.isRead ? 'transparent' : 'color-mix(in srgb, var(--p1) 5%, transparent)'">
+              
+              <!-- Icon Container -->
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm shrink-0 border mt-0.5"
+                   style="background: var(--bg2); border-color: var(--border);">
+                <i [class]="iconClass(n.type)"></i>
+              </div>
+
+              <!-- Message Body -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                  <h3 class="text-xs sm:text-sm font-extrabold truncate"
+                      [style.color]="n.isRead ? 'var(--t2)' : 'var(--text)'">
+                    {{ n.title }}
+                  </h3>
+                  @if (!n.isRead) {
+                    <span class="w-2 h-2 rounded-full shrink-0" style="background: var(--p1);"></span>
+                  }
+                </div>
+
+                <p class="text-xs mt-0.5 leading-relaxed font-medium" style="color: var(--t2);">
+                  {{ n.message || n.body }}
+                </p>
+
+                <div class="text-[10px] font-semibold mt-1.5" style="color: var(--t3);">
+                  {{ n.createdAt | date:'EEE, dd MMM · hh:mm a' }}
+                </div>
+              </div>
+
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="card p-10 text-center rounded-2xl border flex flex-col items-center justify-center"
+             style="border-color: var(--border);">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl mb-2"
+               style="background: var(--bg2); color: var(--t3);">
+            <i class="fa-regular fa-bell"></i>
+          </div>
+          <div class="text-xs font-black tracking-tight" style="color: var(--text);">
+            No Notifications Yet
+          </div>
+          <div class="text-[11px] font-medium mt-1 max-w-xs" style="color: var(--t3);">
+            Shared expenses, bills, settlements, and pool updates will appear here.
+          </div>
+        </div>
+      }
+    </div>
+
   </div>
 </div>

@@ -6,6 +6,7 @@ export interface User {
   fullName?: string;
   phone?: string;
   avatarUrl?: string;
+  upiId?: string;
 }
 
 export interface AuthResult {
@@ -116,6 +117,7 @@ export interface DebtPair {
   toUserId: number;
   toUserName: string;      // non-optional → charAt(0) safe
   amount: number;
+  upiId?: string | null;
 }
 
 export interface MyBalance {
@@ -141,6 +143,9 @@ export interface PoolMemberStatus {
   contributedThisMonth?: number;
   expectedThisMonth?: number;
   hasPaidTarget?: boolean;
+  isAdmin?: boolean;
+  role?: string;
+  isAlias?: boolean;
 }
 
 
@@ -160,6 +165,8 @@ export interface PoolTransaction {
 export interface PoolBalance {
   currentBalance: number;    // non-optional → fixes @if comparison
   monthlyTarget: number;
+  isLowBalance?: boolean;
+  lowThreshold?: number;
   totalContributions?: number;
   totalSpent?: number;
   memberStatuses: PoolMemberStatus[];
@@ -191,4 +198,6 @@ export interface MemberStatus {
   userId: number; userName: string; isAlias: boolean;
   contributedThisMonth: number; expectedThisMonth: number;
   hasPaidTarget: boolean; pendingAmount: number;
+  isAdmin?: boolean;
+  role?: string;
 }

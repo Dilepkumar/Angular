@@ -1,10 +1,11 @@
-import { Component, OnInit, AfterViewInit, inject, signal, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, inject, signal, computed, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { GENDERS, GENDER_ICONS } from '../shared/constants';
+import * as QRCode from 'qrcode';
 
 @Component({
   selector: 'app-profile',
@@ -30,6 +31,8 @@ export class ProfileComponent implements OnInit, AfterViewInit {
   gender = signal('');
   today = new Date().toISOString().slice(0, 10);
   upiId = signal('');
+  isEditingUpi = signal(false);
+  tempUpiId = signal('');
 
   // Stats & Membership Signals
   roomName = signal('');
@@ -42,7 +45,13 @@ export class ProfileComponent implements OnInit, AfterViewInit {
 
   // Roommates Modal State
   roommates = signal<any[]>([]);
+  adminMember = computed(() => this.roommates().find(m => m.role?.toLowerCase() === 'admin'));
   showRoommatesModal = signal<boolean>(false);
+
+  // Inactivate Flat State
+  showInactivateModal = signal<boolean>(false);
+  inactivatingFlat = signal<boolean>(false);
+  inactivateError = signal<string | null>(null);
 
   // Invite Modal State
   showInviteModal = signal<boolean>(false);
@@ -95,7 +104,7 @@ export class ProfileComponent implements OnInit, AfterViewInit {
       this.phone.set(phone);
       this.initials.set(this.getInitials(name));
       this.nickname.set(this.getNickname(name));
-      this.upiId.set(this.getUpiId(email, name));
+      this.upiId.set((localUser as any).upiId || '');
       if (localUser.avatarUrl) {
         this.avatarUrl.set(localUser.avatarUrl);
       }
@@ -137,7 +146,8 @@ export class ProfileComponent implements OnInit, AfterViewInit {
         // Dynamic nickname, initials & UPI ID
         this.nickname.set(p.nickname || this.getNickname(name));
         this.initials.set(this.getInitials(name));
-        this.upiId.set(p.upiId || this.getUpiId(mail, name));
+        this.upiId.set(p.upiId || '');
+        this.tempUpiId.set(p.upiId || '');
 
         this.loading.set(false);
         this.cdr.detectChanges();
@@ -169,19 +179,50 @@ export class ProfileComponent implements OnInit, AfterViewInit {
     return parts[0].toLowerCase();
   }
 
-  private getUpiId(email: string, name: string): string {
-    if (email) {
-      return `${email.split('@')[0]}@okhdfcbank`;
-    }
-    if (name) {
-      return `${name.toLowerCase().replace(/\s+/g, '')}@okhdfcbank`;
-    }
-    return 'user@okhdfcbank';
+  onUpiIdChange(val: string): void {
+    this.tempUpiId.set(val);
   }
 
-  onUpiIdChange(val: string): void {
-    this.upiId.set(val);
-    this.drawQrCode();
+  startEditingUpi(): void {
+    this.tempUpiId.set(this.upiId());
+    this.isEditingUpi.set(true);
+  }
+
+  cancelEditingUpi(): void {
+    this.tempUpiId.set(this.upiId());
+    this.isEditingUpi.set(false);
+  }
+
+  savingUpi = signal(false);
+
+  saveUpiId(): void {
+    const upi = this.tempUpiId().trim();
+    if (upi && !upi.includes('@')) {
+      this.showToast('⚠️ Please enter a valid UPI ID (e.g. username@bank or mobile@upi)');
+      return;
+    }
+
+    this.savingUpi.set(true);
+    this.api.put<{ message: string }>('profile', {
+      fullName: this.fullName().trim(),
+      dateOfBirth: this.dob() || null,
+      gender: this.gender() || null,
+      phone: this.phone().trim() || null,
+      upiId: upi || null
+    }).subscribe({
+      next: () => {
+        this.savingUpi.set(false);
+        this.upiId.set(upi);
+        this.isEditingUpi.set(false);
+        this.showToast('✅ UPI ID saved! Flatmates can now pay you directly.');
+        this.cdr.detectChanges();
+        setTimeout(() => this.drawQrCode(), 50);
+      },
+      error: (err: any) => {
+        this.savingUpi.set(false);
+        this.showToast(`❌ ${err?.error?.message || 'Failed to save UPI ID'}`);
+      }
+    });
   }
 
   saveProfile(): void {
@@ -196,7 +237,8 @@ export class ProfileComponent implements OnInit, AfterViewInit {
       fullName: currentName,
       dateOfBirth: this.dob() || null,
       gender: this.gender() || null,
-      phone: this.phone().trim() || null
+      phone: this.phone().trim() || null,
+      upiId: this.upiId().trim() || null
     }).subscribe({
       next: (res) => {
         this.saving.set(false);
@@ -279,6 +321,70 @@ export class ProfileComponent implements OnInit, AfterViewInit {
 
   closeRoommatesModal(): void {
     this.showRoommatesModal.set(false);
+  }
+
+  removingMember = signal<boolean>(false);
+
+  removeMember(m: any): void {
+    const gid = this.groupId() || localStorage.getItem('rl_group_id');
+    if (!gid) return;
+
+    const confirmMsg = `Are you sure you want to remove ${m.name || 'this member'} from the flat?\n\nThe system will verify that they have zero unsettled IOUs, unpaid bills, and unreimbursed pool expenses before removing.`;
+    if (!confirm(confirmMsg)) return;
+
+    this.removingMember.set(true);
+    this.api.post<{ message: string }>(`groups/${gid}/members/${m.id}/remove`, {}).subscribe({
+      next: (res) => {
+        this.removingMember.set(false);
+        this.showToast(`✅ ${res.message || 'Member removed successfully.'}`);
+        this.loadProfile();
+        this.closeRoommatesModal();
+      },
+      error: (err) => {
+        this.removingMember.set(false);
+        this.showToast(`❌ ${err.error?.message || 'Failed to remove member'}`);
+      }
+    });
+  }
+
+  // ═══════════════════════════════════════════
+  // INACTIVATE / ARCHIVE FLAT (ADMIN ONLY)
+  // ═══════════════════════════════════════════
+  openInactivateModal(): void {
+    this.inactivateError.set(null);
+    this.showInactivateModal.set(true);
+  }
+
+  closeInactivateModal(): void {
+    this.showInactivateModal.set(false);
+    this.inactivateError.set(null);
+  }
+
+  confirmInactivateFlat(): void {
+    const gid = this.groupId() || localStorage.getItem('rl_group_id');
+    if (!gid) return;
+
+    this.inactivatingFlat.set(true);
+    this.inactivateError.set(null);
+
+    this.api.post<{ message: string }>(`groups/${gid}/inactivate`, {}).subscribe({
+      next: (res) => {
+        this.inactivatingFlat.set(false);
+        this.showInactivateModal.set(false);
+        this.showToast(`✅ ${res.message || 'Flat has been deactivated and archived.'}`);
+        localStorage.removeItem('rl_group_id');
+        localStorage.removeItem('rl_user_groups');
+        setTimeout(() => {
+          this.router.navigate(['/groups']);
+        }, 1200);
+      },
+      error: (err: any) => {
+        this.inactivatingFlat.set(false);
+        const msg = err.error?.message || 'Failed to inactivate flat. Ensure all debts, bills, and pool balances are settled.';
+        this.inactivateError.set(msg);
+        this.showToast(`❌ ${msg}`);
+      }
+    });
   }
 
   // ═══════════════════════════════════════════
@@ -393,65 +499,32 @@ export class ProfileComponent implements OnInit, AfterViewInit {
 
   drawQrCode(): void {
     const cv = this.qrCanvasRef?.nativeElement;
+    const upi = this.upiId().trim();
     if (!cv) return;
-    const text = this.upiId() || 'upi://pay';
-    const ctx = cv.getContext('2d');
-    if (!ctx) return;
 
-    const sz = cv.width;
-    const m = 21;
-    const mod = sz / m;
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, sz, sz);
-
-    let seed = 0;
-    for (let i = 0; i < text.length; i++) {
-      seed = (seed * 31 + text.charCodeAt(i)) & 0xffffff;
+    if (!upi) {
+      const ctx = cv.getContext('2d');
+      if (ctx) ctx.clearRect(0, 0, cv.width, cv.height);
+      return;
     }
 
-    function rnd(x: number, y: number) {
-      let s = seed ^ (x * 374761393) ^ (y * 1274126177);
-      s = ((s >> 16) ^ s) * 0x45d9f3b;
-      s = ((s >> 16) ^ s) * 0x45d9f3b;
-      return (s >> 16) ^ s;
-    }
+    const name = this.fullName().trim() || 'Roommate';
+    // Standard NPCI UPI URI Specification — 100% compliant with GPay, PhonePe, Paytm, BHIM & Google Lens
+    const upiUri = `upi://pay?pa=${encodeURIComponent(upi)}&pn=${encodeURIComponent(name)}&cu=INR`;
 
-    ctx.fillStyle = '#1A3330';
-    for (let r = 0; r < m; r++) {
-      for (let c = 0; c < m; c++) {
-        const tl = r < 7 && c < 7;
-        const tr = r < 7 && c >= m - 7;
-        const bl = r >= m - 7 && c < 7;
-        let dk = false;
-        if (tl) {
-          dk = (r === 0 || r === 6 || c === 0 || c === 6) || (r >= 2 && r <= 4 && c >= 2 && c <= 4);
-        } else if (tr) {
-          const lr = r, lc = c - (m - 7);
-          dk = (lr === 0 || lr === 6 || lc === 0 || lc === 6) || (lr >= 2 && r <= 4 && lc >= 2 && lc <= 4);
-        } else if (bl) {
-          const lr = r - (m - 7), lc = c;
-          dk = (lr === 0 || lr === 6 || lc === 0 || lc === 6) || (lr >= 2 && r <= 4 && lc >= 2 && lc <= 4);
-        } else {
-          dk = r === 6 || c === 6 ? (r + c) % 2 === 0 : (rnd(r, c) & 1) === 1;
-        }
-        if (dk) {
-          ctx.fillRect(c * mod + 0.5, r * mod + 0.5, mod - 0.5, mod - 0.5);
-        }
+    QRCode.toCanvas(cv, upiUri, {
+      width: 150,
+      margin: 1,
+      color: {
+        dark: '#111827',
+        light: '#ffffff'
+      },
+      errorCorrectionLevel: 'M'
+    }, (err: any) => {
+      if (err) {
+        console.error('Failed to generate UPI QR code:', err);
       }
-    }
-
-    // Splitwise Teal central badge
-    ctx.fillStyle = '#1ABC9C';
-    ctx.beginPath();
-    ctx.arc(sz / 2, sz / 2, 13, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 10px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('RL', sz / 2, sz / 2);
+    });
   }
 
   showToast(msg: string): void {

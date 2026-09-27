@@ -21,7 +21,7 @@
             <path d="m6 9 6 6 6-6"/>
           </svg>
         </div>
-        <div class="text-xs font-semibold flex items-center gap-1.5 mt-0.5" style="color: var(--t2);">
+        <div class="text-xs font-semibold flex items-center gap-1.5 mt-0.5 flex-wrap" style="color: var(--t2);">
           <span class="w-2 h-2 rounded-full inline-block" style="background: var(--ok);"></span>
           <span>{{ memberCount() }} Roommates · {{ groupAddress() || 'Room Address' }}</span>
         </div>
@@ -60,9 +60,15 @@
           <div class="text-xs font-black leading-none" style="color: var(--text);">
             {{ me()?.fullName?.split(' ')[0] }}
           </div>
-          <span class="text-[9px] font-black px-1.5 py-0.5 rounded uppercase mt-0.5 inline-block"
-                style="background: color-mix(in srgb, var(--p1) 12%, transparent); color: var(--p1);">
-            Member
+          <span class="text-[9px] font-black px-1.5 py-0.5 rounded uppercase mt-0.5 inline-flex items-center gap-1 border"
+                [style.background]="isMeAdmin() ? 'color-mix(in srgb, #f59e0b 15%, transparent)' : 'color-mix(in srgb, var(--p1) 12%, transparent)'"
+                [style.color]="isMeAdmin() ? '#d97706' : 'var(--p1)'"
+                [style.borderColor]="isMeAdmin() ? 'color-mix(in srgb, #f59e0b 25%, transparent)' : 'color-mix(in srgb, var(--p1) 25%, transparent)'">
+            @if (isMeAdmin()) {
+              <i class="fa-solid fa-crown text-[8px] text-amber-500"></i> Admin
+            } @else {
+              Member
+            }
           </span>
         </div>
       </div>

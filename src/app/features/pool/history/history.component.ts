@@ -274,6 +274,129 @@ export class HistoryComponent implements OnInit {
     return '#64748b';
   }
 
+  // ── Edit & Void Pool Expense (Admin Feature) ──
+  editingExpense = signal<PoolHistoryTransaction | null>(null);
+  editForm = {
+    description: '',
+    amount: 0,
+    expenseDate: '',
+    category: '',
+    reason: ''
+  };
+  savingEdit = signal<boolean>(false);
+
+  voidingExpense = signal<PoolHistoryTransaction | null>(null);
+  voidReason = '';
+  savingVoid = signal<boolean>(false);
+
+  latestExpenseId(): string | null {
+    const list = this.historyData()?.transactions || [];
+    const latest = list.find((t: PoolHistoryTransaction) => t.type === 'Expense' && t.status !== 'Voided');
+    return latest ? latest.id : null;
+  }
+
+  isLatestExpense(id: string): boolean {
+    return this.latestExpenseId() === id;
+  }
+
+  openEditExpense(t: PoolHistoryTransaction): void {
+    if (!this.isLatestExpense(t.id)) {
+      this.showToast('⚠️ Only the last recorded pool expense can be edited.');
+      return;
+    }
+    this.editingExpense.set(t);
+    let d = t.date;
+    try {
+      d = new Date(t.date).toISOString().split('T')[0];
+    } catch {
+      d = '';
+    }
+    this.editForm = {
+      description: t.description,
+      amount: t.amount,
+      expenseDate: d,
+      category: t.category || '',
+      reason: ''
+    };
+  }
+
+  closeEditModal(): void {
+    this.editingExpense.set(null);
+  }
+
+  submitEditExpense(): void {
+    const t = this.editingExpense();
+    if (!t) return;
+    const numericId = t.id.startsWith('e') ? parseInt(t.id.substring(1), 10) : parseInt(t.id, 10);
+    if (!numericId) return;
+
+    if (!this.editForm.description.trim()) {
+      this.showToast('⚠️ Please enter an expense description');
+      return;
+    }
+    if (this.editForm.amount <= 0) {
+      this.showToast('⚠️ Amount must be greater than zero');
+      return;
+    }
+
+    this.savingEdit.set(true);
+    this.api.put<{ message: string }>(`groups/${this.groupId}/pool/expenses/${numericId}`, {
+      description: this.editForm.description.trim(),
+      amount: this.editForm.amount,
+      expenseDate: this.editForm.expenseDate,
+      category: this.editForm.category.trim() || undefined,
+      reason: this.editForm.reason.trim() || 'Admin corrected expense details'
+    }).subscribe({
+      next: (res) => {
+        this.savingEdit.set(false);
+        this.closeEditModal();
+        this.showToast(`✅ ${res.message || 'Expense updated successfully!'}`);
+        this.loadHistory();
+      },
+      error: (err) => {
+        this.savingEdit.set(false);
+        this.showToast(`❌ ${err.error?.message || 'Failed to update expense'}`);
+      }
+    });
+  }
+
+  openVoidExpense(t: PoolHistoryTransaction): void {
+    this.voidingExpense.set(t);
+    this.voidReason = '';
+  }
+
+  closeVoidModal(): void {
+    this.voidingExpense.set(null);
+  }
+
+  submitVoidExpense(): void {
+    const t = this.voidingExpense();
+    if (!t) return;
+    const numericId = t.id.startsWith('e') ? parseInt(t.id.substring(1), 10) : parseInt(t.id, 10);
+    if (!numericId) return;
+
+    if (!this.voidReason.trim()) {
+      this.showToast('⚠️ Please provide a reason to void this expense');
+      return;
+    }
+
+    this.savingVoid.set(true);
+    this.api.post<{ message: string }>(`groups/${this.groupId}/pool/expenses/${numericId}/void`, {
+      reason: this.voidReason.trim()
+    }).subscribe({
+      next: (res) => {
+        this.savingVoid.set(false);
+        this.closeVoidModal();
+        this.showToast(`✅ ${res.message || 'Expense voided and balance restored!'}`);
+        this.loadHistory();
+      },
+      error: (err) => {
+        this.savingVoid.set(false);
+        this.showToast(`❌ ${err.error?.message || 'Failed to void expense'}`);
+      }
+    });
+  }
+
   // Navigation
   goBack(): void {
     this.router.navigate(['/g', this.groupId, 'pool']);

@@ -144,6 +144,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   groupName = signal('My Flat');
   groupAddress = signal('');
   memberCount = signal(1);
+  adminName = signal<string>('');
+  myRole = signal<string>('Member');
+  isMeAdmin = computed(() => this.myRole() === 'Admin' || this.myRole() === 'Room Admin');
 
   // Category vs Items vs Monthly Categories vs Monthly Items Switcher
   breakdownView = signal<'category' | 'items' | 'monthly_category' | 'monthly_items'>('category');
@@ -250,6 +253,21 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.groupId = this.route.snapshot.paramMap.get('groupId') || localStorage.getItem('rl_group_id') || '1';
     this.loadDashboardData();
+    this.loadGroupInfo();
+  }
+
+  loadGroupInfo(): void {
+    if (!this.groupId) return;
+    this.api.get<any>(`groups/${this.groupId}`).subscribe({
+      next: (g) => {
+        if (g?.myRole) this.myRole.set(g.myRole);
+        const admin = g?.members?.find((m: any) => m.role === 'Admin');
+        if (admin) {
+          this.adminName.set(admin.fullName || admin.name || '');
+        }
+      },
+      error: () => {}
+    });
   }
 
   ngAfterViewInit(): void {}

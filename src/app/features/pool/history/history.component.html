@@ -307,93 +307,119 @@
             
             <!-- Accordion Header Card -->
             <div (click)="toggleReceipt(t.id)"
-                 class="p-3.5 sm:p-4 cursor-pointer transition flex items-center justify-between select-none hover:shadow-xs"
+                 class="p-3.5 sm:p-4 cursor-pointer transition select-none hover:shadow-xs"
                  style="background: var(--bg2);">
               
-              <!-- Left side: Icon & Title/Details -->
-              <div class="flex items-center gap-3 min-w-0">
-                <div class="text-2xl shrink-0">
-                  @if (t.type === 'Contribution') {
-                    💰
-                  } @else {
-                    {{ getCategoryIcon(t.category) }}
-                  }
-                </div>
-
-                <div class="min-w-0">
-                  <div class="text-xs sm:text-[14px] font-bold flex items-center gap-1.5 flex-wrap" style="color: var(--text);">
-                    <span class="break-words">{{ t.description }}</span>
-                    @if (t.category) {
-                      <span class="text-[10px] font-black px-2 py-0.5 rounded-full"
-                            style="background: color-mix(in srgb, var(--p1) 14%, transparent); color: var(--p1);">
-                        {{ t.category }}
-                      </span>
+              <div class="flex items-start justify-between gap-3">
+                <!-- Left side: Icon & Title/Details -->
+                <div class="flex items-start gap-3 min-w-0 flex-1">
+                  <div class="text-2xl shrink-0 mt-0.5">
+                    @if (t.type === 'Contribution') {
+                      💰
+                    } @else {
+                      {{ getCategoryIcon(t.category) }}
                     }
                   </div>
 
-                  <div class="text-[11px] font-medium mt-0.5 flex items-center gap-1.5 flex-wrap" style="color: var(--t3);">
-                    <span>{{ t.date | date:'dd MMM yyyy' }}</span>
-                    <span>·</span>
-                    <span class="font-semibold" style="color: var(--t2);">{{ t.userName }}</span>
-                    @if (t.status === 'Pending') {
-                      <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded"
-                            style="background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn);">
-                        ⏳ Pending
-                      </span>
-                    }
-                    @if (t.status === 'Pending Reimbursement' || (t.payerType === 'member' && !t.isReimbursed)) {
-                      <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded"
-                            style="background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn);">
-                        ⏳ Pending Reimbursement
-                      </span>
-                    }
-                    @if (t.status === 'Reimbursed ✓' || (t.payerType === 'member' && t.isReimbursed)) {
-                      <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded"
-                            style="background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok);">
-                        💸 Reimbursed from Pool ✓
-                      </span>
-                    }
+                  <div class="min-w-0 flex-1">
+                    <div class="text-xs sm:text-[14px] font-bold flex items-center gap-1.5 flex-wrap" style="color: var(--text);">
+                      <span class="break-words">{{ t.description }}</span>
+                      @if (t.category) {
+                        <span class="text-[10px] font-black px-2 py-0.5 rounded-full"
+                              style="background: color-mix(in srgb, var(--p1) 14%, transparent); color: var(--p1);">
+                          {{ t.category }}
+                        </span>
+                      }
+                    </div>
+
+                    <div class="text-[11px] font-medium mt-1 flex items-center gap-1.5 flex-wrap" style="color: var(--t3);">
+                      <span>{{ t.date | date:'dd MMM yyyy' }}</span>
+                      <span>·</span>
+                      <span class="font-semibold" style="color: var(--t2);">{{ t.userName }}</span>
+                      @if (t.status === 'Pending') {
+                        <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded"
+                              style="background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn);">
+                          ⏳ Pending
+                        </span>
+                      }
+                      @if (t.status === 'Pending Reimbursement' || (t.payerType === 'member' && !t.isReimbursed)) {
+                        <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded"
+                              style="background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn);">
+                          ⏳ Pending Reimbursement
+                        </span>
+                      }
+                      @if (t.status === 'Reimbursed ✓' || (t.payerType === 'member' && t.isReimbursed)) {
+                        <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded"
+                              style="background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok);">
+                          💸 Reimbursed from Pool ✓
+                        </span>
+                      }
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Right side: Actions & Amount -->
-              <div class="flex items-center gap-2 shrink-0 ml-2">
-                <!-- Receipt Photo Pill Button -->
-                @if (t.receiptUrl) {
-                  <button type="button"
-                          (click)="$event.stopPropagation(); viewReceipt(t.receiptUrl)"
-                          class="text-[10px] font-black px-2.5 py-1 rounded-lg border flex items-center gap-1.5 cursor-pointer transition hover:scale-105 active:scale-95 shadow-xs"
-                          style="background: color-mix(in srgb, var(--p1) 15%, var(--card)); border-color: var(--p1); color: var(--p1);"
-                          title="View Attached Bill Photo">
-                    <i class="fa-solid fa-image text-xs" style="color: rgb(99, 230, 190);"></i>
-                    <span class="hidden sm:inline">Photo</span>
-                  </button>
-                }
+                <!-- Right side: Top Corner Actions + Amount -->
+                <div class="flex flex-col items-end justify-between self-stretch shrink-0 gap-2 min-h-[44px]">
+                  <!-- Top Corner Action Icons -->
+                  <div class="flex items-center gap-1.5">
+                    <!-- Receipt Photo Button -->
+                    @if (t.receiptUrl) {
+                      <button type="button"
+                              (click)="$event.stopPropagation(); viewReceipt(t.receiptUrl)"
+                              class="w-7 h-7 rounded-lg border flex items-center justify-center cursor-pointer transition hover:scale-105 active:scale-95 shadow-xs"
+                              style="background: color-mix(in srgb, var(--p1) 15%, var(--card)); border-color: var(--p1); color: var(--p1);"
+                              title="View Attached Bill Photo">
+                        <i class="fa-solid fa-image text-[11px]" style="color: rgb(99, 230, 190);"></i>
+                      </button>
+                    }
 
-                <!-- Out-of-pocket Reimburse Button -->
-                @if (t.payerType === 'member' && !t.isReimbursed && (isAdmin() || (t.payerName && me?.fullName && t.payerName === me?.fullName))) {
-                  <button type="button"
-                          (click)="$event.stopPropagation(); reimburseOutOfPocket(t.id.startsWith('e') ? +t.id.slice(1) : undefined)"
-                          [disabled]="reimbursingOutOfPocket()"
-                          class="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border transition cursor-pointer hover:scale-105 active:scale-95 flex items-center gap-1"
-                          style="background: color-mix(in srgb, var(--p1) 15%, transparent); border-color: var(--p1); color: var(--p1);"
-                          title="Reimburse this expense from Central Pool">
-                    <i class="fa-solid fa-hand-holding-dollar" style="color: rgb(99, 230, 190);"></i>
-                    <span>Reimburse</span>
-                  </button>
-                }
+                    <!-- Out-of-pocket Reimburse Button -->
+                    @if (t.payerType === 'member' && !t.isReimbursed && (isAdmin() || (t.payerName && me?.fullName && t.payerName === me?.fullName))) {
+                      <button type="button"
+                              (click)="$event.stopPropagation(); reimburseOutOfPocket(t.id.startsWith('e') ? +t.id.slice(1) : undefined)"
+                              [disabled]="reimbursingOutOfPocket()"
+                              class="text-[10px] font-extrabold px-2 py-0.5 rounded-lg border transition cursor-pointer hover:scale-105 active:scale-95 flex items-center gap-1 shadow-xs"
+                              style="background: color-mix(in srgb, var(--p1) 15%, transparent); border-color: var(--p1); color: var(--p1);"
+                              title="Reimburse this expense from Central Pool">
+                        <i class="fa-solid fa-hand-holding-dollar text-[10px]" style="color: rgb(99, 230, 190);"></i>
+                        <span class="hidden sm:inline">Reimburse</span>
+                      </button>
+                    }
 
-                <!-- Formatted Amount -->
-                <span class="text-xs sm:text-sm font-black"
-                      [style.color]="t.type === 'Contribution' ? 'var(--ok)' : 'var(--text)'">
-                  {{ t.type === 'Contribution' ? '+' : '−' }}₹{{ t.amount }}
-                </span>
+                    <!-- Admin Edit (Latest only) Button -->
+                    @if (t.type === 'Expense' && isAdmin() && t.status !== 'Voided') {
+                      @if (isLatestExpense(t.id)) {
+                        <button type="button"
+                                (click)="$event.stopPropagation(); openEditExpense(t)"
+                                class="w-7 h-7 rounded-lg border transition cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center shadow-xs"
+                                style="background: color-mix(in srgb, #f59e0b 15%, transparent); border-color: color-mix(in srgb, #f59e0b 35%, transparent); color: #d97706;"
+                                title="Edit this expense (Only the latest pool expense can be edited)">
+                          <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                        </button>
+                      }
 
-                <!-- Chevron toggle arrow with Font Awesome icon -->
-                <i class="fa-solid fa-chevron-right text-xs transition-transform duration-200"
-                   style="color: var(--t3);"
-                   [style.transform]="isReceiptExpanded(t.id) ? 'rotate(90deg)' : 'rotate(0deg)'"></i>
+                      <!-- Admin Void Button -->
+                      <button type="button"
+                              (click)="$event.stopPropagation(); openVoidExpense(t)"
+                              class="w-7 h-7 rounded-lg border transition cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center shadow-xs"
+                              style="background: color-mix(in srgb, var(--err) 12%, transparent); border-color: color-mix(in srgb, var(--err) 30%, transparent); color: var(--err);"
+                              title="Void this expense (Admin)">
+                        <i class="fa-solid fa-ban text-[10px]"></i>
+                      </button>
+                    }
+                  </div>
+
+                  <!-- Bottom: Amount & Chevron toggle arrow -->
+                  <div class="flex items-center gap-1.5 mt-auto">
+                    <span class="text-xs sm:text-sm font-black"
+                          [style.color]="t.type === 'Contribution' ? 'var(--ok)' : 'var(--text)'">
+                      {{ t.type === 'Contribution' ? '+' : '−' }}₹{{ t.amount }}
+                    </span>
+                    <i class="fa-solid fa-chevron-right text-xs transition-transform duration-200"
+                       style="color: var(--t3);"
+                       [style.transform]="isReceiptExpanded(t.id) ? 'rotate(90deg)' : 'rotate(0deg)'"></i>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -535,6 +561,184 @@
         <img [src]="selectedReceiptImage()"
              alt="Full Receipt"
              class="max-h-[70vh] w-auto rounded-2xl object-contain shadow-md" />
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════
+     MODAL: ADMIN EDIT POOL EXPENSE
+═══════════════════════════════════════════ -->
+@if (editingExpense()) {
+  <div class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 fade-up"
+       (click)="closeEditModal()">
+    <div class="w-full max-w-md rounded-3xl overflow-hidden shadow-2xl relative border"
+         style="background: var(--card); border-color: var(--border);"
+         (click)="$event.stopPropagation()">
+      <div class="p-4 border-b flex items-center justify-between" style="border-color: var(--border);">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center"
+               style="background: color-mix(in srgb, #f59e0b 20%, transparent); color: #f59e0b;">
+            <i class="fa-solid fa-pen-to-square text-sm"></i>
+          </div>
+          <div>
+            <div class="text-sm font-black" style="color: var(--text);">Edit Pool Expense</div>
+            <div class="text-[10px] font-medium" style="color: var(--t3);">Admin Correction Tool</div>
+          </div>
+        </div>
+        <button type="button"
+                (click)="closeEditModal()"
+                class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black cursor-pointer border"
+                style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-4 space-y-3.5">
+        <!-- Description -->
+        <div>
+          <label class="block text-[11px] font-black uppercase tracking-wider mb-1" style="color: var(--t2);">
+            Description / Item Name
+          </label>
+          <input type="text"
+                 [(ngModel)]="editForm.description"
+                 placeholder="e.g. Weekly Groceries, Water Cans"
+                 class="inp w-full py-2 px-3 text-xs font-bold" />
+        </div>
+
+        <!-- Amount & Date -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-black uppercase tracking-wider mb-1" style="color: var(--t2);">
+              Total Amount (₹)
+            </label>
+            <input type="number"
+                   min="1"
+                   step="any"
+                   [(ngModel)]="editForm.amount"
+                   placeholder="0.00"
+                   class="inp w-full py-2 px-3 text-xs font-black" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-black uppercase tracking-wider mb-1" style="color: var(--t2);">
+              Expense Date
+            </label>
+            <input type="date"
+                   [(ngModel)]="editForm.expenseDate"
+                   class="inp w-full py-2 px-3 text-xs font-bold" />
+          </div>
+        </div>
+
+        <!-- Category -->
+        <div>
+          <label class="block text-[11px] font-black uppercase tracking-wider mb-1" style="color: var(--t2);">
+            Category
+          </label>
+          <input type="text"
+                 [(ngModel)]="editForm.category"
+                 placeholder="e.g. Groceries, Utilities, Cleaning"
+                 class="inp w-full py-2 px-3 text-xs font-bold" />
+        </div>
+
+        <!-- Correction Reason -->
+        <div>
+          <label class="block text-[11px] font-black uppercase tracking-wider mb-1" style="color: var(--t2);">
+            Audit Note / Reason for Change
+          </label>
+          <input type="text"
+                 [(ngModel)]="editForm.reason"
+                 placeholder="e.g. Corrected typo in price, updated date"
+                 class="inp w-full py-2 px-3 text-xs font-medium" />
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="p-4 border-t flex gap-2" style="border-color: var(--border);">
+        <button type="button"
+                (click)="closeEditModal()"
+                class="btns flex-1 py-2.5 text-xs font-black cursor-pointer">
+          Cancel
+        </button>
+        <button type="button"
+                (click)="submitEditExpense()"
+                [disabled]="savingEdit()"
+                class="btn flex-1 py-2.5 text-xs font-black flex items-center justify-center gap-1.5 shadow-md">
+          @if (savingEdit()) {
+            <i class="fa-solid fa-circle-notch fa-spin text-xs"></i>
+            <span>Saving…</span>
+          } @else {
+            <i class="fa-solid fa-check text-xs"></i>
+            <span>Save Changes</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════
+     MODAL: ADMIN VOID POOL EXPENSE
+═══════════════════════════════════════════ -->
+@if (voidingExpense()) {
+  <div class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 fade-up"
+       (click)="closeVoidModal()">
+    <div class="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl relative border"
+         style="background: var(--card); border-color: var(--border);"
+         (click)="$event.stopPropagation()">
+      <div class="p-4 border-b flex items-center justify-between" style="border-color: var(--border);">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center"
+               style="background: color-mix(in srgb, var(--err) 20%, transparent); color: var(--err);">
+            <i class="fa-solid fa-ban text-sm"></i>
+          </div>
+          <div>
+            <div class="text-sm font-black" style="color: var(--text);">Void Expense</div>
+            <div class="text-[10px] font-medium" style="color: var(--t3);">Restores Pool Fund Balance</div>
+          </div>
+        </div>
+        <button type="button"
+                (click)="closeVoidModal()"
+                class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black cursor-pointer border"
+                style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-4 space-y-3">
+        <p class="text-xs leading-relaxed" style="color: var(--t2);">
+          Voiding <strong style="color: var(--text);">"{{ voidingExpense()?.description }}"</strong> (₹{{ voidingExpense()?.amount }}) will restore this amount back into the room pool fund.
+        </p>
+
+        <div>
+          <label class="block text-[11px] font-black uppercase tracking-wider mb-1" style="color: var(--t2);">
+            Reason for Voiding *
+          </label>
+          <input type="text"
+                 [(ngModel)]="voidReason"
+                 placeholder="e.g. Duplicate entry, bill cancelled"
+                 class="inp w-full py-2 px-3 text-xs font-bold" />
+        </div>
+      </div>
+
+      <div class="p-4 border-t flex gap-2" style="border-color: var(--border);">
+        <button type="button"
+                (click)="closeVoidModal()"
+                class="btns flex-1 py-2.5 text-xs font-black cursor-pointer">
+          Cancel
+        </button>
+        <button type="button"
+                (click)="submitVoidExpense()"
+                [disabled]="savingVoid()"
+                class="py-2.5 px-4 flex-1 text-xs font-black rounded-2xl text-white transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+          @if (savingVoid()) {
+            <i class="fa-solid fa-circle-notch fa-spin text-xs"></i>
+            <span>Voiding…</span>
+          } @else {
+            <i class="fa-solid fa-trash text-xs"></i>
+            <span>Confirm Void</span>
+          }
+        </button>
       </div>
     </div>
   </div>
