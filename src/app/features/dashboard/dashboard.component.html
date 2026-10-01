@@ -237,7 +237,8 @@
       
       <!-- Card: Category Expense Breakdown -->
       <div class="card">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
+        <!-- Card Header: Title + Scope Switcher + Stepper + View Mode Tabs -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
           <div>
             <div class="sl mb-0">Category Expense Breakdown</div>
             <div class="text-[11px] font-medium" style="color: var(--t3);">
@@ -245,44 +246,99 @@
             </div>
           </div>
           
-          <!-- 4-Way View Mode Switcher Pills -->
-          <div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-            <button type="button"
-                    (click)="setBreakdownView('category')"
-                    class="text-[10px] font-black px-2.5 py-1 rounded-full border transition cursor-pointer shrink-0 flex items-center gap-1"
-                    [style.background]="breakdownView() === 'category' ? 'var(--p1)' : 'transparent'"
-                    [style.color]="breakdownView() === 'category' ? 'white' : 'var(--t3)'"
-                    [style.borderColor]="breakdownView() === 'category' ? 'var(--p1)' : 'var(--border)'">
-              <i class="fa-solid fa-chart-pie"></i>
-              <span>Categories</span>
-            </button>
-            <button type="button"
-                    (click)="setBreakdownView('items')"
-                    class="text-[10px] font-black px-2.5 py-1 rounded-full border transition cursor-pointer shrink-0 flex items-center gap-1"
-                    [style.background]="breakdownView() === 'items' ? 'var(--p1)' : 'transparent'"
-                    [style.color]="breakdownView() === 'items' ? 'white' : 'var(--t3)'"
-                    [style.borderColor]="breakdownView() === 'items' ? 'var(--p1)' : 'var(--border)'">
-              <i class="fa-solid fa-list-check"></i>
-              <span>Items</span>
-            </button>
-            <button type="button"
-                    (click)="setBreakdownView('monthly_category')"
-                    class="text-[10px] font-black px-2.5 py-1 rounded-full border transition cursor-pointer shrink-0 flex items-center gap-1"
-                    [style.background]="breakdownView() === 'monthly_category' ? 'var(--p1)' : 'transparent'"
-                    [style.color]="breakdownView() === 'monthly_category' ? 'white' : 'var(--t3)'"
-                    [style.borderColor]="breakdownView() === 'monthly_category' ? 'var(--p1)' : 'var(--border)'">
-              <i class="fa-solid fa-calendar-days"></i>
-              <span>Monthly Categories</span>
-            </button>
-            <button type="button"
-                    (click)="setBreakdownView('monthly_items')"
-                    class="text-[10px] font-black px-2.5 py-1 rounded-full border transition cursor-pointer shrink-0 flex items-center gap-1"
-                    [style.background]="breakdownView() === 'monthly_items' ? 'var(--p1)' : 'transparent'"
-                    [style.color]="breakdownView() === 'monthly_items' ? 'white' : 'var(--t3)'"
-                    [style.borderColor]="breakdownView() === 'monthly_items' ? 'var(--p1)' : 'var(--border)'">
-              <i class="fa-solid fa-calendar-check"></i>
-              <span>Monthly Items</span>
-            </button>
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Time Scope Filter Pills (This Month, Monthwise, Overall) -->
+            <div class="flex items-center gap-0.5 p-0.5 rounded-xl border shrink-0"
+                 style="background: var(--bg2); border-color: var(--border);">
+              <button type="button"
+                      (click)="setBreakdownScope('this_month')"
+                      class="text-[10px] font-black px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1"
+                      [style.background]="breakdownScope() === 'this_month' ? 'var(--p1)' : 'transparent'"
+                      [style.color]="breakdownScope() === 'this_month' ? '#ffffff' : 'var(--t3)'"
+                      title="Current Month Expenses">
+                <i class="fa-solid fa-calendar-check text-[9px]"></i>
+                <span>This Month</span>
+              </button>
+              <button type="button"
+                      (click)="setBreakdownScope('monthwise')"
+                      class="text-[10px] font-black px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1"
+                      [style.background]="breakdownScope() === 'monthwise' ? 'var(--p1)' : 'transparent'"
+                      [style.color]="breakdownScope() === 'monthwise' ? '#ffffff' : 'var(--t3)'"
+                      title="Month-by-Month Expenses">
+                <i class="fa-solid fa-calendar-days text-[9px]"></i>
+                <span>Monthwise</span>
+              </button>
+              <button type="button"
+                      (click)="setBreakdownScope('overall')"
+                      class="text-[10px] font-black px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1"
+                      [style.background]="breakdownScope() === 'overall' ? 'var(--p1)' : 'transparent'"
+                      [style.color]="breakdownScope() === 'overall' ? '#ffffff' : 'var(--t3)'"
+                      title="All-Time Cumulative Expenses">
+                <i class="fa-solid fa-infinity text-[9px]"></i>
+                <span>Overall</span>
+              </button>
+            </div>
+
+            <!-- Monthwise Stepper (Visible when Monthwise is active) -->
+            @if (breakdownScope() === 'monthwise') {
+              <div class="flex items-center rounded-xl border p-0.5 shadow-2xs fade-in shrink-0"
+                   style="background: var(--card); border-color: var(--border);">
+                <button type="button"
+                        (click)="prevBreakdownMonth()"
+                        class="w-6 h-6 rounded-lg flex items-center justify-center transition hover:bg-black/5 cursor-pointer font-bold text-xs"
+                        style="color: var(--text);"
+                        title="Previous Month">
+                  ‹
+                </button>
+                <span class="text-[11px] font-black px-2 flex items-center gap-1" style="color: var(--text);">
+                  <span>{{ formatMonthKey(selectedBreakdownMonth()) }}</span>
+                  @if (isBreakdownCurrentMonth()) {
+                    <span class="text-[8px] font-black px-1.5 py-0.2 rounded-md uppercase"
+                          style="background: color-mix(in srgb, var(--p1) 16%, transparent); color: var(--p1);">
+                      Current
+                    </span>
+                  }
+                </span>
+                <button type="button"
+                        (click)="nextBreakdownMonth()"
+                        class="w-6 h-6 rounded-lg flex items-center justify-center transition hover:bg-black/5 cursor-pointer font-bold text-xs"
+                        style="color: var(--text);"
+                        title="Next Month">
+                  ›
+                </button>
+              </div>
+            }
+
+            <!-- View Mode Switcher Pills (Categories, Items, Trends) -->
+            <div class="flex items-center gap-1 overflow-x-auto scrollbar-none shrink-0">
+              <button type="button"
+                      (click)="setBreakdownView('category')"
+                      class="text-[10px] font-black px-2.5 py-1 rounded-full border transition cursor-pointer shrink-0 flex items-center gap-1"
+                      [style.background]="breakdownView() === 'category' ? 'var(--p1)' : 'transparent'"
+                      [style.color]="breakdownView() === 'category' ? '#ffffff' : 'var(--t3)'"
+                      [style.borderColor]="breakdownView() === 'category' ? 'var(--p1)' : 'var(--border)'">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Categories</span>
+              </button>
+              <button type="button"
+                      (click)="setBreakdownView('items')"
+                      class="text-[10px] font-black px-2.5 py-1 rounded-full border transition cursor-pointer shrink-0 flex items-center gap-1"
+                      [style.background]="breakdownView() === 'items' ? 'var(--p1)' : 'transparent'"
+                      [style.color]="breakdownView() === 'items' ? '#ffffff' : 'var(--t3)'"
+                      [style.borderColor]="breakdownView() === 'items' ? 'var(--p1)' : 'var(--border)'">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Items</span>
+              </button>
+              <button type="button"
+                      (click)="setBreakdownView('trends')"
+                      class="text-[10px] font-black px-2.5 py-1 rounded-full border transition cursor-pointer shrink-0 flex items-center gap-1"
+                      [style.background]="breakdownView() === 'trends' ? 'var(--p1)' : 'transparent'"
+                      [style.color]="breakdownView() === 'trends' ? '#ffffff' : 'var(--t3)'"
+                      [style.borderColor]="breakdownView() === 'trends' ? 'var(--p1)' : 'var(--border)'">
+                <i class="fa-solid fa-chart-simple"></i>
+                <span>Trends</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -291,12 +347,12 @@
         <!-- ════════════════════════════════════════════════════════ -->
         @if (breakdownView() === 'category') {
           <div class="space-y-4 mb-5 fade-up">
-            @if (categoryBreakdown().length > 0) {
+            @if (displayedCategories().length > 0) {
               <!-- Donut Distribution Chart -->
               <div class="p-4 rounded-2xl border flex flex-col items-center justify-center relative"
                    style="background: var(--bg2); border-color: var(--border);">
-                <div class="text-[11px] font-bold uppercase tracking-wider mb-3 text-center" style="color: var(--t3);">
-                  Current Month Category Share
+                <div class="text-[11px] font-bold uppercase tracking-wider mb-3 text-center flex items-center justify-center gap-1.5" style="color: var(--t3);">
+                  <span>{{ displayedScopeLabel() }} Category Share</span>
                 </div>
                 <div class="relative w-36 h-36 rounded-full flex items-center justify-center shadow-inner transition-transform hover:scale-105 duration-300"
                      [style.background]="categoryConicGradient()">
@@ -305,10 +361,10 @@
                        style="background: var(--card);">
                     <span class="text-[10px] font-bold uppercase" style="color: var(--t3);">Total Spend</span>
                     <span class="text-sm font-black truncate max-w-[80px]" style="color: var(--text);">
-                      ₹{{ poolSpentThisMonth() | number:'1.0-0' }}
+                      ₹{{ displayedTotalSpend() | number:'1.0-0' }}
                     </span>
                     <span class="text-[9px] font-semibold text-teal-600">
-                      {{ categoryBreakdown().length }} {{ categoryBreakdown().length === 1 ? 'category' : 'categories' }}
+                      {{ displayedCategories().length }} {{ displayedCategories().length === 1 ? 'category' : 'categories' }}
                     </span>
                   </div>
                 </div>
@@ -316,7 +372,7 @@
 
               <!-- Category Details with Dynamic Progress Bars -->
               <div class="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
-                @for (cat of categoryBreakdown(); track cat.categoryId ?? cat.categoryName) {
+                @for (cat of displayedCategories(); track cat.categoryId ?? cat.categoryName) {
                   <div class="p-2.5 rounded-2xl border transition hover:shadow-xs"
                        style="background: var(--bg2); border-color: var(--border);">
                     <div class="flex items-center justify-between mb-1.5">
@@ -359,7 +415,7 @@
               <div class="p-8 rounded-2xl border text-center text-xs font-semibold flex flex-col items-center justify-center"
                    style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
                 <i class="fa-solid fa-chart-pie text-2xl mb-2" style="color: var(--t3);"></i>
-                <span>No category expenses recorded this month yet.</span>
+                <span>No category expenses recorded for {{ displayedScopeLabel() }}.</span>
               </div>
             }
           </div>
@@ -370,12 +426,13 @@
         <!-- ════════════════════════════════════════════════════════ -->
         @if (breakdownView() === 'items') {
           <div class="space-y-3 mb-5 fade-up">
-            @if (itemBreakdown().length > 0) {
-              <div class="text-[11px] font-bold uppercase tracking-wider mb-1" style="color: var(--t3);">
-                Top Expense Items (Current Month)
+            @if (displayedItems().length > 0) {
+              <div class="flex items-center justify-between mb-1" style="color: var(--t3);">
+                <span class="text-[11px] font-bold uppercase tracking-wider">Top Expense Items ({{ displayedScopeLabel() }})</span>
+                <span class="text-[10px] font-bold text-teal-600">{{ displayedItems().length }} items</span>
               </div>
               <div class="space-y-2 max-h-[380px] overflow-y-auto pr-1">
-                @for (it of itemBreakdown(); track it.itemName; let idx = $index) {
+                @for (it of displayedItems(); track it.itemName; let idx = $index) {
                   <div class="p-2.5 rounded-2xl border transition hover:shadow-xs"
                        style="background: var(--bg2); border-color: var(--border);">
                     <div class="flex items-center justify-between mb-1.5">
@@ -425,36 +482,37 @@
               <div class="p-8 rounded-2xl border text-center text-xs font-semibold flex flex-col items-center justify-center"
                    style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
                 <i class="fa-solid fa-receipt text-2xl mb-2" style="color: var(--t3);"></i>
-                <span>No itemized expenses recorded yet this month.</span>
+                <span>No itemized expenses recorded for {{ displayedScopeLabel() }}.</span>
               </div>
             }
           </div>
         }
 
         <!-- ════════════════════════════════════════════════════════ -->
-        <!-- VIEW 3: MONTHLY GRAPH FOR CATEGORIES                     -->
+        <!-- VIEW 3: MONTHLY GRAPH & TRENDS                           -->
         <!-- ════════════════════════════════════════════════════════ -->
-        @if (breakdownView() === 'monthly_category') {
+        @if (breakdownView() === 'trends') {
           <div class="space-y-4 mb-5 fade-up">
             @if (monthlyCategories().length > 0) {
               <!-- Multi-Month Stacked Column Graph -->
               <div class="p-4 rounded-2xl border" style="background: var(--bg2); border-color: var(--border);">
                 <div class="text-[11px] font-bold uppercase tracking-wider mb-4 text-center" style="color: var(--t3);">
-                  6-Month Category Spend Trajectory (₹)
+                  6-Month Category Spend Trajectory (Click a Month to Inspect)
                 </div>
                 <div class="flex items-end justify-between gap-2 h-40 pt-4 pb-1 px-1">
                   @for (m of monthlyCategories(); track m.monthKey; let idx = $index) {
-                    <div (click)="selectCategoryMonth(idx)"
-                         class="flex-1 flex flex-col items-center h-full justify-end cursor-pointer group select-none">
+                    <div (click)="selectTrendMonth(m.monthKey)"
+                         class="flex-1 flex flex-col items-center h-full justify-end cursor-pointer group select-none"
+                         [title]="'View ' + m.month + ' Breakdown'">
                       <!-- Monthly Total Label -->
                       <div class="text-[10px] font-black mb-1 transition truncate max-w-full"
-                           [style.color]="selectedCategoryMonthIndex() === idx ? 'var(--p1)' : 'var(--t3)'">
+                           [style.color]="selectedBreakdownMonth() === m.monthKey ? 'var(--p1)' : 'var(--t3)'">
                         ₹{{ m.totalAmount > 999 ? (m.totalAmount / 1000 | number:'1.1-1') + 'k' : (m.totalAmount | number:'1.0-0') }}
                       </div>
                       <!-- Stacked Column Bar -->
-                      <div class="w-full max-w-[38px] rounded-t-xl transition-all duration-300 relative overflow-hidden flex flex-col-reverse border"
+                      <div class="w-full max-w-[38px] rounded-t-xl transition-all duration-300 relative overflow-hidden flex flex-col-reverse border group-hover:scale-105"
                            [style.height.%]="m.totalAmount > 0 ? (m.totalAmount / (monthlyCategories()[5]?.totalAmount || 1) * 75 + 15) : 6"
-                           [style.borderColor]="selectedCategoryMonthIndex() === idx ? 'var(--p1)' : 'transparent'"
+                           [style.borderColor]="selectedBreakdownMonth() === m.monthKey ? 'var(--p1)' : 'transparent'"
                            style="background: var(--bg3);">
                         @for (cat of m.categories; track cat.categoryName) {
                           <div class="w-full transition-all duration-300 hover:opacity-80"
@@ -465,7 +523,7 @@
                       </div>
                       <!-- Month Label -->
                       <div class="text-[10px] font-bold mt-2 truncate max-w-full text-center"
-                           [style.color]="selectedCategoryMonthIndex() === idx ? 'var(--p1)' : 'var(--text)'">
+                           [style.color]="selectedBreakdownMonth() === m.monthKey ? 'var(--p1)' : 'var(--text)'">
                         {{ m.month.split(' ')[0] }}
                       </div>
                     </div>
@@ -481,11 +539,11 @@
                 <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                   @for (m of monthlyCategories(); track m.monthKey; let idx = $index) {
                     <button type="button"
-                            (click)="selectCategoryMonth(idx)"
+                            (click)="selectTrendMonth(m.monthKey)"
                             class="text-[10px] font-black px-3 py-1.5 rounded-xl border transition cursor-pointer shrink-0"
-                            [style.background]="selectedCategoryMonthIndex() === idx ? 'var(--p1)' : 'var(--bg2)'"
-                            [style.color]="selectedCategoryMonthIndex() === idx ? '#ffffff' : 'var(--text)'"
-                            [style.borderColor]="selectedCategoryMonthIndex() === idx ? 'var(--p1)' : 'var(--border)'">
+                            [style.background]="selectedBreakdownMonth() === m.monthKey ? 'var(--p1)' : 'var(--bg2)'"
+                            [style.color]="selectedBreakdownMonth() === m.monthKey ? '#ffffff' : 'var(--text)'"
+                            [style.borderColor]="selectedBreakdownMonth() === m.monthKey ? 'var(--p1)' : 'var(--border)'">
                       {{ m.month }} · ₹{{ m.totalAmount | number:'1.0-0' }}
                     </button>
                   }
@@ -546,131 +604,6 @@
               <div class="p-8 rounded-2xl border text-center text-xs font-semibold flex flex-col items-center justify-center"
                    style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
                 <i class="fa-solid fa-calendar-days text-2xl mb-2" style="color: var(--t3);"></i>
-                <span>No monthly historical expenses recorded yet.</span>
-              </div>
-            }
-          </div>
-        }
-
-        <!-- ════════════════════════════════════════════════════════ -->
-        <!-- VIEW 4: MONTHLY GRAPH FOR ITEMS                          -->
-        <!-- ════════════════════════════════════════════════════════ -->
-        @if (breakdownView() === 'monthly_items') {
-          <div class="space-y-4 mb-5 fade-up">
-            @if (monthlyItems().length > 0) {
-              <!-- 6-Month Item Spend Velocity Columns -->
-              <div class="p-4 rounded-2xl border" style="background: var(--bg2); border-color: var(--border);">
-                <div class="text-[11px] font-bold uppercase tracking-wider mb-4 text-center" style="color: var(--t3);">
-                  6-Month Item Expenditure Velocity (₹)
-                </div>
-                <div class="flex items-end justify-between gap-2 h-36 pt-4 pb-1 px-1">
-                  @for (m of monthlyItems(); track m.monthKey; let idx = $index) {
-                    <div (click)="selectItemMonth(idx)"
-                         class="flex-1 flex flex-col items-center h-full justify-end cursor-pointer group select-none">
-                      <div class="text-[10px] font-black mb-1 transition truncate max-w-full"
-                           [style.color]="selectedItemMonthIndex() === idx ? 'var(--p1)' : 'var(--t3)'">
-                        ₹{{ m.totalAmount > 999 ? (m.totalAmount / 1000 | number:'1.1-1') + 'k' : (m.totalAmount | number:'1.0-0') }}
-                      </div>
-                      <div class="w-full max-w-[36px] rounded-t-lg transition-all duration-300 relative overflow-hidden"
-                           [style.height.%]="m.totalAmount > 0 ? (m.totalAmount / (monthlyItems()[5]?.totalAmount || 1) * 75 + 15) : 6"
-                           [style.background]="selectedItemMonthIndex() === idx ? 'var(--p1)' : 'linear-gradient(180deg, var(--p1) 0%, color-mix(in srgb, var(--p1) 35%, transparent) 100%)'">
-                      </div>
-                      <div class="text-[10px] font-bold mt-2 truncate max-w-full text-center"
-                           [style.color]="selectedItemMonthIndex() === idx ? 'var(--p1)' : 'var(--text)'">
-                        {{ m.month.split(' ')[0] }}
-                      </div>
-                    </div>
-                  }
-                </div>
-              </div>
-
-              <!-- Interactive Month Selector Buttons -->
-              <div>
-                <div class="text-[11px] font-bold uppercase tracking-wider mb-2" style="color: var(--t3);">
-                  Select Month to View Item Breakdown:
-                </div>
-                <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                  @for (m of monthlyItems(); track m.monthKey; let idx = $index) {
-                    <button type="button"
-                            (click)="selectItemMonth(idx)"
-                            class="text-[10px] font-black px-3 py-1.5 rounded-xl border transition cursor-pointer shrink-0"
-                            [style.background]="selectedItemMonthIndex() === idx ? 'var(--p1)' : 'var(--bg2)'"
-                            [style.color]="selectedItemMonthIndex() === idx ? '#ffffff' : 'var(--text)'"
-                            [style.borderColor]="selectedItemMonthIndex() === idx ? 'var(--p1)' : 'var(--border)'">
-                      {{ m.month }} · ₹{{ m.totalAmount | number:'1.0-0' }}
-                    </button>
-                  }
-                </div>
-              </div>
-
-              <!-- Selected Month Item Breakdown Drilldown -->
-              @if (selectedItemMonth()) {
-                <div class="p-3.5 rounded-2xl border space-y-2.5"
-                     style="background: var(--bg2); border-color: var(--border);">
-                  <div class="flex justify-between items-center border-b pb-2" style="border-color: var(--border);">
-                    <span class="text-xs font-black flex items-center gap-1.5" style="color: var(--text);">
-                      <i class="fa-solid fa-basket-shopping" style="color: var(--p1);"></i>
-                      <span>{{ selectedItemMonth()!.month }} Top Purchased Items</span>
-                    </span>
-                    <span class="text-xs font-extrabold" style="color: var(--p1);">
-                      ₹{{ selectedItemMonth()!.totalAmount | number:'1.0-0' }} total
-                    </span>
-                  </div>
-
-                  @if (selectedItemMonth()!.items.length > 0) {
-                    <div class="space-y-2 max-h-[260px] overflow-y-auto pr-1">
-                      @for (it of selectedItemMonth()!.items; track it.itemName; let idx = $index) {
-                        <div class="p-2.5 rounded-2xl border"
-                             style="background: var(--card); border-color: var(--border);">
-                          <div class="flex items-center justify-between mb-1.5">
-                            <div class="flex items-center gap-2 min-w-0">
-                              <div class="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black shrink-0"
-                                   [style.background]="idx === 0 ? '#f59e0b' : 'color-mix(in srgb, var(--p1) 20%, transparent)'"
-                                   [style.color]="idx === 0 ? '#ffffff' : 'var(--p1)'">
-                                #{{ idx + 1 }}
-                              </div>
-                              <div class="min-w-0">
-                                <div class="text-xs font-bold truncate" style="color: var(--text);">
-                                  {{ it.itemName }}
-                                </div>
-                                <div class="text-[10px] font-medium" style="color: var(--t3);">
-                                  <span>{{ it.categoryName }}</span>
-                                  @if (it.quantity > 0) {
-                                    <span> · {{ it.quantity }} Qty</span>
-                                  }
-                                </div>
-                              </div>
-                            </div>
-                            <div class="text-right shrink-0">
-                              <div class="text-xs font-black" style="color: var(--text);">
-                                ₹{{ it.totalAmount | number:'1.0-0' }}
-                              </div>
-                              <span class="text-[10px] font-semibold" style="color: var(--t3);">
-                                {{ it.percentage }}% of month
-                              </span>
-                            </div>
-                          </div>
-
-                          <!-- Comparative bar scaled to month's top item -->
-                          <div class="h-1.5 w-full rounded-full overflow-hidden" style="background: var(--bg3);">
-                            <div class="h-full rounded-full transition-all duration-500"
-                                 [style.width.%]="(it.totalAmount / getMaxMonthlyItemSpend()) * 100"
-                                 [style.background]="getCategoryColor(it.categoryName)"></div>
-                          </div>
-                        </div>
-                      }
-                    </div>
-                  } @else {
-                    <div class="text-center py-4 text-xs font-semibold" style="color: var(--t3);">
-                      No individual items recorded in {{ selectedItemMonth()!.month }}.
-                    </div>
-                  }
-                </div>
-              }
-            } @else {
-              <div class="p-8 rounded-2xl border text-center text-xs font-semibold flex flex-col items-center justify-center"
-                   style="background: var(--bg2); border-color: var(--border); color: var(--t3);">
-                <i class="fa-solid fa-calendar-xmark text-2xl mb-2 opacity-40"></i>
                 <span>No monthly historical expenses recorded yet.</span>
               </div>
             }

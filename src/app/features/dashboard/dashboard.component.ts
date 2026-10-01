@@ -148,17 +148,91 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   myRole = signal<string>('Member');
   isMeAdmin = computed(() => this.myRole() === 'Admin' || this.myRole() === 'Room Admin');
 
-  // Category vs Items vs Monthly Categories vs Monthly Items Switcher
-  breakdownView = signal<'category' | 'items' | 'monthly_category' | 'monthly_items'>('category');
+  // Category vs Items vs Trends Switcher
+  breakdownView = signal<'category' | 'items' | 'trends'>('category');
+
+  // Breakdown Scope: 'this_month' | 'monthwise' | 'overall'
+  breakdownScope = signal<'this_month' | 'monthwise' | 'overall'>('this_month');
+
+  // Month navigation
+  currentMonthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+  selectedBreakdownMonth = signal<string>(this.currentMonthStr);
 
   // Dynamic Collections
   categoryBreakdown = signal<DashboardCategory[]>([]);
   itemBreakdown = signal<DashboardItemBreakdown[]>([]);
+  allTimeCategories = signal<DashboardCategory[]>([]);
+  allTimeItems = signal<DashboardItemBreakdown[]>([]);
+  allTimePoolSpent = signal<number>(0);
+  availableMonths = signal<string[]>([]);
   monthlyTrends = signal<MonthlyTrend[]>([]);
   monthlyCategories = signal<DashboardMonthlyCategory[]>([]);
   monthlyItems = signal<DashboardMonthlyItem[]>([]);
   selectedCategoryMonthIndex = signal<number>(5);
   selectedItemMonthIndex = signal<number>(5);
+
+  isBreakdownCurrentMonth = computed(() => this.selectedBreakdownMonth() === this.currentMonthStr);
+
+  displayedCategories = computed<DashboardCategory[]>(() => {
+    const scope = this.breakdownScope();
+    if (scope === 'overall') {
+      return this.allTimeCategories();
+    }
+    if (scope === 'this_month') {
+      return this.categoryBreakdown();
+    }
+    // monthwise
+    const m = this.monthlyCategories().find(x => x.monthKey === this.selectedBreakdownMonth());
+    if (!m || !m.categories) return [];
+    return m.categories.map(c => ({
+      categoryId: null,
+      categoryName: c.categoryName,
+      icon: c.icon,
+      totalAmount: c.totalAmount,
+      itemCount: (c as any).itemCount || 1,
+      percentage: c.percentage
+    }));
+  });
+
+  displayedItems = computed<DashboardItemBreakdown[]>(() => {
+    const scope = this.breakdownScope();
+    if (scope === 'overall') {
+      return this.allTimeItems();
+    }
+    if (scope === 'this_month') {
+      return this.itemBreakdown();
+    }
+    // monthwise
+    const m = this.monthlyItems().find(x => x.monthKey === this.selectedBreakdownMonth());
+    if (!m || !m.items) return [];
+    return m.items.map(it => ({
+      itemName: it.itemName,
+      categoryName: it.categoryName,
+      totalAmount: it.totalAmount,
+      count: it.count,
+      percentage: it.percentage
+    }));
+  });
+
+  displayedTotalSpend = computed<number>(() => {
+    const scope = this.breakdownScope();
+    if (scope === 'overall') {
+      return this.allTimePoolSpent();
+    }
+    if (scope === 'this_month') {
+      return this.poolSpentThisMonth();
+    }
+    // monthwise
+    const m = this.monthlyCategories().find(x => x.monthKey === this.selectedBreakdownMonth());
+    return m?.totalAmount ?? 0;
+  });
+
+  displayedScopeLabel = computed<string>(() => {
+    const scope = this.breakdownScope();
+    if (scope === 'overall') return 'All-Time (Overall)';
+    if (scope === 'this_month') return `${this.formatMonthKey(this.currentMonthStr)} (Current)`;
+    return this.formatMonthKey(this.selectedBreakdownMonth());
+  });
 
   selectedCategoryMonth = computed(() => {
     const list = this.monthlyCategories();
@@ -175,7 +249,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   });
 
   categoryConicGradient = computed(() => {
-    const cats = this.categoryBreakdown();
+    const cats = this.displayedCategories();
     if (!cats || cats.length === 0) return 'conic-gradient(#334155 0% 100%)';
     let acc = 0;
     const parts: string[] = [];
@@ -299,6 +373,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
           this.categoryBreakdown.set(d.categoryBreakdown ?? []);
           this.itemBreakdown.set(d.itemBreakdown ?? []);
+          this.allTimeCategories.set(d.allTimeCategories ?? []);
+          this.allTimeItems.set(d.allTimeItems ?? []);
+          this.allTimePoolSpent.set(d.allTimePoolSpent ?? 0);
+          this.availableMonths.set(d.availableMonths ?? []);
           this.monthlyTrends.set(d.monthlyTrends ?? []);
           this.monthlyCategories.set(d.monthlyCategories ?? []);
           this.monthlyItems.set(d.monthlyItems ?? []);
@@ -324,20 +402,76 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     this.activeBucket.set(bucket);
   }
 
-  setBreakdownView(view: 'category' | 'items' | 'monthly_category' | 'monthly_items'): void {
+  setBreakdownScope(scope: 'this_month' | 'monthwise' | 'overall'): void {
+    this.breakdownScope.set(scope);
+    if (scope === 'this_month') {
+      this.selectedBreakdownMonth.set(this.currentMonthStr);
+    }
+  }
+
+  setBreakdownView(view: 'category' | 'items' | 'trends'): void {
     this.breakdownView.set(view);
+  }
+
+  prevBreakdownMonth(): void {
+    const current = this.selectedBreakdownMonth();
+    const [y, m] = current.split('-').map(Number);
+    const d = new Date(y, m - 2, 1);
+    const prevKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    this.selectedBreakdownMonth.set(prevKey);
+    this.breakdownScope.set('monthwise');
+  }
+
+  nextBreakdownMonth(): void {
+    const current = this.selectedBreakdownMonth();
+    const [y, m] = current.split('-').map(Number);
+    const d = new Date(y, m, 1);
+    const nextKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    this.selectedBreakdownMonth.set(nextKey);
+    if (nextKey === this.currentMonthStr) {
+      this.breakdownScope.set('this_month');
+    } else {
+      this.breakdownScope.set('monthwise');
+    }
+  }
+
+  formatMonthKey(key: string): string {
+    if (!key || !key.includes('-')) return 'Current Month';
+    const [y, m] = key.split('-').map(Number);
+    const d = new Date(y, m - 1, 1);
+    return d.toLocaleString('default', { month: 'short', year: 'numeric' });
+  }
+
+  selectTrendMonth(monthKey: string): void {
+    this.selectedBreakdownMonth.set(monthKey);
+    if (monthKey === this.currentMonthStr) {
+      this.breakdownScope.set('this_month');
+    } else {
+      this.breakdownScope.set('monthwise');
+    }
+    this.breakdownView.set('category');
   }
 
   selectCategoryMonth(index: number): void {
     this.selectedCategoryMonthIndex.set(index);
+    const m = this.monthlyCategories()[index];
+    if (m?.monthKey) {
+      this.selectedBreakdownMonth.set(m.monthKey);
+      this.breakdownScope.set('monthwise');
+    }
   }
 
   selectItemMonth(index: number): void {
     this.selectedItemMonthIndex.set(index);
+    const m = this.monthlyItems()[index];
+    if (m?.monthKey) {
+      this.selectedBreakdownMonth.set(m.monthKey);
+      this.breakdownScope.set('monthwise');
+    }
   }
 
   getMaxItemSpend(): number {
-    const items = this.itemBreakdown();
+    const items = this.displayedItems();
     if (!items || items.length === 0) return 1;
     return Math.max(...items.map(i => i.totalAmount), 1);
   }

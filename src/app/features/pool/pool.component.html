@@ -85,39 +85,97 @@
     ═══════════════════════════════════════════ -->
     <div class="card p-6 sm:p-7 rounded-3xl relative overflow-hidden mb-7"
          style="background: var(--kpi1); border-color: color-mix(in srgb, var(--p1) 30%, transparent);">
-      <div class="flex justify-between items-center mb-3">
-        <span class="sl mb-0">CURRENT POOL BALANCE</span>
-        <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-sm"
-             style="background: color-mix(in srgb, var(--p1) 16%, transparent); color: var(--p1);">
-          <i class="fa-solid fa-wallet"></i>
+      
+      <!-- Top Row: Title + Month Switcher (Matching Fixed Recurring Bills) -->
+      <div class="flex justify-between items-center flex-wrap gap-2 mb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base shadow-xs"
+               style="background: color-mix(in srgb, var(--p1) 18%, transparent); color: var(--p1);">
+            <i class="fa-solid fa-vault"></i>
+          </div>
+          <span class="sl mb-0 text-[11px] font-black uppercase tracking-wider">TOTAL POOL CASH IN HAND</span>
+        </div>
+
+        <!-- Month Switcher (Matching Fixed Recurring Bills) -->
+        <div class="flex items-center rounded-xl border p-1 shadow-xs"
+             style="background: var(--card); border-color: var(--border);">
+          <button type="button"
+                  (click)="prevMonth()"
+                  class="w-7 h-7 rounded-lg flex items-center justify-center transition hover:bg-black/5 cursor-pointer font-bold"
+                  style="color: var(--text);"
+                  title="Previous Month">
+            ‹
+          </button>
+          <span class="text-xs font-black px-2 flex items-center gap-1.5" style="color: var(--text);">
+            <span>{{ formattedMonth() }}</span>
+            @if (isViewingCurrentMonth) {
+              <span class="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase"
+                    style="background: color-mix(in srgb, var(--p1) 16%, transparent); color: var(--p1);">
+                Current
+              </span>
+            }
+          </span>
+          <button type="button"
+                  (click)="nextMonth()"
+                  class="w-7 h-7 rounded-lg flex items-center justify-center transition hover:bg-black/5 cursor-pointer font-bold"
+                  style="color: var(--text);"
+                  title="Next Month">
+            ›
+          </button>
         </div>
       </div>
 
+      <!-- Main Live Cash in Hand -->
       <div class="flex items-baseline gap-2 mb-1">
         <span class="text-3xl sm:text-4xl font-black tracking-tight" style="color: var(--text);">
           ₹{{ balance()?.currentBalance | number:'1.0-0' }}
         </span>
-        <span class="text-xs font-bold" style="color: var(--t3);">available</span>
+        <span class="text-xs font-bold" style="color: var(--t3);">physical cash available</span>
       </div>
 
-      <div class="text-xs font-semibold mb-4" style="color: var(--t2);">
-        of ₹{{ balance()?.monthlyTarget | number:'1.0-0' }} monthly budget
+      <!-- Carryover & Surplus Pill -->
+      <div class="flex items-center gap-2 flex-wrap mb-4">
+        @if ((balance()?.openingCarryover || 0) > 0) {
+          <span class="text-[11px] font-extrabold px-2.5 py-0.5 rounded-lg border inline-flex items-center gap-1.5"
+                style="background: color-mix(in srgb, var(--ok) 12%, transparent); border-color: color-mix(in srgb, var(--ok) 30%, transparent); color: var(--ok);">
+            <i class="fa-solid fa-arrow-turn-up text-[10px]"></i>
+            <span>Includes ₹{{ balance()?.openingCarryover | number:'1.0-0' }} carryover from previous months</span>
+          </span>
+        }
         @if (isAdmin()) {
-          <button type="button" (click)="openTarget()" class="ml-1.5 underline font-extrabold cursor-pointer inline-flex items-center gap-1" style="color: var(--p1);">
-            <i class="fa-solid fa-pen-to-square text-[11px]"></i>
-            <span>Edit target</span>
+          <button type="button" (click)="openTarget()" class="text-[11px] underline font-extrabold cursor-pointer inline-flex items-center gap-1" style="color: var(--p1);">
+            <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+            <span>Edit Target (₹{{ balance()?.monthlyTarget | number:'1.0-0' }})</span>
           </button>
         }
       </div>
 
-      <!-- Progress Bar -->
-      <div class="pt mb-2">
-        <div class="pf" [style.width.%]="remainingPercent"></div>
-      </div>
+      <!-- Current Month Budget Spending Progress -->
+      <div class="p-3.5 rounded-2xl border mb-5"
+           style="background: color-mix(in srgb, var(--card) 60%, transparent); border-color: color-mix(in srgb, var(--border) 80%, transparent);">
+        <div class="flex justify-between items-center text-xs font-black mb-1.5" style="color: var(--text);">
+          <span class="flex items-center gap-1.5">
+            <i class="fa-solid fa-receipt text-[11px]" style="color: var(--p1);"></i>
+            <span>{{ formattedMonth() }} Spending: ₹{{ (balance()?.monthSpent ?? 0) | number:'1.0-0' }}</span>
+          </span>
+          <span class="text-[11px] font-extrabold" style="color: var(--t3);">
+            Budget: ₹{{ balance()?.monthlyTarget | number:'1.0-0' }}
+          </span>
+        </div>
 
-      <div class="flex justify-between text-[11px] font-extrabold mb-5">
-        <span style="color: var(--p1);">{{ remainingPercent }}% budget available</span>
-        <span style="color: var(--t3);">₹{{ balance()?.totalSpent | number:'1.0-0' }} spent so far</span>
+        <!-- Spend Progress Bar -->
+        <div class="pt mb-2" style="background: rgba(255, 255, 255, 0.1);">
+          <div class="pf" [style.width.%]="spentPercent" style="background: var(--p1);"></div>
+        </div>
+
+        <div class="flex justify-between text-[11px] font-extrabold">
+          <span style="color: var(--p1);">
+            {{ spentPercent }}% spent · ₹{{ monthRemainingBudget | number:'1.0-0' }} budget remaining
+          </span>
+          <span style="color: var(--t3);">
+            ₹{{ (balance()?.monthContributions ?? 0) | number:'1.0-0' }} collected ({{ collectedPercent }}%)
+          </span>
+        </div>
       </div>
 
       <!-- Action Buttons with Distinct Vibrant Colors -->

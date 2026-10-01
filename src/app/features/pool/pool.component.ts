@@ -78,8 +78,24 @@ export interface MonthlyBreakdownItem {
 export interface PoolBalance {
   isAdmin: boolean;
   pendingItems: PendingContribution[] | null;
+  selectedMonth?: string;
+  availableMonths?: string[];
+  isCurrentMonth?: boolean;
+
+  // Live Physical Cash in Hand (All-time wallet balance)
   currentBalance: number;
+  openingCarryover?: number;
+  totalContributionsAllTime?: number;
+  totalSpentAllTime?: number;
+
+  // Selected Month Budget & Spending (Scenario 2: Fixed Monthly Cycle)
   monthlyTarget: number;
+  monthContributions?: number;
+  monthSpent?: number;
+  monthlyBudgetRemaining?: number;
+  monthlySpentPercentage?: number;
+  monthlyCollectedPercentage?: number;
+
   isLowBalance?: boolean;
   lowThreshold?: number;
   totalContributions: number;
@@ -118,6 +134,10 @@ export class PoolComponent implements OnInit {
   groupId!: string;
   groupName = signal('Apartment 402');
   groupAddress = signal('HSR Layout, Sector 2');
+
+  // ── Month Filter State (Scenario 2: Fixed Monthly Cycle) ──
+  selectedMonth = signal<string>(new Date().toISOString().slice(0, 7));
+  availableMonths = signal<string[]>([]);
 
   // ── Main Pool Data ──
   balance = signal<PoolBalance | null>(null);
@@ -257,11 +277,19 @@ export class PoolComponent implements OnInit {
   load(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.api.get<PoolBalance>(`groups/${this.groupId}/pool/balance`).subscribe({
+    const m = this.selectedMonth();
+    const endpoint = m ? `groups/${this.groupId}/pool/balance?month=${encodeURIComponent(m)}` : `groups/${this.groupId}/pool/balance`;
+    this.api.get<PoolBalance>(endpoint).subscribe({
       next: (b) => {
         this.balance.set(b);
         this.isAdmin.set(b.isAdmin);
         this.pending.set(b.pendingItems ?? []);
+
+        if (b.availableMonths && b.availableMonths.length > 0) {
+          this.availableMonths.set(b.availableMonths);
+        } else if (!this.availableMonths().includes(this.selectedMonth())) {
+          this.availableMonths.set([this.selectedMonth()]);
+        }
 
         // Dynamically populate room members in "SHARED AMONG FLAT" and "Add Money"
         if (b.memberStatuses && b.memberStatuses.length > 0) {
@@ -1019,10 +1047,77 @@ export class PoolComponent implements OnInit {
     });
   }
 
-  get remainingPercent(): number {
+  prevMonth(): void {
+    const monthVal = this.selectedMonth();
+    const [y, m] = (monthVal && monthVal.includes('-') ? monthVal : this.currentMonthStr).split('-').map(Number);
+    const d = new Date(y, m - 2, 1);
+    this.selectedMonth.set(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    this.load();
+  }
+
+  nextMonth(): void {
+    const monthVal = this.selectedMonth();
+    const [y, m] = (monthVal && monthVal.includes('-') ? monthVal : this.currentMonthStr).split('-').map(Number);
+    const d = new Date(y, m, 1);
+    this.selectedMonth.set(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    this.load();
+  }
+
+  formattedMonth(): string {
+    const monthVal = this.selectedMonth();
+    if (!monthVal || !monthVal.includes('-')) return 'Current Month';
+    const [y, m] = monthVal.split('-').map(Number);
+    const date = new Date(y, m - 1, 1);
+    return date.toLocaleString('default', { month: 'short', year: 'numeric' });
+  }
+
+  changeMonth(m: string): void {
+    if (this.selectedMonth() === m) return;
+    this.selectedMonth.set(m);
+    this.load();
+  }
+
+  get currentMonthStr(): string {
+    return new Date().toISOString().slice(0, 7);
+  }
+
+  get isViewingCurrentMonth(): boolean {
+    return this.selectedMonth() === this.currentMonthStr;
+  }
+
+  getMonthLabel(m?: string): string {
+    const val = m || this.selectedMonth();
+    if (val === 'all') return 'All Time';
+    if (!val || !val.includes('-')) return val;
+    const [yearStr, monthStr] = val.split('-');
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const idx = parseInt(monthStr, 10) - 1;
+    return `${monthNames[idx] || monthStr} ${yearStr}`;
+  }
+
+  get spentPercent(): number {
     const target = this.balance()?.monthlyTarget || 1;
-    const balance = this.balance()?.currentBalance || 0;
-    return Math.max(0, Math.min(100, Math.round((balance / target) * 100)));
+    const spent = this.balance()?.monthSpent ?? 0;
+    return Math.max(0, Math.min(100, Math.round((spent / target) * 100)));
+  }
+
+  get remainingPercent(): number {
+    return Math.max(0, 100 - this.spentPercent);
+  }
+
+  get collectedPercent(): number {
+    const target = this.balance()?.monthlyTarget || 1;
+    const collected = this.balance()?.monthContributions ?? 0;
+    return Math.max(0, Math.min(100, Math.round((collected / target) * 100)));
+  }
+
+  get monthRemainingBudget(): number {
+    const target = this.balance()?.monthlyTarget || 0;
+    const spent = this.balance()?.monthSpent ?? 0;
+    return Math.max(0, target - spent);
   }
 
   showToast(msg: string): void {
