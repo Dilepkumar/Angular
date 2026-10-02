@@ -65,6 +65,7 @@ export interface OutOfPocketItem {
   reimbursedAmount?: number;
   isFullyReimbursed?: boolean;
   pendingCount?: number;
+  userPendingContribution?: number;
   expenseCount: number;
   status: string;
 }
@@ -97,6 +98,7 @@ export interface PoolBalance {
   monthlyCollectedPercentage?: number;
 
   isLowBalance?: boolean;
+  isCriticalBalance?: boolean;
   lowThreshold?: number;
   totalContributions: number;
   totalSpent: number;
@@ -632,11 +634,12 @@ export class PoolComponent implements OnInit {
     this.contributeMessage = '';
     this.contributeMode.set('per_person');
     if (this.balance()?.memberStatuses) {
+      const myId = this.me?.id;
       this.contributeMembers.set(this.balance()!.memberStatuses.map(m => ({
         userId: m.userId,
         name: m.userName,
         initials: this.getInitials(m.userName),
-        selected: true
+        selected: this.isAdmin() ? true : (m.userId === myId)
       })));
     }
   }
@@ -659,12 +662,14 @@ export class PoolComponent implements OnInit {
   }
 
   toggleContributeMember(userId: number): void {
+    if (!this.isAdmin()) return; // Non-admins can only contribute for themselves
     this.contributeMembers.update(list =>
       list.map(m => m.userId === userId ? { ...m, selected: !m.selected } : m)
     );
   }
 
   selectAllContributeMembers(select: boolean): void {
+    if (!this.isAdmin()) return; // Non-admins can only contribute for themselves
     this.contributeMembers.update(list => list.map(m => ({ ...m, selected: select })));
   }
 
@@ -696,10 +701,23 @@ export class PoolComponent implements OnInit {
       return;
     }
 
-    const selectedMembers = this.contributeMembers().filter(m => m.selected);
-    if (selectedMembers.length === 0) {
-      this.showToast('⚠️ Please select at least one contributing roommate');
-      return;
+    let memberIds: number[] = [];
+    let mode = this.contributeMode();
+
+    if (!this.isAdmin()) {
+      if (!this.me?.id) {
+        this.showToast('⚠️ Member profile not loaded. Please re-login.');
+        return;
+      }
+      memberIds = [this.me.id];
+      mode = 'per_person';
+    } else {
+      const selectedMembers = this.contributeMembers().filter(m => m.selected);
+      if (selectedMembers.length === 0) {
+        this.showToast('⚠️ Please select at least one contributing roommate');
+        return;
+      }
+      memberIds = selectedMembers.map(m => m.userId);
     }
 
     this.contributing = true;
@@ -707,15 +725,16 @@ export class PoolComponent implements OnInit {
       amount: amt,
       message: this.contributeMessage.trim() || null,
       transactionRef: this.contributeMessage.trim() || null,
-      memberUserIds: selectedMembers.map(m => m.userId),
-      mode: this.contributeMode()
+      memberUserIds: memberIds,
+      mode: mode,
+      autoApprove: this.isAdmin()
     };
 
     this.api.post<{ message: string }>(`groups/${this.groupId}/pool/contribute`, payload).subscribe({
       next: (res) => {
         this.contributing = false;
         this.showContribute = false;
-        this.showToast(`🎉 ${res.message || 'Contribution added to pool balance!'}`);
+        this.showToast(`🎉 ${res.message || (this.isAdmin() ? 'Contribution added to pool balance!' : 'Contribution submitted — waiting for admin approval')}`);
         this.load();
       },
       error: (e) => {
@@ -740,10 +759,59 @@ export class PoolComponent implements OnInit {
     this.quickPayTarget.set(null);
   }
 
+  getPendingOutOfPocket(userId: number): number {
+    const item = this.balance()?.outOfPocketSummary?.find(x => x.userId === userId);
+    return item?.pendingReimbursement ?? 0;
+  }
+
+  applyOutOfPocketCreditToQuickPay(): void {
+    const target = this.quickPayTarget();
+    if (!target) return;
+    const oopPending = this.getPendingOutOfPocket(target.userId);
+    if (oopPending <= 0) return;
+
+    this.quickPaying.set(true);
+    this.api.post<{ message: string }>(
+      `groups/${this.groupId}/pool/reimburse-out-of-pocket`,
+      { targetUserId: target.userId, mode: 'cut_contribution' }
+    ).subscribe({
+      next: (res) => {
+        this.quickPaying.set(false);
+        this.popup.success(res.message || `✓ Offset ₹${oopPending} from monthly share!`);
+
+        // Update target in-place so the modal immediately reflects the new pending amount
+        const updatedTarget = { ...target };
+        updatedTarget.contributedThisMonth = (updatedTarget.contributedThisMonth || 0) + oopPending;
+        updatedTarget.pendingAmount = Math.max(0, (updatedTarget.expectedThisMonth || 0) - updatedTarget.contributedThisMonth);
+        this.quickPayTarget.set(updatedTarget);
+        this.quickPayAmount = updatedTarget.pendingAmount;
+
+        // If target reached 0, close modal automatically
+        if (updatedTarget.pendingAmount <= 0) {
+          this.showQuickPayModal.set(false);
+          this.quickPayTarget.set(null);
+        }
+
+        this.load();
+      },
+      error: (e) => {
+        this.quickPaying.set(false);
+        this.popup.error(e.error?.message || 'Failed to apply out-of-pocket credit');
+      }
+    });
+  }
+
   submitQuickPay(): void {
     const target = this.quickPayTarget();
     if (!target) return;
-    const amt = Number(this.quickPayAmount);
+
+    // For non-admin, force the contribution amount to be strictly their pending monthly share (no arbitrary 10k)
+    let amt = Number(this.quickPayAmount);
+    if (!this.isAdmin()) {
+      amt = target.pendingAmount > 0 ? target.pendingAmount : (target.expectedThisMonth > 0 ? target.expectedThisMonth : 1000);
+      this.quickPayAmount = amt;
+    }
+
     if (!amt || amt <= 0) {
       this.popup.error('Please enter a valid contribution amount');
       return;
@@ -756,7 +824,7 @@ export class PoolComponent implements OnInit {
       transactionRef: this.quickPayNote.trim() || `Pool Share`,
       memberUserIds: [target.userId],
       mode: 'per_person',
-      autoApprove: true
+      autoApprove: this.isAdmin()
     };
 
     this.api.post<{ message: string }>(`groups/${this.groupId}/pool/contribute`, payload).subscribe({
@@ -764,7 +832,7 @@ export class PoolComponent implements OnInit {
         this.quickPaying.set(false);
         this.showQuickPayModal.set(false);
         this.quickPayTarget.set(null);
-        this.popup.success(res.message || `✓ ₹${amt} marked as paid for ${target.userName}`);
+        this.popup.success(res.message || (this.isAdmin() ? `✓ ₹${amt} marked as paid for ${target.userName}` : 'Payment submitted — waiting for admin approval'));
         this.load();
       },
       error: (e) => {
@@ -831,21 +899,21 @@ export class PoolComponent implements OnInit {
     return Math.min(100, Math.round((contributed / expected) * 100));
   }
 
-  reimburseOutOfPocket(targetUserId?: number, expenseId?: number): void {
+  reimburseOutOfPocket(targetUserId?: number, expenseId?: number, mode: 'cash' | 'cut_contribution' = 'cash'): void {
     if (this.reimbursingOutOfPocket()) return;
     this.reimbursingOutOfPocket.set(true);
     this.api.post<{ message: string; reimbursedAmount?: number }>(
       `groups/${this.groupId}/pool/reimburse-out-of-pocket`,
-      { targetUserId: targetUserId ?? null, expenseId: expenseId ?? null }
+      { targetUserId: targetUserId ?? null, expenseId: expenseId ?? null, mode }
     ).subscribe({
       next: (res) => {
         this.reimbursingOutOfPocket.set(false);
-        this.showToast(`✅ ${res.message || 'Expenses reimbursed from Room Pool!'}`);
+        this.showToast(`✅ ${res.message || 'Expenses settled!'}`);
         this.load();
       },
       error: (e) => {
         this.reimbursingOutOfPocket.set(false);
-        this.showToast(`❌ ${e.error?.message || 'Failed to reimburse expense'}`);
+        this.showToast(`❌ ${e.error?.message || 'Failed to settle expense'}`);
       }
     });
   }

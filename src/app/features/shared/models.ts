@@ -198,6 +198,8 @@ export interface MemberStatus {
   userId: number; userName: string; isAlias: boolean;
   contributedThisMonth: number; expectedThisMonth: number;
   hasPaidTarget: boolean; pendingAmount: number;
+  pendingApprovalAmount?: number;
+  hasPendingApproval?: boolean;
   isAdmin?: boolean;
   role?: string;
 }
