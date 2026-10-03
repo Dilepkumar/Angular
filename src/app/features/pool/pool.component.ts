@@ -197,14 +197,14 @@ export class PoolComponent implements OnInit {
   expenseCategory = '';
   customCategory = '';
   categories = [
-    '🥕 Groceries',
-    '🥛 Dairy & Essentials',
-    '⚡ Utilities & Bills',
-    '🧴 Cleaning & Household',
-    '🍕 Food & Snacks',
-    '🔧 Maintenance & Repairs',
-    '🚕 Travel & Transport',
-    '📦 Other'
+    'Groceries',
+    'Dairy & Essentials',
+    'Utilities & Bills',
+    'Cleaning & Household',
+    'Food & Snacks',
+    'Maintenance & Repairs',
+    'Travel & Transport',
+    'Other'
   ];
 
   expenseTotal: number | null = null;
@@ -937,7 +937,19 @@ export class PoolComponent implements OnInit {
   }
 
   // ── Category Icon & Color Helpers ──
-  getCategoryIcon(category: string): string {
+  getCategoryFaIcon(category?: string | null): string {
+    const cat = (category || '').toLowerCase();
+    if (cat.includes('grocer') || cat.includes('veg')) return 'fa-solid fa-basket-shopping';
+    if (cat.includes('dairy') || cat.includes('milk')) return 'fa-solid fa-bottle-water';
+    if (cat.includes('utilit') || cat.includes('bill') || cat.includes('power') || cat.includes('wifi')) return 'fa-solid fa-bolt';
+    if (cat.includes('clean') || cat.includes('house')) return 'fa-solid fa-spray-can-sparkles';
+    if (cat.includes('food') || cat.includes('snack') || cat.includes('dinner')) return 'fa-solid fa-utensils';
+    if (cat.includes('maint') || cat.includes('repair')) return 'fa-solid fa-wrench';
+    if (cat.includes('travel') || cat.includes('cab') || cat.includes('auto')) return 'fa-solid fa-taxi';
+    return 'fa-solid fa-box-open';
+  }
+
+  getCategoryIcon(category?: string | null): string {
     const cat = (category || '').toLowerCase();
     if (cat.includes('grocer')) return '🥕';
     if (cat.includes('dairy') || cat.includes('milk')) return '🥛';
@@ -949,7 +961,7 @@ export class PoolComponent implements OnInit {
     return '📦';
   }
 
-  getCategoryColor(category: string): string {
+  getCategoryColor(category?: string | null): string {
     const cat = (category || '').toLowerCase();
     if (cat.includes('grocer')) return '#10b981';
     if (cat.includes('dairy') || cat.includes('milk')) return '#06b6d4';

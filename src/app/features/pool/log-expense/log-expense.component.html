@@ -141,17 +141,72 @@
             </div>
             <div>
               <label class="text-[11px] font-bold mb-1 block" style="color: var(--t3);">CATEGORY</label>
-              <select class="inp font-semibold" [(ngModel)]="expenseCategory">
-                <option value="" disabled selected>-- Select Category --</option>
-                @for (c of categories; track c) {
-                  <option [value]="c">{{ c }}</option>
+              
+              <!-- Custom Category Dropdown Trigger -->
+              <div class="relative">
+                <button type="button"
+                        (click)="toggleCategoryDropdown()"
+                        class="inp font-semibold w-full flex items-center justify-between text-left cursor-pointer transition hover:border-zinc-500"
+                        style="height: 42px;">
+                  @if (getSelectedCategoryOption(); as sel) {
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <div class="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-xs"
+                           [style.background]="sel.bg"
+                           [style.color]="sel.color">
+                        <i [class]="sel.icon"></i>
+                      </div>
+                      <span class="truncate text-xs sm:text-sm font-bold" style="color: var(--text);">{{ sel.name }}</span>
+                    </div>
+                  } @else {
+                    <span class="text-xs font-medium" style="color: var(--t3);">-- Select Category --</span>
+                  }
+                  <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200"
+                     [style.transform]="categoryDropdownOpen() ? 'rotate(180deg)' : 'rotate(0)'"
+                     style="color: var(--t3);"></i>
+                </button>
+
+                <!-- Dropdown Menu -->
+                @if (categoryDropdownOpen()) {
+                  <!-- Backdrop to dismiss on click outside -->
+                  <div class="fixed inset-0 z-40" (click)="categoryDropdownOpen.set(false)"></div>
+
+                  <div class="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-2xl border shadow-xl p-2 max-h-64 overflow-y-auto fade-up backdrop-blur-md"
+                       style="background: var(--card); border-color: var(--border);">
+                    @for (cat of categoryOptions; track cat.name) {
+                      <button type="button"
+                              (click)="selectCategory(cat.name)"
+                              class="w-full flex items-center justify-between p-2 rounded-xl transition cursor-pointer text-left hover:bg-white/5"
+                              [style.background]="expenseCategory === cat.name ? 'color-mix(in srgb, var(--p1) 12%, transparent)' : 'transparent'">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                          <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs"
+                               [style.background]="cat.bg"
+                               [style.color]="cat.color">
+                            <i [class]="cat.icon"></i>
+                          </div>
+                          <span class="text-xs font-bold truncate"
+                                [style.color]="expenseCategory === cat.name ? 'var(--p1)' : 'var(--text)'">
+                            {{ cat.name }}
+                          </span>
+                        </div>
+                        @if (expenseCategory === cat.name) {
+                          <i class="fa-solid fa-check text-xs" style="color: var(--p1);"></i>
+                        }
+                      </button>
+                    }
+                  </div>
                 }
-              </select>
-              @if (expenseCategory === '📦 Other') {
-                <input class="inp mt-2 text-xs font-semibold"
-                       type="text"
-                       [(ngModel)]="customCategory"
-                       placeholder="Specify category (e.g. WiFi, Water cans, Gas...)" />
+              </div>
+
+              @if (expenseCategory === 'Other' || expenseCategory === '📦 Other') {
+                <div class="relative mt-2 fade-up">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs" style="color: var(--t3);">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </span>
+                  <input class="inp text-xs font-semibold pl-8"
+                         type="text"
+                         [(ngModel)]="customCategory"
+                         placeholder="Specify category (e.g. WiFi, Water cans, Gas...)" />
+                </div>
               }
             </div>
           </div>

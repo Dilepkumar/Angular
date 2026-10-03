@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.vercel.roomledger_app.twa",
+    "sha256_cert_fingerprints": [
+      "8D:78:2F:2E:CF:F8:7C:AA:DF:76:85:13:1B:F7:A2:BE:15:55:7D:27:2F:50:72:B3:34:2C:9D:4B:CC:36:5C:D4"
+    ]
+  }
+}]

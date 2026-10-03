@@ -9,6 +9,13 @@ import { MemberStatus } from '../../shared/models';
 import { environment } from '../../../../environments/environment';
 import { compressImageFile } from '../../../core/utils/image-utils';
 
+export interface CategoryOption {
+  name: string;
+  icon: string;
+  color: string;
+  bg: string;
+}
+
 export interface ReceiptRow {
   id: number;
   name: string;
@@ -44,16 +51,48 @@ export class LogExpenseComponent implements OnInit {
   expenseDate = new Date().toISOString().slice(0, 10);
   expenseCategory = '';
   customCategory = '';
-  categories = [
-    '🥕 Groceries',
-    '🥛 Dairy & Essentials',
-    '⚡ Utilities & Bills',
-    '🧴 Cleaning & Household',
-    '🍕 Food & Snacks',
-    '🔧 Maintenance & Repairs',
-    '🚕 Travel & Transport',
-    '📦 Other'
+  categoryDropdownOpen = signal<boolean>(false);
+
+  categoryOptions: CategoryOption[] = [
+    { name: 'Groceries', icon: 'fa-solid fa-basket-shopping', color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)' },
+    { name: 'Dairy & Essentials', icon: 'fa-solid fa-bottle-water', color: '#06b6d4', bg: 'rgba(6, 182, 212, 0.12)' },
+    { name: 'Utilities & Bills', icon: 'fa-solid fa-bolt', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)' },
+    { name: 'Cleaning & Household', icon: 'fa-solid fa-spray-can-sparkles', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.12)' },
+    { name: 'Food & Snacks', icon: 'fa-solid fa-utensils', color: '#f97316', bg: 'rgba(249, 115, 22, 0.12)' },
+    { name: 'Maintenance & Repairs', icon: 'fa-solid fa-wrench', color: '#ec4899', bg: 'rgba(236, 72, 153, 0.12)' },
+    { name: 'Travel & Transport', icon: 'fa-solid fa-taxi', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.12)' },
+    { name: 'Other', icon: 'fa-solid fa-box-open', color: '#64748b', bg: 'rgba(100, 116, 139, 0.12)' }
   ];
+
+  categories = [
+    'Groceries',
+    'Dairy & Essentials',
+    'Utilities & Bills',
+    'Cleaning & Household',
+    'Food & Snacks',
+    'Maintenance & Repairs',
+    'Travel & Transport',
+    'Other'
+  ];
+
+  toggleCategoryDropdown(): void {
+    this.categoryDropdownOpen.update(v => !v);
+  }
+
+  selectCategory(name: string): void {
+    this.expenseCategory = name;
+    this.categoryDropdownOpen.set(false);
+    if (name !== 'Other' && name !== '📦 Other') {
+      this.customCategory = '';
+    }
+  }
+
+  getSelectedCategoryOption(): CategoryOption | undefined {
+    if (!this.expenseCategory) return undefined;
+    const clean = this.getCleanCategoryName(this.expenseCategory).toLowerCase();
+    return this.categoryOptions.find(o => o.name.toLowerCase() === clean || clean.includes(o.name.toLowerCase())) ||
+      { name: this.expenseCategory, icon: 'fa-solid fa-box-open', color: '#64748b', bg: 'rgba(100, 116, 139, 0.12)' };
+  }
 
   expenseTotal: number | null = null;
   expenseRows: ReceiptRow[] = [];
@@ -369,7 +408,8 @@ export class LogExpenseComponent implements OnInit {
     const paidByUserId = payerType === 'me' ? (this.paidByMemberId() || this.me?.id || null) : null;
     const selectedMemberIds = this.splitWith().filter(m => m.selected).map(m => m.id);
 
-    const selectedCat = this.expenseCategory === '📦 Other' && this.customCategory.trim()
+    const isOther = this.expenseCategory === 'Other' || this.expenseCategory === '📦 Other';
+    const selectedCat = isOther && this.customCategory.trim()
       ? this.customCategory.trim()
       : this.expenseCategory;
     const finalCategory = this.getCleanCategoryName(selectedCat);

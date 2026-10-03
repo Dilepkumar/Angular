@@ -261,7 +261,10 @@
        style="background: var(--card); border-color: var(--border);">
     
     <div class="flex justify-between items-center mb-3.5">
-      <div class="sl mb-0 font-black">Recent Receipts &amp; Money Movements</div>
+      <div class="sl mb-0 font-black flex items-center gap-2">
+        <i class="fa-solid fa-receipt text-sky-500 text-xs"></i>
+        <span>Recent Receipts &amp; Money Movements</span>
+      </div>
       <div class="text-[11px] font-extrabold" style="color: var(--t3);">
         Showing {{ filteredTransactions().length }} records
       </div>
@@ -313,11 +316,12 @@
               <div class="flex items-start justify-between gap-3">
                 <!-- Left side: Icon & Title/Details -->
                 <div class="flex items-start gap-3 min-w-0 flex-1">
-                  <div class="text-2xl shrink-0 mt-0.5">
+                  <div class="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 mt-0.5"
+                       [style.background]="t.type === 'Contribution' ? 'rgba(16, 185, 129, 0.12)' : getCategoryColor(t.category) + '1f'">
                     @if (t.type === 'Contribution') {
-                      💰
+                      <i class="fa-solid fa-coins text-emerald-500 text-base"></i>
                     } @else {
-                      {{ getCategoryIcon(t.category) }}
+                      <i [class]="getCategoryFaIcon(t.category)" class="text-base" [style.color]="getCategoryColor(t.category)"></i>
                     }
                   </div>
 
@@ -337,21 +341,24 @@
                       <span>·</span>
                       <span class="font-semibold" style="color: var(--t2);">{{ t.userName }}</span>
                       @if (t.status === 'Pending') {
-                        <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded"
+                        <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded inline-flex items-center gap-1"
                               style="background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn);">
-                          ⏳ Pending
+                          <i class="fa-solid fa-clock text-[9px]"></i>
+                          <span>Pending</span>
                         </span>
                       }
                       @if (t.status === 'Pending Reimbursement' || (t.payerType === 'member' && !t.isReimbursed)) {
-                        <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded"
+                        <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded inline-flex items-center gap-1"
                               style="background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn);">
-                          ⏳ Pending Reimbursement
+                          <i class="fa-solid fa-clock text-[9px]"></i>
+                          <span>Pending Reimbursement</span>
                         </span>
                       }
                       @if (t.status === 'Reimbursed ✓' || (t.payerType === 'member' && t.isReimbursed)) {
-                        <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded"
+                        <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded inline-flex items-center gap-1"
                               style="background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok);">
-                          💸 Reimbursed from Pool ✓
+                          <i class="fa-solid fa-hand-holding-dollar text-[9px]"></i>
+                          <span>Reimbursed from Pool <i class="fa-solid fa-check text-[8px] ml-0.5"></i></span>
                         </span>
                       }
                     </div>

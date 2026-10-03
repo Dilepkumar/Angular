@@ -250,6 +250,18 @@ export class HistoryComponent implements OnInit {
   }
 
   // Category visual helpers
+  getCategoryFaIcon(category?: string | null): string {
+    const cat = (category || '').toLowerCase();
+    if (cat.includes('grocer') || cat.includes('veg')) return 'fa-solid fa-basket-shopping';
+    if (cat.includes('dairy') || cat.includes('milk')) return 'fa-solid fa-bottle-water';
+    if (cat.includes('utilit') || cat.includes('bill') || cat.includes('wifi') || cat.includes('power')) return 'fa-solid fa-bolt';
+    if (cat.includes('clean') || cat.includes('house')) return 'fa-solid fa-spray-can-sparkles';
+    if (cat.includes('food') || cat.includes('snack') || cat.includes('dinner')) return 'fa-solid fa-utensils';
+    if (cat.includes('maint') || cat.includes('repair')) return 'fa-solid fa-wrench';
+    if (cat.includes('travel') || cat.includes('cab') || cat.includes('auto')) return 'fa-solid fa-taxi';
+    return 'fa-solid fa-box-open';
+  }
+
   getCategoryIcon(category?: string | null): string {
     const cat = (category || '').toLowerCase();
     if (cat.includes('grocer') || cat.includes('veg')) return '🥕';
