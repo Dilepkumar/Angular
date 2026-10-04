@@ -108,6 +108,11 @@ export class LogExpenseComponent implements OnInit {
   // Dynamic flat members for "SHARED AMONG FLAT"
   splitWith = signal<{ id: string; name: string; initials: string; selected: boolean }[]>([]);
 
+  // Edit Mode state
+  isEditMode = signal<boolean>(false);
+  editExpenseId = signal<number | null>(null);
+  loadingEditExpense = signal<boolean>(false);
+
   toastMessage = signal<string | null>(null);
 
   ngOnInit(): void {
@@ -118,6 +123,95 @@ export class LogExpenseComponent implements OnInit {
 
     this.initExpenseRows();
     this.loadGroupMembers();
+
+    // Check for edit mode via query params (?editExpenseId=123)
+    this.route.queryParamMap.subscribe(params => {
+      const editId = params.get('editExpenseId');
+      if (editId) {
+        this.isEditMode.set(true);
+        this.editExpenseId.set(+editId);
+        this.loadExpenseForEdit(+editId);
+      }
+    });
+  }
+
+  loadExpenseForEdit(expenseId: number): void {
+    this.loadingEditExpense.set(true);
+    this.api.get<any>(`groups/${this.groupId}/pool/expenses/${expenseId}`).subscribe({
+      next: (res) => {
+        this.loadingEditExpense.set(false);
+        if (!res) return;
+
+        if (res.isLatest === false) {
+          this.popup.warning('⚠️ Only the last recorded transaction can be edited.');
+          setTimeout(() => {
+            this.router.navigate(['/g', this.groupId, 'history']);
+          }, 1200);
+          return;
+        }
+
+        this.expenseName = res.description || '';
+        this.expenseDate = res.expenseDate || new Date().toISOString().slice(0, 10);
+        this.expenseTotal = res.totalAmount != null ? res.totalAmount : null;
+
+        // Category selection
+        if (res.category) {
+          const clean = this.getCleanCategoryName(res.category).toLowerCase();
+          const match = this.categoryOptions.find(o => o.name.toLowerCase() === clean);
+          if (match) {
+            this.expenseCategory = match.name;
+            this.customCategory = '';
+          } else {
+            this.expenseCategory = 'Other';
+            this.customCategory = res.category;
+          }
+        }
+
+        // Payer
+        if (res.payerType === 'me' || res.paidByUserId) {
+          this.expensePayer.set('me');
+          if (res.paidByUserId) {
+            this.paidByMemberId.set(res.paidByUserId);
+          }
+        } else {
+          this.expensePayer.set('pool');
+        }
+
+        // Receipt
+        if (res.receiptUrl) {
+          this.receiptUrl = res.receiptUrl;
+          this.receiptPreview.set(this.getFullUrl(res.receiptUrl));
+        } else {
+          this.receiptUrl = null;
+          this.receiptPreview.set(null);
+        }
+
+        // Line items
+        if (res.items && res.items.length > 0) {
+          this.expenseRows = res.items.map((it: any, idx: number) => ({
+            id: idx + 1,
+            name: it.name || it.itemName || '',
+            qty: it.qty || it.quantity || 1,
+            rate: null,
+            price: it.price != null ? it.price : (it.amount != null ? it.amount : null)
+          }));
+          this.rowCounter = this.expenseRows.length;
+        } else {
+          this.expenseRows = [{
+            id: 1,
+            name: res.description || '',
+            qty: 1,
+            rate: null,
+            price: res.totalAmount != null ? res.totalAmount : null
+          }];
+          this.rowCounter = 1;
+        }
+      },
+      error: (err) => {
+        this.loadingEditExpense.set(false);
+        this.popup.error(err.error?.message || 'Failed to load expense for editing');
+      }
+    });
   }
 
   initExpenseRows(): void {
@@ -414,6 +508,41 @@ export class LogExpenseComponent implements OnInit {
       : this.expenseCategory;
     const finalCategory = this.getCleanCategoryName(selectedCat);
 
+    if (this.isEditMode() && this.editExpenseId()) {
+      const editPayload = {
+        description: desc,
+        amount: this.expenseTotal,
+        expenseDate: this.expenseDate,
+        category: finalCategory,
+        receiptUrl: this.receiptUrl,
+        payerType: payerType,
+        paidByUserId: paidByUserId,
+        reason: 'Admin updated expense details',
+        items: items.map(i => ({
+          categoryId: i.categoryId,
+          itemName: i.itemName,
+          amount: i.amount,
+          quantity: i.quantity
+        }))
+      };
+
+      this.savingExpense = true;
+      this.api.put<{ message: string }>(`groups/${this.groupId}/pool/expenses/${this.editExpenseId()}`, editPayload).subscribe({
+        next: (res) => {
+          this.savingExpense = false;
+          this.popup.success(res.message || 'Expense updated successfully!');
+          setTimeout(() => {
+            this.router.navigate(['/g', this.groupId, 'history']);
+          }, 600);
+        },
+        error: (e) => {
+          this.savingExpense = false;
+          this.popup.error(e.error?.message || 'Failed to update expense');
+        }
+      });
+      return;
+    }
+
     const payload = {
       description: desc,
       expenseDate: this.expenseDate,
@@ -443,7 +572,11 @@ export class LogExpenseComponent implements OnInit {
   }
 
   backToPool(): void {
-    this.router.navigate(['/g', this.groupId, 'pool']);
+    if (this.isEditMode()) {
+      this.router.navigate(['/g', this.groupId, 'history']);
+    } else {
+      this.router.navigate(['/g', this.groupId, 'pool']);
+    }
   }
 
   showToast(msg: string): void {

@@ -188,6 +188,44 @@ select.inp {
   appearance: none;
 }
 
+/* ══ GLOBAL IOS SAFARI & MOBILE DATE INPUT FIX ══ */
+input[type="date"],
+input[type="date"].inp {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  margin: 0 !important;
+  background-color: var(--bg2);
+  height: 42px;
+  line-height: normal;
+  overflow: hidden !important;
+}
+
+.date-field-wrapper,
+.date-input-container {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 1.25em;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+input[type="date"]::-webkit-inner-spin-button {
+  display: none;
+  -webkit-appearance: none;
+}
+
 /* ══ PREVENT MOBILE / IOS SAFARI ZOOM ON INPUT FOCUS ══ */
 @media screen and (max-width: 768px) {
   input,

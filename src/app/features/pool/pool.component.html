@@ -210,18 +210,9 @@
         </div>
       </div>
 
-      <!-- Action Buttons with Distinct Vibrant Colors -->
-      <div class="grid grid-cols-3 gap-2 sm:gap-3 pt-1 border-t" style="border-color: color-mix(in srgb, var(--p1) 18%, transparent);">
-        <!-- Button 1: Log Expense (Royal Indigo) -->
-        <button type="button"
-                (click)="goToLogExpense()"
-                class="py-2.5 sm:py-3 text-[11px] sm:text-xs font-black flex items-center justify-center gap-1.5 rounded-2xl text-white transition transform active:scale-95 cursor-pointer shadow-md hover:brightness-110 border border-white/20"
-                style="background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%); box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);">
-          <i class="fa-solid fa-plus text-xs"></i>
-          <span>Log Expense</span>
-        </button>
-
-        <!-- Button 2: Add Money (Emerald Green) -->
+      <!-- Action Buttons with Distinct Vibrant Colors (Add Money & History) -->
+      <div class="grid grid-cols-2 gap-2 sm:gap-3 pt-1 border-t" style="border-color: color-mix(in srgb, var(--p1) 18%, transparent);">
+        <!-- Button 1: Add Money (Emerald Green) -->
         <button type="button"
                 (click)="openContribute()"
                 class="py-2.5 sm:py-3 text-[11px] sm:text-xs font-black flex items-center justify-center gap-1.5 rounded-2xl text-white transition transform active:scale-95 cursor-pointer shadow-md hover:brightness-110 border border-white/20"
@@ -230,7 +221,7 @@
           <span>Add Money</span>
         </button>
 
-        <!-- Button 3: History (Ocean Sky Blue) -->
+        <!-- Button 2: History (Ocean Sky Blue) -->
         <button type="button"
                 (click)="openHistory()"
                 class="py-2.5 sm:py-3 text-[11px] sm:text-xs font-black flex items-center justify-center gap-1.5 rounded-2xl text-white transition transform active:scale-95 cursor-pointer shadow-md hover:brightness-110 border border-white/20"
@@ -520,133 +511,166 @@
 
         <!-- Out-of-Pocket Reimbursements Tracker -->
         @if (balance()?.outOfPocketSummary && balance()!.outOfPocketSummary!.length > 0) {
-          <div class="mb-6">
-            <div class="flex items-center justify-between mb-2.5">
-              <div class="sl mb-0 flex items-center gap-1.5">
-                <i class="fa-solid fa-receipt text-sky-500 text-xs"></i>
-                <span>Out-of-Pocket Roommate Expenses</span>
+          <div class="mb-6 rounded-2xl border transition-all overflow-hidden"
+               style="background: var(--bg2); border-color: var(--border);">
+            
+            <!-- Clickable Accordion Header -->
+            <button type="button"
+                    (click)="toggleOutOfPocket()"
+                    class="w-full p-3.5 flex items-center justify-between text-left cursor-pointer select-none transition hover:opacity-90 active:scale-[0.99] gap-2"
+                    title="Click to collapse or expand out-of-pocket expenses">
+              <div class="flex items-center gap-2 min-w-0">
+                <i class="fa-solid fa-receipt text-sky-500 text-sm shrink-0"></i>
+                <span class="text-xs sm:text-sm font-black truncate" style="color: var(--text);">
+                  Out-of-Pocket Roommate Expenses
+                </span>
+                <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full shrink-0"
+                      style="background: color-mix(in srgb, var(--p1) 15%, transparent); color: var(--p1);">
+                  {{ balance()!.outOfPocketSummary!.length }}
+                </span>
               </div>
-              @if ((balance()?.pendingReimbursementsTotal || 0) > 0) {
-                <span class="text-[10px] font-black px-2 py-0.5 rounded-full inline-flex items-center gap-1"
-                      style="background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn);">
-                  <i class="fa-solid fa-clock text-[10px]"></i>
-                  <span>₹{{ balance()?.pendingReimbursementsTotal | number:'1.0-0' }} Pending Reimbursement</span>
-                </span>
-              } @else {
-                <span class="text-[10px] font-black px-2 py-0.5 rounded-full inline-flex items-center gap-1"
-                      style="background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok);">
-                  <i class="fa-solid fa-circle-check text-[10px]"></i>
-                  <span>All Settled &amp; Reimbursed</span>
-                </span>
-              }
-            </div>
 
-            <div class="space-y-2.5">
-              @for (oop of balance()!.outOfPocketSummary; track oop.userId) {
-                <div class="p-3.5 rounded-2xl border transition flex flex-col gap-2.5"
-                     style="background: var(--bg2); border-color: var(--border);">
-                  
-                  <!-- Top Row: Avatar + Name on Left; Status Badge on Right -->
-                  <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2.5 min-w-0">
-                      <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0"
-                           style="background: #6366f1;">
-                        {{ getInitials(oop.userName) }}
+              <div class="flex items-center gap-2 shrink-0">
+                @if ((balance()?.pendingReimbursementsTotal || 0) > 0) {
+                  <span class="text-[10px] font-black px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+                        style="background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn);">
+                    <i class="fa-solid fa-clock text-[10px]"></i>
+                    <span class="hidden sm:inline">₹{{ balance()?.pendingReimbursementsTotal | number:'1.0-0' }} Pending Reimbursement</span>
+                    <span class="sm:hidden">₹{{ balance()?.pendingReimbursementsTotal | number:'1.0-0' }} Pending</span>
+                  </span>
+                } @else {
+                  <span class="text-[10px] font-black px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+                        style="background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok);">
+                    <i class="fa-solid fa-circle-check text-[10px]"></i>
+                    <span>Settled</span>
+                  </span>
+                }
+                <!-- Arrow Icon: toggles collapse / expand -->
+                <div class="w-6 h-6 rounded-lg flex items-center justify-center transition-transform duration-200"
+                     [style.transform]="isOutOfPocketExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'"
+                     style="background: var(--bg3); color: var(--t2);">
+                  <i class="fa-solid fa-chevron-down text-[11px]"></i>
+                </div>
+              </div>
+            </button>
+
+            <!-- Collapsible Body -->
+            @if (isOutOfPocketExpanded()) {
+              <div class="px-3.5 pb-3.5 space-y-2.5 border-t pt-3"
+                   style="border-color: var(--border);">
+                @for (oop of balance()!.outOfPocketSummary; track oop.userId) {
+                  <div class="p-3.5 rounded-2xl border transition flex flex-col gap-2.5"
+                       style="background: var(--card); border-color: var(--border);">
+                    
+                    <!-- Top Row: Avatar + Name on Left; Status Badge on Right -->
+                    <div class="flex items-center justify-between gap-2">
+                      <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0"
+                             style="background: #6366f1;">
+                          {{ getInitials(oop.userName) }}
+                        </div>
+                        <div class="min-w-0">
+                          <div class="text-xs sm:text-[13px] font-bold flex items-center gap-1.5 truncate" style="color: var(--text);">
+                            <span class="truncate">{{ oop.userName }}</span>
+                            @if (me?.id === oop.userId) {
+                              <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded shrink-0"
+                                    style="background: color-mix(in srgb, var(--p1) 20%, transparent); color: var(--p1);">You</span>
+                            }
+                          </div>
+                          <div class="text-[10px] font-medium mt-0.5 truncate" style="color: var(--t3);">
+                            {{ oop.expenseCount }} {{ oop.expenseCount === 1 ? 'receipt' : 'receipts' }} · Total spent: ₹{{ oop.totalPaid | number:'1.0-0' }}
+                          </div>
+                        </div>
                       </div>
-                      <div class="min-w-0">
-                        <div class="text-xs sm:text-[13px] font-bold flex items-center gap-1.5 truncate" style="color: var(--text);">
-                          <span class="truncate">{{ oop.userName }}</span>
-                          @if (me?.id === oop.userId) {
-                            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded shrink-0"
-                                  style="background: color-mix(in srgb, var(--p1) 20%, transparent); color: var(--p1);">You</span>
+
+                      <!-- Status Pill (Top Right) -->
+                      <div class="shrink-0 text-right">
+                        @if (oop.pendingReimbursement && oop.pendingReimbursement > 0) {
+                          <span class="text-[10px] font-black px-2.5 py-1 rounded-full border inline-flex items-center gap-1.5"
+                                style="background: color-mix(in srgb, var(--warn) 14%, transparent); border-color: color-mix(in srgb, var(--warn) 30%, transparent); color: var(--warn);">
+                            <i class="fa-solid fa-clock text-[10px]"></i>
+                            <span>Pending: ₹{{ oop.pendingReimbursement | number:'1.0-0' }}</span>
+                          </span>
+                        } @else {
+                          <span class="text-[10px] font-black px-2.5 py-1 rounded-full border inline-flex items-center gap-1.5"
+                                style="background: color-mix(in srgb, var(--ok) 14%, transparent); border-color: color-mix(in srgb, var(--ok) 30%, transparent); color: var(--ok);">
+                            <i class="fa-solid fa-circle-check text-[10px]"></i>
+                            <span>Reimbursed</span>
+                          </span>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Breakdown Strip (if user has partial reimbursements or pending) -->
+                    @if (oop.reimbursedAmount && oop.reimbursedAmount > 0 && oop.pendingReimbursement && oop.pendingReimbursement > 0) {
+                      <div class="flex items-center justify-between px-3 py-1.5 rounded-xl border text-[11px] font-bold"
+                           style="background: var(--bg2); border-color: var(--border);">
+                        <div class="flex items-center gap-1.5" style="color: var(--warn);">
+                          <i class="fa-solid fa-clock text-[10px]"></i>
+                          <span>Pending payout:</span>
+                          <span class="font-black">₹{{ oop.pendingReimbursement | number:'1.0-0' }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5" style="color: var(--ok);">
+                          <i class="fa-solid fa-circle-check text-[10px]"></i>
+                          <span>Already reimbursed:</span>
+                          <span class="font-black">₹{{ oop.reimbursedAmount | number:'1.0-0' }}</span>
+                        </div>
+                      </div>
+                    }
+
+                    <!-- Action Buttons: Return Cash vs Cut from Contribution (Admin Only) -->
+                    @if (oop.pendingReimbursement && oop.pendingReimbursement > 0) {
+                      @if (isAdmin()) {
+                        <div class="space-y-2 pt-1">
+                          <div class="flex flex-col sm:flex-row gap-2">
+                            <!-- Option A: Return Cash from Central Room Pool -->
+                            <button type="button"
+                                    (click)="reimburseOutOfPocket(oop.userId, undefined, 'cash')"
+                                    [disabled]="reimbursingOutOfPocket()"
+                                    class="flex-1 py-2 px-3 text-xs font-black flex items-center justify-center gap-1.5 rounded-xl border shadow-xs transition hover:opacity-90 active:scale-98 cursor-pointer disabled:opacity-50"
+                                    style="background: var(--bg3); border-color: var(--border); color: var(--text);"
+                                    title="Payout cash from central room pool directly to roommate">
+                              <i class="fa-solid fa-hand-holding-dollar text-emerald-500 text-sm"></i>
+                              <span>Return Cash from Pool</span>
+                            </button>
+
+                            <!-- Option B: Cut from Monthly Contribution -->
+                            <button type="button"
+                                    (click)="reimburseOutOfPocket(oop.userId, undefined, 'cut_contribution')"
+                                    [disabled]="reimbursingOutOfPocket()"
+                                    class="flex-1 py-2 px-3 text-xs font-black flex items-center justify-center gap-1.5 rounded-xl shadow-xs transition hover:opacity-90 active:scale-98 cursor-pointer disabled:opacity-50"
+                                    style="background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; border: none;"
+                                    title="Offset this out-of-pocket amount against roommate's monthly pending contribution">
+                              <i class="fa-solid fa-scissors text-sm"></i>
+                              <span>Cut from Contribution</span>
+                            </button>
+                          </div>
+
+                          @if (oop.userPendingContribution && oop.userPendingContribution > 0) {
+                            <div class="text-[10px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-2 border"
+                                 style="background: color-mix(in srgb, #0ea5e9 10%, transparent); border-color: color-mix(in srgb, #0ea5e9 25%, transparent); color: #0284c7;">
+                              <i class="fa-solid fa-lightbulb text-amber-500 text-xs shrink-0"></i>
+                              <span>Roommate owes ₹{{ oop.userPendingContribution | number:'1.0-2' }} this month. Clicking "Cut from Contribution" offsets ₹{{ oop.pendingReimbursement | number:'1.0-2' }} from it!</span>
+                            </div>
                           }
                         </div>
-                        <div class="text-[10px] font-medium mt-0.5 truncate" style="color: var(--t3);">
-                          {{ oop.expenseCount }} {{ oop.expenseCount === 1 ? 'receipt' : 'receipts' }} · Total spent: ₹{{ oop.totalPaid | number:'1.0-0' }}
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Status Pill (Top Right) -->
-                    <div class="shrink-0 text-right">
-                      @if (oop.pendingReimbursement && oop.pendingReimbursement > 0) {
-                        <span class="text-[10px] font-black px-2.5 py-1 rounded-full border inline-flex items-center gap-1.5"
-                              style="background: color-mix(in srgb, var(--warn) 14%, transparent); border-color: color-mix(in srgb, var(--warn) 30%, transparent); color: var(--warn);">
-                          <i class="fa-solid fa-clock text-[10px]"></i>
-                          <span>Pending: ₹{{ oop.pendingReimbursement | number:'1.0-0' }}</span>
-                        </span>
                       } @else {
-                        <span class="text-[10px] font-black px-2.5 py-1 rounded-full border inline-flex items-center gap-1.5"
-                              style="background: color-mix(in srgb, var(--ok) 14%, transparent); border-color: color-mix(in srgb, var(--ok) 30%, transparent); color: var(--ok);">
-                          <i class="fa-solid fa-circle-check text-[10px]"></i>
-                          <span>Reimbursed</span>
-                        </span>
-                      }
-                    </div>
-                  </div>
-
-                  <!-- Breakdown Strip (if user has partial reimbursements or pending) -->
-                  @if (oop.reimbursedAmount && oop.reimbursedAmount > 0 && oop.pendingReimbursement && oop.pendingReimbursement > 0) {
-                    <div class="flex items-center justify-between px-3 py-1.5 rounded-xl border text-[11px] font-bold"
-                         style="background: var(--card); border-color: var(--border);">
-                      <div class="flex items-center gap-1.5" style="color: var(--warn);">
-                        <i class="fa-solid fa-clock text-[10px]"></i>
-                        <span>Pending payout:</span>
-                        <span class="font-black">₹{{ oop.pendingReimbursement | number:'1.0-0' }}</span>
-                      </div>
-                      <div class="flex items-center gap-1.5" style="color: var(--ok);">
-                        <i class="fa-solid fa-circle-check text-[10px]"></i>
-                        <span>Already reimbursed:</span>
-                        <span class="font-black">₹{{ oop.reimbursedAmount | number:'1.0-0' }}</span>
-                      </div>
-                    </div>
-                  }
-
-                  <!-- Action Buttons: Return Cash vs Cut from Contribution -->
-                  @if (oop.pendingReimbursement && oop.pendingReimbursement > 0 && (isAdmin() || me?.id === oop.userId)) {
-                    <div class="space-y-2 pt-1">
-                      <div class="flex flex-col sm:flex-row gap-2">
-                        <!-- Option A: Return Cash from Central Room Pool -->
-                        <button type="button"
-                                (click)="reimburseOutOfPocket(oop.userId, undefined, 'cash')"
-                                [disabled]="reimbursingOutOfPocket()"
-                                class="flex-1 py-2 px-3 text-xs font-black flex items-center justify-center gap-1.5 rounded-xl border shadow-xs transition hover:opacity-90 active:scale-98 cursor-pointer disabled:opacity-50"
-                                style="background: var(--bg3); border-color: var(--border); color: var(--text);"
-                                title="Payout cash from central room pool directly to roommate">
-                          <i class="fa-solid fa-hand-holding-dollar text-emerald-500 text-sm"></i>
-                          <span>Return Cash from Pool</span>
-                        </button>
-
-                        <!-- Option B: Cut from Monthly Contribution -->
-                        <button type="button"
-                                (click)="reimburseOutOfPocket(oop.userId, undefined, 'cut_contribution')"
-                                [disabled]="reimbursingOutOfPocket()"
-                                class="flex-1 py-2 px-3 text-xs font-black flex items-center justify-center gap-1.5 rounded-xl shadow-xs transition hover:opacity-90 active:scale-98 cursor-pointer disabled:opacity-50"
-                                style="background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; border: none;"
-                                title="Offset this out-of-pocket amount against roommate's monthly pending contribution">
-                          <i class="fa-solid fa-scissors text-sm"></i>
-                          <span>Cut from Contribution</span>
-                        </button>
-                      </div>
-
-                      @if (oop.userPendingContribution && oop.userPendingContribution > 0) {
-                        <div class="text-[10px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-2 border"
-                             style="background: color-mix(in srgb, #0ea5e9 10%, transparent); border-color: color-mix(in srgb, #0ea5e9 25%, transparent); color: #0284c7;">
-                          <i class="fa-solid fa-lightbulb text-amber-500 text-xs shrink-0"></i>
-                          <span>Roommate owes ₹{{ oop.userPendingContribution | number:'1.0-2' }} this month. Clicking "Cut from Contribution" offsets ₹{{ oop.pendingReimbursement | number:'1.0-2' }} from it!</span>
+                        <div class="pt-1.5 flex items-center gap-1.5 text-[11px] font-bold text-amber-500">
+                          <i class="fa-solid fa-clock text-xs"></i>
+                          <span>Waiting for Admin Approval &amp; Reimbursement</span>
                         </div>
                       }
-                    </div>
-                  }
+                    }
 
+                  </div>
+                }
+
+                <div class="text-[10px] font-medium mt-2 flex items-center gap-1.5" style="color: var(--t3);">
+                  <i class="fa-solid fa-lightbulb text-amber-500 text-xs shrink-0"></i>
+                  <span>Settle options: <strong>Return Cash</strong> pays out from central pool cash, or <strong>Cut from Contribution</strong> credits their pending monthly share without needing pool cash.</span>
                 </div>
-              }
-            </div>
-
-            <div class="text-[10px] font-medium mt-2 flex items-center gap-1.5" style="color: var(--t3);">
-              <i class="fa-solid fa-lightbulb text-amber-500 text-xs shrink-0"></i>
-              <span>Settle options: <strong>Return Cash</strong> pays out from central pool cash, or <strong>Cut from Contribution</strong> credits their pending monthly share without needing pool cash.</span>
-            </div>
+              </div>
+            }
           </div>
 
           <div class="div"></div>
@@ -654,8 +678,10 @@
 
         <!-- Monthly Pool Contributions per Roommate -->
         <div>
-          <div class="flex justify-between items-center mb-2">
-            <div>
+          <div class="flex justify-between items-center mb-2 cursor-pointer select-none transition hover:opacity-90 active:scale-[0.99] gap-2"
+               (click)="toggleWhoContributed()"
+               title="Click to collapse or expand roommate contributions">
+            <div class="min-w-0 flex-1">
               <div class="sl mb-0 flex items-center gap-1.5 flex-wrap">
                 <span>Who has contributed this month?</span>
                 <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full"
@@ -667,22 +693,27 @@
                 Tracks each roommate's contribution towards this month's room maintenance target
               </div>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 shrink-0">
               <button type="button"
-                      (click)="toggleTargetInfo()"
+                      (click)="$event.stopPropagation(); toggleTargetInfo()"
                       class="text-[10px] font-bold px-2 py-1 rounded-lg border transition cursor-pointer flex items-center gap-1"
                       style="border-color: var(--border); background: var(--bg2); color: var(--t2);"
                       title="Learn how monthly targets work">
                 <span>💡 How it works</span>
               </button>
-              @if (isAdmin()) {
-                <button type="button" (click)="openShares()" class="text-[11px] font-extrabold underline cursor-pointer flex items-center gap-1" style="color: var(--p1);">
-                  <i class="fa-solid fa-gear text-[10px]"></i>
-                  <span>Set shares</span>
-                </button>
-              }
+
+              <!-- Arrow Icon: toggles collapse / expand -->
+              <div class="w-6 h-6 rounded-lg flex items-center justify-center transition-transform duration-200"
+                   [style.transform]="isWhoContributedExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'"
+                   style="background: var(--bg3); color: var(--t2);">
+                <i class="fa-solid fa-chevron-down text-[11px]"></i>
+              </div>
             </div>
           </div>
+
+          <!-- Collapsible Body -->
+          @if (isWhoContributedExpanded()) {
+            <div class="fade-up">
 
           <!-- Explanation Popover/Box -->
           @if (showTargetInfo()) {
@@ -712,7 +743,7 @@
           }
 
           <div class="space-y-2.5">
-            @for (m of balance()?.memberStatuses; track m.userId) {
+            @for (m of sortedMemberStatuses; track m.userId) {
               <div class="p-3 rounded-2xl border transition space-y-2"
                    style="background: var(--bg2); border-color: var(--border);">
                 <!-- Top Row: Member Info + Status / Action -->
@@ -796,6 +827,8 @@
             }
           </div>
         </div>
+      }
+    </div>
 
       </div>
 
@@ -891,13 +924,13 @@
                           <i class="fa-solid fa-image text-[11px]" style="color: rgb(99, 230, 190);"></i>
                         </button>
                       }
-                      @if (t.payerType === 'member' && !t.isReimbursed && (isAdmin() || (t.payerName && me?.fullName && t.payerName === me?.fullName))) {
+                      @if (t.payerType === 'member' && !t.isReimbursed && isAdmin()) {
                         <button type="button"
                                 (click)="$event.stopPropagation(); reimburseOutOfPocket(undefined, t.id.startsWith('e') ? +t.id.slice(1) : undefined)"
                                 [disabled]="reimbursingOutOfPocket()"
                                 class="text-[10px] font-extrabold px-2 py-0.5 rounded-lg border transition cursor-pointer hover:scale-105 active:scale-95 flex items-center gap-1 shadow-xs"
                                 style="background: color-mix(in srgb, var(--p1) 15%, transparent); border-color: var(--p1); color: var(--p1);"
-                                title="Reimburse this expense from Central Pool">
+                                title="Reimburse this expense from Central Pool (Admin)">
                           <i class="fa-solid fa-hand-holding-dollar text-[10px]" style="color: rgb(99, 230, 190);"></i>
                           <span class="hidden sm:inline">Reimburse</span>
                         </button>
@@ -1413,6 +1446,7 @@
     </div>
   </div>
 }
+
 
 <!-- ═══════════════════════════════════════════
      MODAL: REJECT REASON

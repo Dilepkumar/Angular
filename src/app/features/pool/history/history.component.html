@@ -161,48 +161,28 @@
           </button>
         </div>
       </div>
-
-      <!-- Expand / Collapse All Helpers -->
-      <div class="flex items-center gap-1.5 self-end sm:self-center">
-        <button type="button"
-                (click)="expandAll()"
-                class="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border transition cursor-pointer flex items-center gap-1"
-                style="background: var(--bg2); border-color: var(--border); color: var(--t2);"
-                title="Expand all receipt item details">
-          <i class="fa-solid fa-chevron-down text-[9px]"></i>
-          <span>Expand All</span>
-        </button>
-        <button type="button"
-                (click)="collapseAll()"
-                class="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border transition cursor-pointer flex items-center gap-1"
-                style="background: var(--bg2); border-color: var(--border); color: var(--t2);"
-                title="Collapse all receipt item details">
-          <i class="fa-solid fa-chevron-up text-[9px]"></i>
-          <span>Collapse All</span>
-        </button>
-      </div>
     </div>
 
     <!-- Custom Date Range Bar (When Custom is Active) -->
     @if (historyPeriod() === 'custom') {
-      <div class="flex items-center gap-3 pt-2.5 border-t flex-wrap fade-up" style="border-color: var(--border);">
-        <div class="flex items-center gap-1.5">
-          <span class="text-xs font-bold" style="color: var(--t3);">From:</span>
+      <div class="flex items-center gap-3 pt-2.5 border-t flex-wrap fade-up w-full min-w-0" style="border-color: var(--border);">
+        <div class="date-field-wrapper flex items-center gap-1.5 min-w-0">
+          <span class="text-xs font-bold shrink-0" style="color: var(--t3);">From:</span>
           <input type="date"
                  [(ngModel)]="historyFromDate"
                  (ngModelChange)="loadHistory()"
-                 class="inp py-1 px-2.5 text-xs font-semibold rounded-lg" />
+                 class="inp py-1 px-2.5 text-xs font-semibold rounded-lg min-w-0 w-full" />
         </div>
-        <div class="flex items-center gap-1.5">
-          <span class="text-xs font-bold" style="color: var(--t3);">To:</span>
+        <div class="date-field-wrapper flex items-center gap-1.5 min-w-0">
+          <span class="text-xs font-bold shrink-0" style="color: var(--t3);">To:</span>
           <input type="date"
                  [(ngModel)]="historyToDate"
                  (ngModelChange)="loadHistory()"
-                 class="inp py-1 px-2.5 text-xs font-semibold rounded-lg" />
+                 class="inp py-1 px-2.5 text-xs font-semibold rounded-lg min-w-0 w-full" />
         </div>
         <button type="button"
                 (click)="loadHistory()"
-                class="btn py-1 px-3.5 text-xs font-black">
+                class="btn py-1 px-3.5 text-xs font-black shrink-0">
           Apply Filter
         </button>
       </div>
@@ -334,10 +314,17 @@
                           {{ t.category }}
                         </span>
                       }
+                      @if (t.isEdited) {
+                        <span class="text-[9px] font-black px-1.5 py-0.5 rounded-full border inline-flex items-center gap-1 shadow-xs"
+                              style="background: color-mix(in srgb, #f59e0b 14%, transparent); border-color: color-mix(in srgb, #f59e0b 35%, transparent); color: #d97706;">
+                          <i class="fa-solid fa-pen text-[7px]"></i>
+                          <span>Edited</span>
+                        </span>
+                      }
                     </div>
 
                     <div class="text-[11px] font-medium mt-1 flex items-center gap-1.5 flex-wrap" style="color: var(--t3);">
-                      <span>{{ t.date | date:'dd MMM yyyy' }}</span>
+                      <span>{{ t.date | date:'dd MMM yyyy, hh:mm a' }}</span>
                       <span>·</span>
                       <span class="font-semibold" style="color: var(--t2);">{{ t.userName }}</span>
                       @if (t.status === 'Pending') {
@@ -380,38 +367,36 @@
                       </button>
                     }
 
-                    <!-- Out-of-pocket Reimburse Button -->
-                    @if (t.payerType === 'member' && !t.isReimbursed && (isAdmin() || (t.payerName && me?.fullName && t.payerName === me?.fullName))) {
+                    <!-- Out-of-pocket Reimburse Button (Admin Only) -->
+                    @if (t.payerType === 'member' && !t.isReimbursed && isAdmin()) {
                       <button type="button"
                               (click)="$event.stopPropagation(); reimburseOutOfPocket(t.id.startsWith('e') ? +t.id.slice(1) : undefined)"
                               [disabled]="reimbursingOutOfPocket()"
                               class="text-[10px] font-extrabold px-2 py-0.5 rounded-lg border transition cursor-pointer hover:scale-105 active:scale-95 flex items-center gap-1 shadow-xs"
                               style="background: color-mix(in srgb, var(--p1) 15%, transparent); border-color: var(--p1); color: var(--p1);"
-                              title="Reimburse this expense from Central Pool">
+                              title="Reimburse this expense from Central Pool (Admin)">
                         <i class="fa-solid fa-hand-holding-dollar text-[10px]" style="color: rgb(99, 230, 190);"></i>
                         <span class="hidden sm:inline">Reimburse</span>
                       </button>
                     }
 
-                    <!-- Admin Edit (Latest only) Button -->
-                    @if (t.type === 'Expense' && isAdmin() && t.status !== 'Voided') {
-                      @if (isLatestExpense(t.id)) {
-                        <button type="button"
-                                (click)="$event.stopPropagation(); openEditExpense(t)"
-                                class="w-7 h-7 rounded-lg border transition cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center shadow-xs"
-                                style="background: color-mix(in srgb, #f59e0b 15%, transparent); border-color: color-mix(in srgb, #f59e0b 35%, transparent); color: #d97706;"
-                                title="Edit this expense (Only the latest pool expense can be edited)">
-                          <i class="fa-solid fa-pen-to-square text-[10px]"></i>
-                        </button>
-                      }
+                    <!-- Admin Edit & Delete (Latest Transaction Only) Buttons -->
+                    @if (t.type === 'Expense' && isAdmin() && t.status !== 'Voided' && isLatestExpense(t.id)) {
+                      <button type="button"
+                              (click)="$event.stopPropagation(); openEditExpense(t)"
+                              class="w-7 h-7 rounded-lg border transition cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center shadow-xs"
+                              style="background: color-mix(in srgb, #f59e0b 15%, transparent); border-color: color-mix(in srgb, #f59e0b 35%, transparent); color: #d97706;"
+                              title="Edit this expense in Log Pool Expense (Admin only · Last transaction)">
+                        <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                      </button>
 
-                      <!-- Admin Void Button -->
+                      <!-- Admin Delete / Void Button -->
                       <button type="button"
                               (click)="$event.stopPropagation(); openVoidExpense(t)"
                               class="w-7 h-7 rounded-lg border transition cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center shadow-xs"
                               style="background: color-mix(in srgb, var(--err) 12%, transparent); border-color: color-mix(in srgb, var(--err) 30%, transparent); color: var(--err);"
-                              title="Void this expense (Admin)">
-                        <i class="fa-solid fa-ban text-[10px]"></i>
+                              title="Delete this expense (Admin only · Last transaction)">
+                        <i class="fa-solid fa-trash-can text-[10px]"></i>
                       </button>
                     }
                   </div>
@@ -507,6 +492,12 @@
                     <span>Transaction ID: </span>
                     <span class="font-mono font-bold" style="color: var(--t2);">#{{ t.id }}</span>
                   </div>
+                  @if (t.isEdited) {
+                    <div class="font-bold flex items-center gap-1" style="color: #d97706;">
+                      <i class="fa-solid fa-pen text-[9px]"></i>
+                      <span>Edited by Admin</span>
+                    </div>
+                  }
                   @if (t.payerName) {
                     <div>
                       <span>Payer: </span>
@@ -573,115 +564,7 @@
   </div>
 }
 
-<!-- ═══════════════════════════════════════════
-     MODAL: ADMIN EDIT POOL EXPENSE
-═══════════════════════════════════════════ -->
-@if (editingExpense()) {
-  <div class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 fade-up"
-       (click)="closeEditModal()">
-    <div class="w-full max-w-md rounded-3xl overflow-hidden shadow-2xl relative border"
-         style="background: var(--card); border-color: var(--border);"
-         (click)="$event.stopPropagation()">
-      <div class="p-4 border-b flex items-center justify-between" style="border-color: var(--border);">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-xl flex items-center justify-center"
-               style="background: color-mix(in srgb, #f59e0b 20%, transparent); color: #f59e0b;">
-            <i class="fa-solid fa-pen-to-square text-sm"></i>
-          </div>
-          <div>
-            <div class="text-sm font-black" style="color: var(--text);">Edit Pool Expense</div>
-            <div class="text-[10px] font-medium" style="color: var(--t3);">Admin Correction Tool</div>
-          </div>
-        </div>
-        <button type="button"
-                (click)="closeEditModal()"
-                class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black cursor-pointer border"
-                style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
 
-      <div class="p-4 space-y-3.5">
-        <!-- Description -->
-        <div>
-          <label class="block text-[11px] font-black uppercase tracking-wider mb-1" style="color: var(--t2);">
-            Description / Item Name
-          </label>
-          <input type="text"
-                 [(ngModel)]="editForm.description"
-                 placeholder="e.g. Weekly Groceries, Water Cans"
-                 class="inp w-full py-2 px-3 text-xs font-bold" />
-        </div>
-
-        <!-- Amount & Date -->
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[11px] font-black uppercase tracking-wider mb-1" style="color: var(--t2);">
-              Total Amount (₹)
-            </label>
-            <input type="number"
-                   min="1"
-                   step="any"
-                   [(ngModel)]="editForm.amount"
-                   placeholder="0.00"
-                   class="inp w-full py-2 px-3 text-xs font-black" />
-          </div>
-          <div>
-            <label class="block text-[11px] font-black uppercase tracking-wider mb-1" style="color: var(--t2);">
-              Expense Date
-            </label>
-            <input type="date"
-                   [(ngModel)]="editForm.expenseDate"
-                   class="inp w-full py-2 px-3 text-xs font-bold" />
-          </div>
-        </div>
-
-        <!-- Category -->
-        <div>
-          <label class="block text-[11px] font-black uppercase tracking-wider mb-1" style="color: var(--t2);">
-            Category
-          </label>
-          <input type="text"
-                 [(ngModel)]="editForm.category"
-                 placeholder="e.g. Groceries, Utilities, Cleaning"
-                 class="inp w-full py-2 px-3 text-xs font-bold" />
-        </div>
-
-        <!-- Correction Reason -->
-        <div>
-          <label class="block text-[11px] font-black uppercase tracking-wider mb-1" style="color: var(--t2);">
-            Audit Note / Reason for Change
-          </label>
-          <input type="text"
-                 [(ngModel)]="editForm.reason"
-                 placeholder="e.g. Corrected typo in price, updated date"
-                 class="inp w-full py-2 px-3 text-xs font-medium" />
-        </div>
-      </div>
-
-      <!-- Footer Actions -->
-      <div class="p-4 border-t flex gap-2" style="border-color: var(--border);">
-        <button type="button"
-                (click)="closeEditModal()"
-                class="btns flex-1 py-2.5 text-xs font-black cursor-pointer">
-          Cancel
-        </button>
-        <button type="button"
-                (click)="submitEditExpense()"
-                [disabled]="savingEdit()"
-                class="btn flex-1 py-2.5 text-xs font-black flex items-center justify-center gap-1.5 shadow-md">
-          @if (savingEdit()) {
-            <i class="fa-solid fa-circle-notch fa-spin text-xs"></i>
-            <span>Saving…</span>
-          } @else {
-            <i class="fa-solid fa-check text-xs"></i>
-            <span>Save Changes</span>
-          }
-        </button>
-      </div>
-    </div>
-  </div>
-}
 
 <!-- ═══════════════════════════════════════════
      MODAL: ADMIN VOID POOL EXPENSE

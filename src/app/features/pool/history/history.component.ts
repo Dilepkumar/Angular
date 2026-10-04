@@ -20,6 +20,7 @@ export interface PoolHistoryTransaction {
   receiptUrl?: string | null;
   category?: string | null;
   isReimbursed?: boolean;
+  isEdited?: boolean;
   items?: Array<{ id: number; itemName: string; quantity?: number; amount: number }>;
 }
 
@@ -312,67 +313,33 @@ export class HistoryComponent implements OnInit {
   }
 
   openEditExpense(t: PoolHistoryTransaction): void {
+    if (!this.isAdmin()) {
+      this.showToast('⚠️ Only group admins can edit pool expenses.');
+      return;
+    }
     if (!this.isLatestExpense(t.id)) {
-      this.showToast('⚠️ Only the last recorded pool expense can be edited.');
+      this.showToast('⚠️ Only the last recorded transaction can be edited.');
       return;
     }
-    this.editingExpense.set(t);
-    let d = t.date;
-    try {
-      d = new Date(t.date).toISOString().split('T')[0];
-    } catch {
-      d = '';
-    }
-    this.editForm = {
-      description: t.description,
-      amount: t.amount,
-      expenseDate: d,
-      category: t.category || '',
-      reason: ''
-    };
-  }
-
-  closeEditModal(): void {
-    this.editingExpense.set(null);
-  }
-
-  submitEditExpense(): void {
-    const t = this.editingExpense();
-    if (!t) return;
     const numericId = t.id.startsWith('e') ? parseInt(t.id.substring(1), 10) : parseInt(t.id, 10);
-    if (!numericId) return;
-
-    if (!this.editForm.description.trim()) {
-      this.showToast('⚠️ Please enter an expense description');
+    if (!numericId) {
+      this.showToast('⚠️ Could not identify expense record to edit.');
       return;
     }
-    if (this.editForm.amount <= 0) {
-      this.showToast('⚠️ Amount must be greater than zero');
-      return;
-    }
-
-    this.savingEdit.set(true);
-    this.api.put<{ message: string }>(`groups/${this.groupId}/pool/expenses/${numericId}`, {
-      description: this.editForm.description.trim(),
-      amount: this.editForm.amount,
-      expenseDate: this.editForm.expenseDate,
-      category: this.editForm.category.trim() || undefined,
-      reason: this.editForm.reason.trim() || 'Admin corrected expense details'
-    }).subscribe({
-      next: (res) => {
-        this.savingEdit.set(false);
-        this.closeEditModal();
-        this.showToast(`✅ ${res.message || 'Expense updated successfully!'}`);
-        this.loadHistory();
-      },
-      error: (err) => {
-        this.savingEdit.set(false);
-        this.showToast(`❌ ${err.error?.message || 'Failed to update expense'}`);
-      }
+    this.router.navigate(['/g', this.groupId, 'log-expense'], {
+      queryParams: { editExpenseId: numericId }
     });
   }
 
   openVoidExpense(t: PoolHistoryTransaction): void {
+    if (!this.isAdmin()) {
+      this.showToast('⚠️ Only group admins can delete pool expenses.');
+      return;
+    }
+    if (!this.isLatestExpense(t.id)) {
+      this.showToast('⚠️ Only the last recorded transaction can be deleted.');
+      return;
+    }
     this.voidingExpense.set(t);
     this.voidReason = '';
   }
@@ -384,11 +351,16 @@ export class HistoryComponent implements OnInit {
   submitVoidExpense(): void {
     const t = this.voidingExpense();
     if (!t) return;
+    if (!this.isLatestExpense(t.id)) {
+      this.showToast('⚠️ Only the last recorded transaction can be deleted.');
+      this.closeVoidModal();
+      return;
+    }
     const numericId = t.id.startsWith('e') ? parseInt(t.id.substring(1), 10) : parseInt(t.id, 10);
     if (!numericId) return;
 
     if (!this.voidReason.trim()) {
-      this.showToast('⚠️ Please provide a reason to void this expense');
+      this.showToast('⚠️ Please provide a reason to delete this expense');
       return;
     }
 
@@ -399,12 +371,12 @@ export class HistoryComponent implements OnInit {
       next: (res) => {
         this.savingVoid.set(false);
         this.closeVoidModal();
-        this.showToast(`✅ ${res.message || 'Expense voided and balance restored!'}`);
+        this.showToast(`✅ ${res.message || 'Expense deleted and balance restored!'}`);
         this.loadHistory();
       },
       error: (err) => {
         this.savingVoid.set(false);
-        this.showToast(`❌ ${err.error?.message || 'Failed to void expense'}`);
+        this.showToast(`❌ ${err.error?.message || 'Failed to delete expense'}`);
       }
     });
   }

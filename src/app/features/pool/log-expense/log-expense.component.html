@@ -15,10 +15,17 @@
       </button>
       <div>
         <h1 class="text-base sm:text-lg font-black leading-tight flex items-center gap-2" style="color: var(--text);">
-          <span>Log New Pool Expense</span>
+          <span>{{ isEditMode() ? 'Edit Pool Expense' : 'Log New Pool Expense' }}</span>
+          @if (isEditMode()) {
+            <span class="text-[10px] font-black px-2.5 py-0.5 rounded-full border inline-flex items-center gap-1 shadow-xs"
+                  style="background: color-mix(in srgb, #f59e0b 15%, transparent); border-color: color-mix(in srgb, #f59e0b 35%, transparent); color: #d97706;">
+              <i class="fa-solid fa-pen text-[8px]"></i>
+              <span>#{{ editExpenseId() }}</span>
+            </span>
+          }
         </h1>
         <p class="text-[11px] font-semibold" style="color: var(--t3);">
-          Itemized receipt ledger with live balance check
+          {{ isEditMode() ? 'Modify itemized receipt, category, date or amount' : 'Itemized receipt ledger with live balance check' }}
         </p>
       </div>
     </div>
@@ -295,20 +302,20 @@
         </div>
 
         <!-- 4. Date & Total Spend Grid -->
-        <div>
+        <div class="w-full min-w-0">
           <label class="sl block">4. DATE & TOTAL SPEND</label>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full min-w-0">
+            <div class="date-field-wrapper w-full min-w-0 max-w-full">
               <label class="text-[11px] font-bold mb-1 block" style="color: var(--t3);">EXPENSE DATE</label>
-              <input class="inp font-semibold"
+              <input class="inp font-semibold w-full min-w-0 max-w-full"
                      type="date"
                      [(ngModel)]="expenseDate" />
             </div>
-            <div>
+            <div class="w-full min-w-0 max-w-full">
               <label class="text-[11px] font-bold mb-1 block" style="color: var(--t3);">TOTAL SPEND (₹)</label>
-              <div class="relative">
+              <div class="relative w-full min-w-0">
                 <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-2xl font-black" style="color: var(--p1);">₹</span>
-                <input class="inp font-black text-2xl"
+                <input class="inp font-black text-2xl w-full min-w-0"
                        style="padding-left: 36px;"
                        type="number"
                        min="0"
@@ -547,7 +554,10 @@
                   class="btn w-full sm:flex-1 py-4 text-sm font-black shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
             @if (savingExpense) {
               <i class="fa-solid fa-spinner fa-spin mr-1 text-sm"></i>
-              <span>Saving to Pool…</span>
+              <span>{{ isEditMode() ? 'Updating Expense…' : 'Saving to Pool…' }}</span>
+            } @else if (isEditMode()) {
+              <i class="fa-solid fa-check mr-1 text-xs"></i>
+              <span>Save Changes & Update Expense (₹{{ expenseTotal || 0 }})</span>
             } @else {
               <i class="fa-solid fa-receipt mr-1 text-xs"></i>
               <span>Log Expense to Pool (₹{{ expenseTotal || 0 }})</span>
@@ -558,7 +568,7 @@
                   (click)="backToPool()"
                   class="w-full sm:w-auto px-6 py-4 rounded-2xl text-xs font-bold border cursor-pointer transition hover:opacity-80"
                   style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
-            Cancel
+            {{ isEditMode() ? 'Cancel Edit' : 'Cancel' }}
           </button>
         </div>
 

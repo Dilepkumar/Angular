@@ -165,6 +165,18 @@ export class PoolComponent implements OnInit {
 
   // ── Out-of-Pocket Reimbursement State ──
   reimbursingOutOfPocket = signal<boolean>(false);
+  isOutOfPocketExpanded = signal<boolean>(false);
+
+  toggleOutOfPocket(): void {
+    this.isOutOfPocketExpanded.update(v => !v);
+  }
+
+  // ── Monthly Roommate Contributions Collapsible State ──
+  isWhoContributedExpanded = signal<boolean>(true);
+
+  toggleWhoContributed(): void {
+    this.isWhoContributedExpanded.update(v => !v);
+  }
 
   // ── Category vs Item-wise vs Monthly Tracking View ──
   breakdownView = signal<'category' | 'items' | 'monthly'>('category');
@@ -238,6 +250,7 @@ export class PoolComponent implements OnInit {
 
   // ── Admin: Shares & Target ──
   showShares = false;
+  savingShares = false;
   realMembers: { userId: number; name: string; monthlyShare: number }[] = [];
   aliasMembers: { aliasName: string; monthlyShare: number }[] = [];
 
@@ -894,6 +907,24 @@ export class PoolComponent implements OnInit {
     return (this.balance()?.memberStatuses || []).length;
   }
 
+  get sortedMemberStatuses(): MemberStatus[] {
+    const list = this.balance()?.memberStatuses || [];
+    return [...list].sort((a, b) => {
+      // 0: pending first, 1: paid last
+      const aPaid = a.hasPaidTarget ? 1 : 0;
+      const bPaid = b.hasPaidTarget ? 1 : 0;
+      if (aPaid !== bPaid) {
+        return aPaid - bPaid;
+      }
+      // Highest pending amount first among pending members
+      const pendingDiff = (b.pendingAmount || 0) - (a.pendingAmount || 0);
+      if (pendingDiff !== 0) {
+        return pendingDiff;
+      }
+      return (a.userName || '').localeCompare(b.userName || '');
+    });
+  }
+
   getMemberProgress(contributed: number, expected: number): number {
     if (!expected || expected <= 0) return 0;
     return Math.min(100, Math.round((contributed / expected) * 100));
@@ -1055,7 +1086,6 @@ export class PoolComponent implements OnInit {
       aliasName: m.userName,
       monthlyShare: m.expectedThisMonth
     }));
-    this.aliasMembers.push({ aliasName: '', monthlyShare: 0 });
     this.showShares = true;
   }
 
@@ -1069,23 +1099,51 @@ export class PoolComponent implements OnInit {
     this.aliasMembers.push({ aliasName: '', monthlyShare: 0 });
   }
 
+  removeAliasRow(index: number): void {
+    this.aliasMembers.splice(index, 1);
+  }
+
+  splitShareEqually(amount?: number): void {
+    const targetAmt = amount !== undefined ? amount : (this.shareTotal || 5000);
+    const namedAliases = this.aliasMembers.filter(a => a.aliasName && a.aliasName.trim().length > 0);
+    const totalCount = this.realMembers.length + namedAliases.length;
+    if (totalCount <= 0) return;
+    const perMember = Math.round(targetAmt / totalCount);
+    this.realMembers.forEach(m => m.monthlyShare = perMember);
+    namedAliases.forEach(a => a.monthlyShare = perMember);
+  }
+
   saveShares(): void {
+    if (this.savingShares) return;
+    this.savingShares = true;
+
     const shares = [
-      ...this.realMembers
-        .filter(m => m.monthlyShare > 0)
-        .map(m => ({ userId: m.userId, aliasName: null, monthlyShare: +m.monthlyShare })),
+      ...this.realMembers.map(m => ({
+        userId: m.userId,
+        aliasName: null,
+        monthlyShare: Math.max(0, +m.monthlyShare || 0)
+      })),
       ...this.aliasMembers
-        .filter(m => m.aliasName.trim() && m.monthlyShare > 0)
-        .map(m => ({ userId: null, aliasName: m.aliasName.trim(), monthlyShare: +m.monthlyShare }))
+        .filter(m => m.aliasName && m.aliasName.trim().length > 0)
+        .map(m => ({
+          userId: null,
+          aliasName: m.aliasName.trim(),
+          monthlyShare: Math.max(0, +m.monthlyShare || 0)
+        }))
     ];
+
     this.api.post<{ message: string }>(`groups/${this.groupId}/pool/shares`, { shares })
       .subscribe({
-        next: () => {
+        next: (res) => {
+          this.savingShares = false;
           this.showShares = false;
-          this.showToast('✅ Monthly shares updated!');
+          this.showToast(`✅ ${res?.message || 'Monthly shares updated!'}`);
           this.load();
         },
-        error: (e) => this.showToast(`❌ ${e.error?.message || 'Failed to update shares'}`)
+        error: (e) => {
+          this.savingShares = false;
+          this.showToast(`❌ ${e.error?.message || 'Failed to update shares'}`);
+        }
       });
   }
 
