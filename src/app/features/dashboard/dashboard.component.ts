@@ -672,4 +672,13 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     }
     return name.slice(0, 2).toUpperCase();
   }
+
+  formatBillName(name?: string): string {
+    if (!name) return '';
+    const lower = name.toLowerCase();
+    if (lower.includes('tgspdcl') || lower.includes('southern power')) {
+      return 'Electricity (TGSPDCL)';
+    }
+    return name;
+  }
 }

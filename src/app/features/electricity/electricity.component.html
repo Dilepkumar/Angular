@@ -1,0 +1,685 @@
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+
+<div class="min-h-screen py-6 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto relative z-10 pb-28">
+
+  <!-- ═══════════════════════════════════════════
+       HEADER & NAVIGATION
+  ═══════════════════════════════════════════ -->
+  <div class="flex items-center justify-between flex-wrap gap-4 mb-6">
+    <div class="flex items-center gap-3">
+      <button type="button"
+              (click)="goToBills()"
+              class="w-10 h-10 rounded-2xl flex items-center justify-center border shadow-sm transition active:scale-95 cursor-pointer header-back-btn"
+              title="Back to Bills">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="m15 18-6-6 6-6"/>
+        </svg>
+      </button>
+      <div>
+        <div class="text-xl font-black tracking-tight flex items-center gap-2 flex-wrap" style="color: var(--text);">
+          <span class="bolt-icon-badge">⚡</span>
+          <span>Electricity Bill Monitoring</span>
+          <span class="text-xs font-black px-2.5 py-0.5 rounded-full uppercase group-badge">
+            {{ groupName() }}
+          </span>
+        </div>
+        <div class="text-xs font-semibold mt-0.5" style="color: var(--t2);">
+          TGSPDCL Online Bill Enquiry &amp; equal roommate split
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <button type="button"
+              (click)="openAddModal()"
+              class="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-sm transition active:scale-95 cursor-pointer btn-add-account">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <path d="M5 12h14m-7-7v14"/>
+        </svg>
+        <span>Add Account</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MULTIPLE METERS SWITCHER (IF > 1)
+  ═══════════════════════════════════════════ -->
+  @if (accounts().length > 1) {
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 mb-4">
+      @for (acc of accounts(); track acc.id) {
+        <button type="button"
+                (click)="selectAccount(acc)"
+                class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer border account-pill"
+                [class.active]="selectedAccount()?.id === acc.id">
+          <span>⚡ {{ acc.billerName }}</span>
+          <span class="opacity-75">({{ acc.consumerNumber }})</span>
+        </button>
+      }
+    </div>
+  }
+
+  <!-- ═══════════════════════════════════════════
+       LOADING STATE
+  ═══════════════════════════════════════════ -->
+  @if (loading()) {
+    <div class="card p-12 text-center my-6">
+      <div class="spinner mx-auto mb-3"></div>
+      <div class="text-sm font-bold" style="color: var(--text);">Connecting to TGSPDCL gateway...</div>
+      <div class="text-xs" style="color: var(--t2);">Retrieving latest consumer bills and monitoring records</div>
+    </div>
+  }
+
+  <!-- ═══════════════════════════════════════════
+       EMPTY STATE (NO ELECTRICITY ACCOUNTS)
+  ═══════════════════════════════════════════ -->
+  @if (!loading() && accounts().length === 0) {
+    <div class="card empty-card text-center p-10 my-6">
+      <div class="w-16 h-16 rounded-3xl mx-auto mb-4 flex items-center justify-center text-3xl empty-icon-wrap">
+        ⚡
+      </div>
+      <h3 class="text-lg font-black mb-1" style="color: var(--text);">No Electricity Accounts Added</h3>
+      <p class="text-xs max-w-md mx-auto mb-6" style="color: var(--t2);">
+        Connect your flat's electricity provider (TGSPDCL, TGNPDCL, BESCOM, TNEB, MSEDCL, and all Indian discoms).
+        RoomLedger will automatically check for new bills twice a day and split them equally among roommates!
+      </p>
+      <button type="button"
+              (click)="openAddModal()"
+              class="px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider inline-flex items-center gap-2 shadow-lg transition active:scale-95 cursor-pointer btn-primary-gradient">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <path d="M5 12h14m-7-7v14"/>
+        </svg>
+        <span>Add Electricity Account</span>
+      </button>
+    </div>
+  }
+
+  <!-- ═══════════════════════════════════════════
+       MAIN ACCOUNT MONITORING CARD
+  ═══════════════════════════════════════════ -->
+  @if (!loading() && selectedAccount(); as acc) {
+    <div class="space-y-6">
+
+      <!-- ACCOUNT SUMMARY & STATUS CARD -->
+      <div class="card p-6 relative overflow-hidden meter-summary-card">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-5" style="border-color: var(--border);">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl meter-logo-badge">
+              ⚡
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="text-lg font-black tracking-tight" style="color: var(--text);">
+                  {{ acc.billerName }}
+                </h2>
+                <span class="text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider status-pill"
+                      [ngClass]="getStatusBadgeClass(acc.monitoringStatus)">
+                  {{ getStatusLabel(acc.monitoringStatus) }}
+                </span>
+              </div>
+              <div class="text-xs font-semibold mt-1 flex items-center gap-3 flex-wrap" style="color: var(--t2);">
+                <span><strong style="color: var(--text);">Consumer No:</strong> {{ acc.consumerNumber }}</span>
+                @if (acc.customerName) {
+                  <span>•</span>
+                  <span><strong style="color: var(--text);">Name:</strong> {{ acc.customerName }}</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- MANUAL CHECK BUTTON & DAILY LIMIT -->
+          <div class="flex flex-col sm:items-end gap-2">
+            <button type="button"
+                    (click)="checkBill()"
+                    [disabled]="checking() || acc.remainingManualChecksToday <= 0"
+                    class="px-5 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase flex items-center justify-center gap-2 shadow-md transition active:scale-95 cursor-pointer btn-manual-check"
+                    [class.disabled-btn]="acc.remainingManualChecksToday <= 0">
+              @if (checking()) {
+                <div class="spinner-sm"></div>
+                <span>Checking TGSPDCL...</span>
+              } @else {
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.85.83 6.72 2.24L21 8"/>
+                  <path d="M21 3v5h-5"/>
+                </svg>
+                <span>Check Bill Now</span>
+              }
+            </button>
+
+            <!-- Remaining Limit Badge / Reached Warning -->
+            <div class="text-right">
+              @if (acc.remainingManualChecksToday > 0) {
+                <div class="text-[11px] font-bold check-limit-note">
+                  <i class="fa-solid fa-clock-rotate-left mr-1"></i>
+                  Manual checks remaining today: <strong class="text-emerald-500">{{ acc.remainingManualChecksToday }} / 2</strong>
+                </div>
+              } @else {
+                <div class="text-[11px] font-black px-2.5 py-1 rounded-lg check-limit-reached-badge">
+                  <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+                  You have reached today's 2 check limit.
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- TIMELINE & SCHEDULE META BAR -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 text-xs">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center meta-icon-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <div>
+              <div class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--t2);">Last Checked</div>
+              <div class="font-black" style="color: var(--text);">
+                {{ acc.lastCheckedAt ? (acc.lastCheckedAt | date:'medium') : 'Just registered' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center meta-icon-box auto-check-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"/>
+              </svg>
+            </div>
+            <div>
+              <div class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--t2);">Next Automatic Check</div>
+              <div class="font-black text-sky-400">
+                {{ acc.nextCheckAt ? (acc.nextCheckAt | date:'medium') : 'Scheduled at next 10 AM/PM cycle' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-2.5 sm:justify-end">
+            <button type="button"
+                    (click)="openLogsModal()"
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold border transition hover:bg-black/5 cursor-pointer view-logs-btn">
+              <i class="fa-solid fa-list-check mr-1.5"></i>
+              <span>View Audit Logs</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════
+           CURRENT BILL CARD (IF BILL EXISTS)
+      ═══════════════════════════════════════════ -->
+      @if (acc.latestBill; as bill) {
+        <div class="card p-6 bill-details-card">
+          <div class="flex items-center justify-between flex-wrap gap-2 mb-4 pb-3 border-b" style="border-color: var(--border);">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-sm font-black uppercase tracking-wider" style="color: var(--text);">
+                Current Billing Cycle
+              </span>
+              @if (bill.billPeriod) {
+                <span class="text-xs font-bold px-2 py-0.5 rounded-md bill-period-pill">
+                  {{ bill.billPeriod }}
+                </span>
+              }
+              @if (bill.isPaidAtProvider) {
+                <span class="text-xs font-black px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5 shadow-sm"
+                      style="background: rgba(16, 185, 129, 0.16); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+                  <i class="fa-solid fa-circle-check text-xs"></i> Paid at TGSPDCL (Settled via PhonePe / Portal)
+                </span>
+              }
+            </div>
+            <div class="text-xs font-semibold" style="color: var(--t2);">
+              Provider Ref: <span class="font-mono" style="color: var(--text);">{{ bill.providerReference || 'TGSPDCL-OK' }}</span>
+            </div>
+          </div>
+
+          <!-- AMOUNTS & DATES GRID -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div class="stat-box p-3 rounded-2xl">
+              <div class="text-[11px] font-bold uppercase" style="color: var(--t2);">Bill Number</div>
+              <div class="text-sm font-black truncate" style="color: var(--text);">
+                {{ bill.billNumber || 'N/A' }}
+              </div>
+            </div>
+
+            <div class="stat-box p-3 rounded-2xl">
+              <div class="text-[11px] font-bold uppercase" style="color: var(--t2);">Bill Date</div>
+              <div class="text-sm font-black" style="color: var(--text);">
+                {{ bill.billDate ? (bill.billDate | date:'mediumDate') : 'Current' }}
+              </div>
+            </div>
+
+            <div class="stat-box p-3 rounded-2xl">
+              <div class="text-[11px] font-bold uppercase text-amber-500">Due Date</div>
+              <div class="text-sm font-black text-amber-400">
+                {{ bill.dueDate ? (bill.dueDate | date:'mediumDate') : 'On Receipt' }}
+              </div>
+            </div>
+
+            <div class="stat-box p-3 rounded-2xl highlight-total">
+              @if (bill.isPaidAtProvider) {
+                <div class="text-[11px] font-bold uppercase text-emerald-400">Due at TGSPDCL</div>
+                <div class="text-lg font-black text-emerald-300 flex items-center gap-1">
+                  <i class="fa-solid fa-circle-check text-xs"></i> ₹0.00 (PAID)
+                </div>
+                <div class="text-[10px]" style="color: var(--t2);">Bill ₹{{ bill.totalAmount | number:'1.2-2' }} settled</div>
+              } @else {
+                <div class="text-[11px] font-bold uppercase text-emerald-400">Total Payable</div>
+                <div class="text-xl font-black text-emerald-300">
+                  ₹{{ bill.totalAmount | number:'1.2-2' }}
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- DETAILED CHARGES BREAKDOWN -->
+          <div class="rounded-2xl p-4 charges-breakdown-box mb-6">
+            <div class="text-xs font-black uppercase tracking-wider mb-2.5" style="color: var(--t2);">
+              Charges Breakdown
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div>
+                <span style="color: var(--t2);">Current Electricity:</span>
+                <span class="font-bold ml-1" style="color: var(--text);">₹{{ bill.billAmount | number:'1.2-2' }}</span>
+              </div>
+              <div>
+                <span style="color: var(--t2);">ACD Amount:</span>
+                <span class="font-bold ml-1" style="color: var(--text);">₹{{ (bill.acdAmount || 0) | number:'1.2-2' }}</span>
+              </div>
+              <div>
+                <span style="color: var(--t2);">Previous Arrears:</span>
+                <span class="font-bold ml-1" [class.text-rose-400]="bill.arrears > 0" style="color: var(--text);">₹{{ bill.arrears | number:'1.2-2' }}</span>
+              </div>
+              <div>
+                <span style="color: var(--t2);">Late Surcharge:</span>
+                <span class="font-bold ml-1" [class.text-rose-400]="bill.lateFee > 0" style="color: var(--text);">₹{{ bill.lateFee | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- GROUP SPLIT BREAKDOWN -->
+          <div class="border-t pt-5" style="border-color: var(--border);">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <div>
+                <h4 class="text-sm font-black flex items-center gap-2" style="color: var(--text);">
+                  <i class="fa-solid fa-users-viewfinder text-indigo-400"></i>
+                  <span>Roommate Equal Split (Bill Total ÷ Flatmates)</span>
+                </h4>
+                <div class="text-xs" style="color: var(--t2);">
+                  Bill total split equally across all active group roommates
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-black px-2.5 py-1 rounded-lg split-status-pill">
+                  Auto-Split Active
+                </span>
+                <button type="button"
+                        (click)="goToBills()"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold border transition hover:bg-black/5 cursor-pointer flex items-center gap-1.5"
+                        style="border-color: var(--border); color: var(--text);"
+                        title="View & Settle in Monthly Bills Checklist">
+                  <i class="fa-solid fa-receipt text-indigo-400"></i>
+                  <span>Bills Checklist</span>
+                  <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- PER PERSON SHARE HIGHLIGHT BANNER -->
+            <div class="p-4 rounded-2xl mb-4 flex items-center justify-between flex-wrap gap-3"
+                 style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.08)); border: 1.5px solid rgba(99, 102, 241, 0.25);">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg shadow-sm"
+                     style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;">
+                  <i class="fa-solid fa-calculator"></i>
+                </div>
+                <div>
+                  <div class="text-[11px] font-bold uppercase tracking-wider text-indigo-400">Per Person Share</div>
+                  <div class="text-2xl font-black text-indigo-200">
+                    ₹{{ perPersonShare() | number:'1.2-2' }}
+                    <span class="text-xs font-normal" style="color: var(--t2);">/ person</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="text-right">
+                <div class="text-xs font-bold" style="color: var(--t2);">
+                  ₹{{ bill.totalAmount | number:'1.2-2' }} ÷ {{ splitMemberCount() }} flatmates
+                </div>
+                <div class="text-[11px] font-semibold text-emerald-400 mt-0.5">
+                  <i class="fa-solid fa-circle-check mr-1"></i> Synchronized with Bills Checklist
+                </div>
+              </div>
+            </div>
+
+            @if (loadingSplits()) {
+              <div class="py-6 text-center text-xs" style="color: var(--t2);">
+                <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Loading roommate splits...
+              </div>
+            } @else if (splits(); as s) {
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                @for (member of s.splits; track member.userId) {
+                  <div class="p-3 rounded-2xl flex items-center justify-between border member-split-card">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center avatar-box">
+                        {{ member.userName.charAt(0) }}
+                      </div>
+                      <div>
+                        <div class="text-xs font-black" style="color: var(--text);">{{ member.userName }}</div>
+                        <div class="text-[10px]" style="color: var(--t2);">Equal Share</div>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-sm font-black text-indigo-300">₹{{ member.shareAmount | number:'1.2-2' }}</div>
+                      <div class="text-[10px] font-bold" [class.text-emerald-400]="member.isPaid" [class.text-amber-400]="!member.isPaid">
+                        {{ member.isPaid ? 'PAID' : 'PENDING' }}
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- CYCLE MONITORING NOTE -->
+          <div class="mt-5 p-3.5 rounded-xl flex items-start gap-3 bg-black/20 text-xs" style="color: var(--t2);">
+            <i class="fa-solid fa-shield-halved text-sky-400 mt-0.5"></i>
+            <div>
+              <strong style="color: var(--text);">Billing Cycle Handled:</strong>
+              This cycle is saved and split. RoomLedger will resume checking <strong>2–3 days before next month's expected bill date</strong> ({{ acc.estimatedNextBillDate ? (acc.estimatedNextBillDate | date:'mediumDate') : 'next cycle' }}).
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ═══════════════════════════════════════════
+           NO BILL GENERATED YET CARD
+      ═══════════════════════════════════════════ -->
+      @if (!acc.latestBill || acc.monitoringStatus === 'NO_BILL' || acc.monitoringStatus === 'MONITORING') {
+        @if (!acc.latestBill) {
+          <div class="card p-8 text-center no-bill-card">
+            <div class="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center text-2xl radar-box">
+              📡
+            </div>
+            <h3 class="text-base font-black mb-1" style="color: var(--text);">Bill not generated yet</h3>
+            <p class="text-xs max-w-md mx-auto mb-4" style="color: var(--t2);">
+              Automatic monitoring is active. RoomLedger checks TGSPDCL twice daily (10:00 AM &amp; 10:00 PM IST).
+              As soon as {{ acc.billerName }} releases the bill, it will be automatically fetched, saved, and split equally among all flatmates.
+            </p>
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-sky-500/10 text-sky-300 border border-sky-500/20">
+              <i class="fa-solid fa-bell"></i>
+              <span>Next automatic check: {{ acc.nextCheckAt ? (acc.nextCheckAt | date:'medium') : 'Next scheduled 10 AM/PM cycle' }}</span>
+            </div>
+          </div>
+        }
+      }
+
+    </div>
+  }
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODAL: ADD ELECTRICITY ACCOUNT
+═══════════════════════════════════════════ -->
+@if (showAddModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-md">
+    <div class="card max-w-xl w-full flex flex-col min-h-[520px] max-h-[90vh] add-account-modal shadow-2xl overflow-hidden">
+      
+      <!-- Modal Header (Pinned) -->
+      <div class="flex items-center justify-between p-5 border-b shrink-0" style="border-color: var(--border);">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl modal-icon-box shrink-0">
+            ⚡
+          </div>
+          <div>
+            <h3 class="text-base font-black tracking-tight" style="color: var(--text);">Add Electricity Account</h3>
+            <p class="text-xs font-semibold" style="color: var(--t2);">Connect with TGSPDCL Online Bill Enquiry</p>
+          </div>
+        </div>
+        <button type="button"
+                (click)="closeAddModal()"
+                class="w-9 h-9 rounded-xl flex items-center justify-center text-base transition hover:bg-black/10 cursor-pointer"
+                style="color: var(--t2);">
+          ✕
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable with plenty of room) -->
+      <div class="flex-1 overflow-y-auto p-5 space-y-5">
+
+        <!-- Step 1: Select Electricity Biller (Discom) -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-xs font-bold uppercase tracking-wider" style="color: var(--text);">
+              Select Electricity Biller (Discom)
+            </label>
+            @if (selectedBillerId && selectedBillerDetail()) {
+              <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                ✓ Provider Connected
+              </span>
+            }
+          </div>
+
+          <!-- Searchable Combobox Field -->
+          <div class="relative flex items-center">
+            <span class="absolute left-3.5 text-base pointer-events-none opacity-80">⚡</span>
+            <input type="text"
+                   [(ngModel)]="billerSearch"
+                   (focus)="billerDropdownOpen.set(true)"
+                   (input)="billerDropdownOpen.set(true)"
+                   placeholder="Search electricity biller (e.g. TGSPDCL, BESCOM, TNEB, MSEDCL)..."
+                   class="w-full pl-10 pr-24 py-2.5 rounded-xl border text-xs font-bold form-input" />
+
+            <div class="absolute right-2 flex items-center gap-1">
+              @if (billerSearch) {
+                <button type="button"
+                        (click)="clearBillerSelection()"
+                        class="w-7 h-7 rounded-lg flex items-center justify-center text-xs opacity-60 hover:opacity-100 transition cursor-pointer"
+                        title="Clear">
+                  ✕
+                </button>
+              }
+              <button type="button"
+                      (click)="toggleBillerDropdown()"
+                      class="px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer hover:bg-black/10"
+                      style="color: var(--t2);">
+                <span class="text-[10px] hidden sm:inline">{{ billerDropdownOpen() ? 'Hide' : 'Browse' }}</span>
+                <i class="fa-solid text-[10px]" [class.fa-chevron-up]="billerDropdownOpen()" [class.fa-chevron-down]="!billerDropdownOpen()"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Embedded Expandable Biller List (Normal Flow - No Overflow Clipping!) -->
+          @if (billerDropdownOpen()) {
+            <div class="mt-2.5 rounded-2xl border shadow-lg max-h-60 overflow-y-auto biller-dropdown-panel">
+              @if (loadingBillers()) {
+                <div class="p-6 text-center text-xs font-bold" style="color: var(--t2);">
+                  <div class="spinner-sm mx-auto mb-2"></div>
+                  Loading electricity billers...
+                </div>
+              } @else if (filteredBillers().length === 0) {
+                <div class="p-6 text-center text-xs" style="color: var(--t2);">
+                  No electricity provider found matching "<strong style="color: var(--text);">{{ billerSearch }}</strong>"
+                  <div class="mt-2">
+                    <button type="button"
+                            (click)="clearBillerSelection()"
+                            class="text-[11px] font-bold text-amber-500 underline cursor-pointer">
+                      View all billers
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <div class="p-1.5 space-y-1">
+                  <div class="text-[10px] font-black uppercase px-2 py-1 flex items-center justify-between" style="color: var(--t2);">
+                    <span>Choose Provider ({{ filteredBillers().length }} available)</span>
+                    <span>Click to select</span>
+                  </div>
+                  @for (b of filteredBillers(); track b.id) {
+                    <div (click)="selectBillerItem(b)"
+                         class="p-2.5 rounded-xl transition flex items-center justify-between cursor-pointer border biller-option-item"
+                         [class.selected]="selectedBillerId === b.id">
+                      <div class="flex items-center gap-2.5 min-w-0 pr-2">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black biller-avatar-tag shrink-0">
+                          ⚡
+                        </div>
+                        <div class="min-w-0">
+                          <div class="text-xs font-bold truncate" style="color: var(--text);">
+                            {{ b.name }}
+                          </div>
+                          <div class="text-[10px] flex items-center gap-1.5 mt-0.5" style="color: var(--t2);">
+                            @if (b.state) {
+                              <span class="font-semibold px-1.5 py-0.2 rounded text-[9px] bg-amber-500/10 text-amber-400">{{ b.state }}</span>
+                            }
+                            <span class="font-mono opacity-70 text-[10px]">{{ b.id }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="shrink-0">
+                        @if (selectedBillerId === b.id) {
+                          <span class="text-xs font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">Selected ✓</span>
+                        } @else {
+                          <span class="text-[11px] font-bold text-amber-500 opacity-60 hover:opacity-100">Select →</span>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Step 2: Dynamic Biller Parameters -->
+        @if (loadingBillerDetail()) {
+          <div class="card p-5 text-center text-xs font-bold my-2" style="color: var(--t2);">
+            <div class="spinner-sm mx-auto mb-2"></div>
+            Connecting to TGSPDCL to load consumer parameters...
+          </div>
+        }
+
+        @if (selectedBillerDetail(); as detail) {
+          <div class="space-y-3.5 pt-1">
+            <div class="text-xs font-black uppercase tracking-wider flex items-center justify-between pb-1 border-b" style="border-color: var(--border); color: var(--t2);">
+              <span>Consumer / Meter Parameters</span>
+              <span class="text-[10px] text-sky-400 font-bold">TGSPDCL Official Schema</span>
+            </div>
+
+            @for (p of detail.customerParams; track p.paramId) {
+              <div>
+                <label class="block text-xs font-bold mb-1" style="color: var(--text);">
+                  {{ p.paramName.replace('(Optional)', '').trim() }}
+                  @if (!p.isOptional) {
+                    <span class="text-rose-500">*</span>
+                  } @else {
+                    <span class="text-[10px] font-normal" style="color: var(--t2);">(Optional)</span>
+                  }
+                </label>
+                <input type="text"
+                       [(ngModel)]="dynamicParamValues[p.paramId]"
+                       [placeholder]="p.hint || 'Enter ' + p.paramName"
+                       [required]="!p.isOptional"
+                       class="w-full px-3.5 py-2.5 rounded-xl border text-xs font-medium form-input" />
+                @if (p.hint) {
+                  <p class="text-[10px] mt-1" style="color: var(--t2);">{{ p.hint }}</p>
+                }
+              </div>
+            }
+
+            <!-- Optional Initial Expected Bill Day -->
+            <div class="pt-2 border-t" style="border-color: var(--border);">
+              <label class="block text-xs font-bold mb-1" style="color: var(--text);">
+                Expected Bill Day of Month (Optional)
+              </label>
+              <input type="number"
+                     min="1"
+                     max="31"
+                     [(ngModel)]="expectedBillDayOfMonth"
+                     placeholder="e.g. 5 or 10 (day of month)"
+                     class="w-full px-3.5 py-2.5 rounded-xl border text-xs form-input" />
+              <p class="text-[10px] mt-1" style="color: var(--t2);">
+                Used for initial monitoring estimation until consumer bill history is established.
+              </p>
+            </div>
+          </div>
+        }
+
+      </div>
+
+      <!-- Modal Footer (Compact & Slim) -->
+      <div class="flex items-center justify-end gap-2.5 px-5 py-3 border-t shrink-0" style="border-color: var(--border);">
+        <button type="button"
+                (click)="closeAddModal()"
+                class="px-4 py-2 rounded-xl text-xs font-bold border transition hover:bg-black/5 cursor-pointer"
+                style="color: var(--text);">
+          Cancel
+        </button>
+        <button type="button"
+                (click)="saveAccount()"
+                [disabled]="submitting() || !selectedBillerId"
+                class="px-5 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition active:scale-95 cursor-pointer btn-primary-gradient"
+                [class.disabled-btn]="submitting() || !selectedBillerId">
+          @if (submitting()) {
+            <div class="spinner-sm"></div>
+            <span>Connecting...</span>
+          } @else {
+            <span>Save &amp; Monitor Meter</span>
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════
+     MODAL: AUDIT LOGS
+═══════════════════════════════════════════ -->
+@if (showLogsModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div class="card max-w-lg w-full p-6 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b mb-4" style="border-color: var(--border);">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-indigo-400"></i>
+          <h3 class="text-sm font-black" style="color: var(--text);">Electricity Check Audit Logs</h3>
+        </div>
+        <button type="button"
+                (click)="closeLogsModal()"
+                class="w-7 h-7 rounded-lg flex items-center justify-center transition hover:bg-black/10 cursor-pointer"
+                style="color: var(--t2);">
+          ✕
+        </button>
+      </div>
+
+      @if (monitoringStatus(); as status) {
+        <div class="space-y-3">
+          @if (status.recentLogs.length === 0) {
+            <div class="text-xs text-center py-6" style="color: var(--t2);">No check logs recorded yet.</div>
+          } @else {
+            @for (log of status.recentLogs; track log.id) {
+              <div class="p-3 rounded-xl border text-xs space-y-1 log-item-box">
+                <div class="flex items-center justify-between">
+                  <span class="font-black px-2 py-0.5 rounded text-[10px] uppercase"
+                        [ngClass]="log.checkType === 'MANUAL' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-emerald-500/20 text-emerald-300'">
+                    {{ log.checkType }} CHECK
+                  </span>
+                  <span class="text-[10px]" style="color: var(--t2);">
+                    {{ log.checkedAt | date:'medium' }}
+                  </span>
+                </div>
+                <div class="font-bold flex items-center gap-1.5" style="color: var(--text);">
+                  <span>Status:</span>
+                  <span class="uppercase" [ngClass]="log.status === 'BILL_GENERATED' ? 'text-emerald-400' : (log.status === 'PROVIDER_ERROR' ? 'text-rose-400' : 'text-amber-400')">
+                    {{ log.status }}
+                  </span>
+                </div>
+                @if (log.message) {
+                  <div class="text-[11px]" style="color: var(--t2);">{{ log.message }}</div>
+                }
+              </div>
+            }
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

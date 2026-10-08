@@ -1,0 +1,220 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+
+  &.b1 { width: 320px; height: 320px; background: #f59e0b; top: -60px; right: -60px; }
+  &.b2 { width: 360px; height: 360px; background: #6366f1; bottom: -60px; left: -60px; }
+}
+
+.bolt-icon-badge {
+  font-size: 1.25rem;
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6));
+  animation: pulse-glow 2.5s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.4)); }
+  50% { transform: scale(1.1); filter: drop-shadow(0 0 14px rgba(245, 158, 11, 0.8)); }
+}
+
+.header-back-btn {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text);
+  &:hover { background: color-mix(in srgb, var(--card) 85%, #000); }
+}
+
+.group-badge {
+  background: color-mix(in srgb, #f59e0b 16%, transparent);
+  color: #f59e0b;
+  border: 1px solid color-mix(in srgb, #f59e0b 30%, transparent);
+}
+
+.btn-add-account {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+  &:hover { filter: brightness(1.08); }
+}
+
+.account-pill {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text);
+  &.active {
+    background: color-mix(in srgb, #f59e0b 15%, var(--card));
+    border-color: #f59e0b;
+    color: #f59e0b;
+  }
+}
+
+.meter-summary-card {
+  border: 1px solid color-mix(in srgb, #f59e0b 20%, var(--border));
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+}
+
+.meter-logo-badge {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.status-pill {
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  &.badge-bill-generated {
+    background: rgba(99, 102, 241, 0.16); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.35);
+  }
+  &.badge-monitoring {
+    background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35);
+  }
+  &.badge-no-bill {
+    background: rgba(245, 158, 11, 0.16); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35);
+  }
+  &.badge-error {
+    background: rgba(244, 63, 94, 0.16); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.35);
+  }
+  &.badge-invalid {
+    background: rgba(239, 68, 68, 0.16); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35);
+  }
+  &.badge-default { background: rgba(148, 163, 184, 0.16); color: #94a3b8; }
+}
+
+.btn-manual-check {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  border: none;
+  &:hover:not(:disabled) { filter: brightness(1.1); }
+  &.disabled-btn { opacity: 0.55; cursor: not-allowed; background: #64748b; box-shadow: none; }
+}
+
+.check-limit-note { color: var(--t2); }
+.check-limit-reached-badge {
+  background: rgba(244, 63, 94, 0.15);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.3);
+}
+
+.meta-icon-box {
+  background: color-mix(in srgb, var(--card) 60%, transparent);
+  border: 1px solid var(--border);
+  color: var(--t2);
+  &.auto-check-icon {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+    border-color: rgba(56, 189, 248, 0.25);
+  }
+}
+
+.view-logs-btn {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.bill-details-card { border: 1px solid color-mix(in srgb, #6366f1 25%, var(--border)); }
+.bill-period-pill, .split-status-pill {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.stat-box {
+  background: color-mix(in srgb, var(--card) 60%, transparent);
+  border: 1px solid var(--border);
+  &.highlight-total {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.05) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+  }
+}
+
+.charges-breakdown-box {
+  background: color-mix(in srgb, var(--card) 50%, transparent);
+  border: 1px solid var(--border);
+}
+
+.member-split-card { background: var(--card); border-color: var(--border); }
+.avatar-box { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #ffffff; }
+.no-bill-card, .empty-card { border: 1px dashed color-mix(in srgb, #f59e0b 35%, var(--border)); }
+.radar-box, .empty-icon-wrap, .modal-icon-box {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.btn-primary-gradient {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  border: none;
+  &:hover:not(:disabled) { filter: brightness(1.1); }
+  &.disabled-btn { opacity: 0.5; cursor: not-allowed; }
+}
+
+.form-input, .form-select {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text);
+  &:focus {
+    outline: none;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+  }
+}
+
+.log-item-box {
+  background: color-mix(in srgb, var(--card) 60%, transparent);
+  border-color: var(--border);
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(245, 158, 11, 0.2);
+  border-top-color: #f59e0b;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner-sm {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.biller-dropdown-panel {
+  background: var(--card);
+  border-color: color-mix(in srgb, #f59e0b 25%, var(--border));
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.4);
+}
+
+.biller-option-item {
+  &:hover {
+    background: color-mix(in srgb, #f59e0b 12%, var(--card));
+  }
+  &.selected {
+    background: color-mix(in srgb, #f59e0b 20%, var(--card));
+    border: 1px solid color-mix(in srgb, #f59e0b 40%, transparent);
+  }
+}
+
+.biller-avatar-tag {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+

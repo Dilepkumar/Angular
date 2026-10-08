@@ -97,9 +97,9 @@
          class="card p-5 sm:p-6 rounded-3xl relative overflow-hidden cursor-pointer transition hover:scale-[1.01] active:scale-[0.99] group select-none"
          style="background: var(--kpi1); border-color: color-mix(in srgb, var(--p1) 25%, transparent);"
          title="Open Pool Page">
-      <div class="flex justify-between items-center mb-3.5">
+      <div class="flex justify-between items-center mb-3">
         <span class="sl mb-0 flex items-center gap-1 group-hover:text-teal-600 transition">
-          <span>POOL FUND</span>
+          <span>AVAILABLE POOL BALANCE</span>
           <span class="text-[10px]">→</span>
         </span>
         <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
@@ -107,11 +107,23 @@
           <i class="fa-solid fa-wallet"></i>
         </div>
       </div>
-      <div class="text-2xl sm:text-3xl font-black tracking-tight mb-1" style="color: var(--text);">
-        ₹{{ poolBalance() | number:'1.0-0' }}
+
+      <div class="flex items-baseline gap-2 mb-1 flex-wrap">
+        <div class="text-2xl sm:text-3xl font-black tracking-tight" style="color: var(--text);">
+          ₹{{ poolBalance() | number:'1.0-0' }}
+        </div>
+        <span class="text-[11px] font-black px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+              style="background: color-mix(in srgb, var(--p1) 18%, transparent); color: var(--p1);">
+          <i class="fa-solid fa-circle-check text-[10px]"></i> Available
+        </span>
       </div>
-      <div class="text-xs font-semibold mb-3.5" style="color: var(--t2);">
-        of ₹{{ poolTarget() | number:'1.0-0' }} monthly budget
+
+      <div class="text-xs font-semibold mb-3.5 flex items-center gap-1.5 flex-wrap" style="color: var(--t2);">
+        <span>of ₹{{ poolTarget() | number:'1.0-0' }} monthly budget</span>
+        @if (poolSpentThisMonth() > 0) {
+          <span>•</span>
+          <span class="font-bold" style="color: var(--warn);">₹{{ poolSpentThisMonth() | number:'1.0-0' }} spent</span>
+        }
       </div>
       
       <!-- Progress Bar -->
@@ -119,7 +131,7 @@
         <div class="pf" [style.width.%]="poolRemainingPercentage()"></div>
       </div>
       <div class="flex justify-between text-[11px] font-extrabold">
-        <span style="color: var(--p1);">{{ poolRemainingPercentage() | number:'1.0-1' }}% remaining</span>
+        <span style="color: var(--p1);">{{ poolRemainingPercentage() | number:'1.0-1' }}% available</span>
         <span style="color: var(--t3);">Open Pool →</span>
       </div>
     </div>
@@ -155,7 +167,7 @@
           <span class="text-[10px] font-black px-2 py-0.5 rounded-full"
                 [style.background]="b.isPaid ? 'color-mix(in srgb, var(--ok) 15%, transparent)' : 'color-mix(in srgb, var(--warn) 15%, transparent)'"
                 [style.color]="b.isPaid ? 'var(--ok)' : 'var(--warn)'">
-            {{ b.billName }} ({{ b.isPaid ? 'Paid' : 'Due ' + b.dueDay + 'th' }})
+            {{ formatBillName(b.billName) }} ({{ b.isPaid ? 'Paid' : 'Due ' + b.dueDay + 'th' }})
           </span>
         }
       </div>
@@ -769,7 +781,7 @@
           <div class="flex justify-between items-start mb-3">
             <div>
               <div class="text-2xl mb-1">{{ getBillIcon(bill.billName) }}</div>
-              <div class="text-base font-extrabold" style="color: var(--text);">{{ bill.billName }}</div>
+              <div class="text-base font-extrabold" style="color: var(--text);">{{ formatBillName(bill.billName) }}</div>
               <div class="text-xs font-semibold" style="color: var(--t3);">Due on {{ bill.dueDay }}th of month</div>
             </div>
             <div class="text-right">

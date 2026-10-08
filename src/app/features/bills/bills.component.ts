@@ -214,6 +214,10 @@ export class BillsComponent implements OnInit {
   }
 
   sendReminder(bill: any): void {
+    if (!this.isAdmin) {
+      this.popup.warning('Only group Admin can send bill payment reminders.');
+      return;
+    }
     const id = bill.id || bill.billId;
     if (!id) return;
     this.api.post<any>(`groups/${this.groupId}/bills/${id}/remind`, {}).subscribe({
@@ -228,9 +232,14 @@ export class BillsComponent implements OnInit {
   }
 
   async deleteBill(bill: any): Promise<void> {
+    if (!this.isAdmin) {
+      this.popup.warning('Only group Admin can deactivate recurring bills.');
+      return;
+    }
+
     const confirmed = await this.popup.confirm({
       title: 'Deactivate Bill',
-      message: `Are you sure you want to deactivate "${bill.billName}"? This will stop recurring splits for future months.`,
+      message: `Are you sure you want to deactivate "${bill.billName}"? This will remove it from this month's checklist and stop recurring splits.`,
       confirmText: 'Deactivate',
       cancelText: 'Keep Active',
       type: 'danger'
@@ -238,12 +247,36 @@ export class BillsComponent implements OnInit {
     if (!confirmed) return;
 
     const id = bill.id || bill.billId;
+
+    // Optimistic UI update: Immediately remove from the screen
+    const current = this.overview();
+    if (current && current.bills) {
+      const remainingBills = current.bills.filter(b => String(b.id) !== String(id) && String((b as any).billId) !== String(id));
+      let totalDue = 0;
+      let totalPaid = 0;
+      for (const b of remainingBills) {
+        for (const s of b.splits) {
+          if (s.isPaid) totalPaid += s.shareAmount;
+          else totalDue += s.shareAmount;
+        }
+      }
+      this.overview.set({
+        ...current,
+        totalDue,
+        totalPaid,
+        bills: remainingBills
+      });
+    }
+
     this.api.delete<any>(`groups/${this.groupId}/bills/${id}`).subscribe({
       next: () => {
         this.popup.success(`🗑️ "${bill.billName}" deactivated`);
         this.load();
       },
-      error: (e) => this.popup.error(`❌ ${e.error?.message || 'Failed to deactivate bill'}`)
+      error: (e) => {
+        this.popup.error(`❌ ${e.error?.message || 'Failed to deactivate bill'}`);
+        this.load();
+      }
     });
   }
 
@@ -284,5 +317,18 @@ export class BillsComponent implements OnInit {
 
   goToDashboard(): void {
     this.router.navigate(['/g', this.groupId, 'dashboard']);
+  }
+
+  goToElectricity(): void {
+    this.router.navigate(['/g', this.groupId, 'electricity']);
+  }
+
+  formatBillName(name?: string): string {
+    if (!name) return '';
+    const lower = name.toLowerCase();
+    if (lower.includes('tgspdcl') || lower.includes('southern power')) {
+      return 'Electricity (TGSPDCL)';
+    }
+    return name;
   }
 }

@@ -203,3 +203,125 @@ export interface MemberStatus {
   isAdmin?: boolean;
   role?: string;
 }
+
+// ── Electricity Bill Monitoring ──
+export interface ElectricityBiller {
+  id: string;
+  name: string;
+  category: string;
+  state?: string;
+  coverage?: string;
+  isActive: boolean;
+}
+
+export interface ElectricityCustomerParam {
+  paramId: string;
+  paramName: string;
+  dataType: string;
+  isOptional: boolean;
+  minLength?: number;
+  maxLength?: number;
+  regex?: string;
+  hint?: string;
+}
+
+export interface ElectricityBillerDetail {
+  billerId: string;
+  billerName: string;
+  category: string;
+  state?: string;
+  customerParams: ElectricityCustomerParam[];
+}
+
+export interface ElectricityBill {
+  id: number;
+  electricityBillId: number;
+  electricityAccountId: number;
+  groupId: number;
+  billerId: string;
+  billerName: string;
+  consumerNumber: string;
+  customerName?: string;
+  billNumber?: string;
+  billDate?: string;
+  billPeriod?: string;
+  dueDate?: string;
+  billAmount: number;
+  acdAmount?: number;
+  arrears: number;
+  lateFee: number;
+  totalAmount: number;
+  providerReference?: string;
+  fetchSource: string;
+  isSplitCreated: boolean;
+  isPaidAtProvider?: boolean;
+  paidAtProviderDate?: string;
+  createdAt: string;
+}
+
+export interface ElectricityAccount {
+  id: number;
+  electricityAccountId: number;
+  groupId: number;
+  billerId: string;
+  billerName: string;
+  consumerNumber: string;
+  customerParameters: Record<string, string>;
+  customerName?: string;
+  createdByUserId: number;
+  isActive: boolean;
+  expectedBillDayOfMonth?: number;
+  estimatedNextBillDate?: string;
+  monitoringStatus: 'MONITORING' | 'BILL_GENERATED' | 'NO_BILL' | 'INVALID_CONSUMER' | 'PROVIDER_ERROR' | string;
+  lastCheckedAt?: string;
+  nextCheckAt?: string;
+  lastCheckStatus?: string;
+  lastCheckMessage?: string;
+  manualChecksTodayCount: number;
+  remainingManualChecksToday: number;
+  createdAt: string;
+  latestBill?: ElectricityBill;
+}
+
+export interface ElectricityCheckLog {
+  id: number;
+  electricityCheckLogId: number;
+  checkType: string;
+  status: string;
+  message?: string;
+  checkedAt: string;
+}
+
+export interface ElectricityMonitoringStatus {
+  accountId: number;
+  electricityAccountId: number;
+  billerName: string;
+  consumerNumber: string;
+  monitoringStatus: string;
+  lastCheckedAt?: string;
+  nextCheckAt?: string;
+  lastCheckStatus?: string;
+  lastCheckMessage?: string;
+  manualChecksTodayCount: number;
+  remainingManualChecksToday: number;
+  canManualCheck: boolean;
+  recentLogs: ElectricityCheckLog[];
+}
+
+export interface ElectricitySplitItem {
+  userId: number;
+  userName: string;
+  shareAmount: number;
+  isPaid: boolean;
+  paidAt?: string;
+}
+
+export interface ElectricityBillSplits {
+  billId: number;
+  billNumber?: string;
+  billPeriod?: string;
+  totalAmount: number;
+  dueDate?: string;
+  splits: ElectricitySplitItem[];
+}
+
