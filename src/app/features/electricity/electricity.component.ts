@@ -30,6 +30,8 @@ export class ElectricityComponent implements OnInit {
 
   groupId = signal<string>('1');
   groupName = signal<string>('Apartment');
+  myRole = signal<string>('Member');
+  isAdmin = computed(() => this.myRole() === 'Admin' || this.myRole() === 'Room Admin');
 
   accounts = signal<ElectricityAccount[]>([]);
   selectedAccount = signal<ElectricityAccount | null>(null);
@@ -110,6 +112,7 @@ export class ElectricityComponent implements OnInit {
     this.api.get<any>(`groups/${gId}`).subscribe({
       next: (g) => {
         if (g?.groupName) this.groupName.set(g.groupName);
+        if (g?.myRole) this.myRole.set(g.myRole);
       },
       error: () => {}
     });
@@ -169,6 +172,11 @@ export class ElectricityComponent implements OnInit {
     const acc = this.selectedAccount();
     if (!acc) return;
 
+    if (!this.isAdmin()) {
+      this.popup.warning('Only group administrators can refresh or check electricity bills.');
+      return;
+    }
+
     if (acc.remainingManualChecksToday <= 0) {
       this.popup.warning("You have reached today's 2 check limit. Next check available tomorrow.");
       return;
@@ -195,6 +203,11 @@ export class ElectricityComponent implements OnInit {
         this.checking.set(false);
         const msg = err?.error?.message || 'Bill check failed';
 
+        if (err?.status === 403) {
+          this.popup.warning(msg || 'Only group administrators can refresh or check electricity bills.');
+          return;
+        }
+
         if (err?.status === 429 || err?.error?.limitReached) {
           this.popup.warning("You have reached today's 2 check limit.");
           if (err?.error?.account) {
@@ -211,6 +224,10 @@ export class ElectricityComponent implements OnInit {
   }
 
   openAddModal(): void {
+    if (!this.isAdmin()) {
+      this.popup.warning('Only group administrators can add an electricity account.');
+      return;
+    }
     this.showAddModal.set(true);
     this.selectedBillerId = '';
     this.selectedBillerDetail.set(null);

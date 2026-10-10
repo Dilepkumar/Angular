@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,6 +6,7 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PopupService } from '../../core/services/popup.service';
 import { MonthlyBillsOverview, BillSplit } from '../shared/models';
+import * as QRCode from 'qrcode';
 
 @Component({
   selector: 'app-bills',
@@ -35,6 +36,17 @@ export class BillsComponent implements OnInit {
   payFromPool = signal<boolean>(false);
   currentPoolBalance = signal<number>(0);
 
+  // Group Admins & Payment Modal State
+  groupAdmins = signal<any[]>([]);
+  selectedAdmin = signal<any>(null);
+  showPayModal = false;
+  paySplit: any = null;
+  payBill: any = null;
+  payUpiId = '';
+  payCopied = false;
+  isSubmittingPayment = false;
+  @ViewChild('payQrCanvas') payQrCanvasRef?: ElementRef<HTMLCanvasElement>;
+
   loading = signal(false);
 
   ngOnInit(): void {
@@ -46,6 +58,14 @@ export class BillsComponent implements OnInit {
       next: (g) => {
         if (g?.groupName) this.groupName.set(g.groupName);
         this.isAdmin = g?.myRole === 'Admin';
+        if (g?.members) {
+          const admins = g.members.filter((m: any) => m.role === 'Admin');
+          this.groupAdmins.set(admins);
+          if (admins.length > 0 && !this.selectedAdmin()) {
+            this.selectedAdmin.set(admins[0]);
+            this.payUpiId = admins[0].upiId || '';
+          }
+        }
       },
       error: () => {}
     });
@@ -200,15 +220,102 @@ export class BillsComponent implements OnInit {
     });
   }
 
-  markPaid(split: any): void {
+  markReceived(split: any, bill?: any): void {
     if (!split.id) return;
     this.api.post(`groups/${this.groupId}/bills/splits/${split.id}/mark-paid`, {}).subscribe({
       next: () => {
-        this.popup.success('✅ Payment status updated!');
+        this.popup.success(`✅ Marked as received for ${split.userName}!`);
         this.load();
       },
       error: (e) => {
         this.popup.error(`❌ ${e.error?.message || 'Failed to update payment status'}`);
+      }
+    });
+  }
+
+  // Alias for backward compatibility
+  markPaid(split: any): void {
+    this.markReceived(split);
+  }
+
+  openPayModal(split: any, bill: any): void {
+    this.paySplit = split;
+    this.payBill = bill;
+    if (!this.selectedAdmin() && this.groupAdmins().length > 0) {
+      this.selectedAdmin.set(this.groupAdmins()[0]);
+    }
+    this.payUpiId = this.selectedAdmin()?.upiId || '';
+    this.payCopied = false;
+    this.showPayModal = true;
+    setTimeout(() => this.drawPayQrCode(), 100);
+  }
+
+  closePayModal(): void {
+    this.showPayModal = false;
+    this.paySplit = null;
+    this.payBill = null;
+  }
+
+  selectAdmin(admin: any): void {
+    this.selectedAdmin.set(admin);
+    this.payUpiId = admin.upiId || '';
+    this.drawPayQrCode();
+  }
+
+  onPayUpiChange(): void {
+    this.drawPayQrCode();
+  }
+
+  getUpiUri(): string {
+    if (!this.payUpiId?.trim() || !this.paySplit?.shareAmount) return '';
+    const adminName = this.selectedAdmin()?.fullName || 'Room Admin';
+    const billName = this.formatBillName(this.payBill?.billName) || 'Flat Bill';
+    return `upi://pay?pa=${encodeURIComponent(this.payUpiId.trim())}&pn=${encodeURIComponent(adminName)}&am=${this.paySplit.shareAmount}&cu=INR&tn=${encodeURIComponent(billName + ' share')}`;
+  }
+
+  drawPayQrCode(): void {
+    const cv = this.payQrCanvasRef?.nativeElement;
+    if (!cv) return;
+    const uri = this.getUpiUri();
+    if (!uri) {
+      const ctx = cv.getContext('2d');
+      if (ctx) ctx.clearRect(0, 0, cv.width, cv.height);
+      return;
+    }
+    QRCode.toCanvas(cv, uri, {
+      width: 170,
+      margin: 1,
+      color: { dark: '#0f172a', light: '#ffffff' },
+      errorCorrectionLevel: 'M'
+    }, (err: any) => {
+      if (err) console.error('Failed to generate Pay QR code:', err);
+    });
+  }
+
+  copyUpiId(): void {
+    if (!this.payUpiId) return;
+    navigator.clipboard.writeText(this.payUpiId);
+    this.payCopied = true;
+    setTimeout(() => this.payCopied = false, 2000);
+  }
+
+  confirmPaymentSent(): void {
+    if (!this.paySplit?.id) return;
+    this.isSubmittingPayment = true;
+    this.api.post<any>(`groups/${this.groupId}/bills/splits/${this.paySplit.id}/notify-paid`, {
+      adminUserId: this.selectedAdmin()?.userId,
+      upiId: this.payUpiId.trim(),
+      note: `Paid ₹${this.paySplit.shareAmount} for ${this.payBill?.billName || 'Flat Bill'}`
+    }).subscribe({
+      next: (res) => {
+        this.isSubmittingPayment = false;
+        this.showPayModal = false;
+        this.popup.success(res?.message || 'Payment confirmed! Group Admin has been notified to verify.');
+        this.load();
+      },
+      error: (err) => {
+        this.isSubmittingPayment = false;
+        this.popup.error(err.error?.message || 'Failed to record payment');
       }
     });
   }
@@ -308,11 +415,17 @@ export class BillsComponent implements OnInit {
   }
 
   isMine(s: any): boolean {
-    return s.userId === this.auth.user()?.id;
+    const myId = this.auth.user()?.id;
+    if (!myId || !s?.userId) return false;
+    return Number(s.userId) === Number(myId);
   }
 
   canMark(s: any): boolean {
     return this.isAdmin || this.isMine(s);
+  }
+
+  canPay(s: any): boolean {
+    return !s?.isPaid && this.isMine(s);
   }
 
   goToDashboard(): void {

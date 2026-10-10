@@ -309,6 +309,7 @@ export interface ElectricityMonitoringStatus {
 }
 
 export interface ElectricitySplitItem {
+  splitId?: number;
   userId: number;
   userName: string;
   shareAmount: number;

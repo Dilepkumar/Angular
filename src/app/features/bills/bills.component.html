@@ -185,9 +185,14 @@
           <div class="space-y-1.5 mb-4">
             @for (s of bill.splits; track s.id) {
               <div class="flex justify-between items-center text-xs p-1.5 rounded-xl transition hover:bg-black/5">
-                <span class="font-medium" style="color: var(--text);">
-                  {{ s.userName }}
+                <span class="font-medium flex items-center gap-1.5" style="color: var(--text);">
+                  <span>{{ s.userName }}</span>
                   <span class="font-bold text-[11px]" style="color: var(--t2);">(₹{{ s.shareAmount | number:'1.0-0' }})</span>
+                  @if (isMine(s)) {
+                    <span class="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-500 dark:text-indigo-400 border border-indigo-500/20">
+                      You
+                    </span>
+                  }
                 </span>
 
                 @if (bill.paidFromPool || s.isPaid) {
@@ -196,14 +201,26 @@
                     <i class="fa-solid fa-check text-[9px]"></i>
                   </span>
                 } @else {
-                  <div class="flex items-center gap-1.5">
+                  <div class="flex items-center gap-1.5 flex-wrap justify-end">
                     <span class="pp">PENDING</span>
-                    @if (canMark(s)) {
+
+                    @if (isAdmin) {
                       <button type="button"
-                              (click)="markPaid(s)"
-                              class="text-[11px] font-black underline cursor-pointer"
-                              style="color: var(--p1);">
-                        Mark Paid
+                              (click)="markReceived(s, bill)"
+                              class="text-[11px] font-bold px-2 py-0.5 rounded-lg border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition cursor-pointer flex items-center gap-1"
+                              title="Mark this roommate's split as received (Admin)">
+                        <i class="fa-solid fa-check-double text-[9px]"></i>
+                        <span>Mark as Received</span>
+                      </button>
+                    }
+
+                    @if (canPay(s)) {
+                      <button type="button"
+                              (click)="openPayModal(s, bill)"
+                              class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-sm cursor-pointer flex items-center gap-1"
+                              title="Pay split via UPI / QR code">
+                        <i class="fa-solid fa-qrcode text-[9px]"></i>
+                        <span>Pay</span>
                       </button>
                     }
                   </div>
@@ -408,6 +425,164 @@
                 [disabled]="!billName.trim() || !amount || amount <= 0"
                 class="btn w-full py-3.5 text-sm font-black shadow-md disabled:opacity-50 cursor-pointer">
           {{ payFromPool() ? 'Pay from Pool & Record Bill' : 'Create Bill & Split' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════
+     PAY VIA UPI / QR CODE MODAL
+═══════════════════════════════════════════ -->
+@if (showPayModal && paySplit) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in"
+       (click)="closePayModal()">
+    <div class="card w-full max-w-md p-6 rounded-3xl shadow-2xl relative border flex flex-col gap-4 animate-scale-up"
+         style="background: var(--card); border-color: var(--border);"
+         (click)="$event.stopPropagation()">
+      
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-lg text-white shadow-md"
+               style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+            <i class="fa-solid fa-qrcode"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-black tracking-tight" style="color: var(--text);">
+              Pay Split via UPI / QR
+            </h3>
+            <p class="text-xs font-semibold" style="color: var(--t2);">
+              {{ formatBillName(payBill?.billName) }} · {{ formattedMonth() }}
+            </p>
+          </div>
+        </div>
+
+        <button type="button"
+                (click)="closePayModal()"
+                class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer"
+                style="color: var(--t3);">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Share Amount Hero -->
+      <div class="p-4 rounded-2xl text-center border relative overflow-hidden"
+           style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08)); border-color: rgba(99, 102, 241, 0.25);">
+        <div class="text-[11px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--p1);">
+          Amount to Pay
+        </div>
+        <div class="text-3xl font-black text-indigo-600 dark:text-indigo-400">
+          ₹{{ paySplit?.shareAmount | number:'1.2-2' }}
+        </div>
+        <div class="text-[11px] font-semibold mt-1" style="color: var(--t2);">
+          Share for <span class="font-bold" style="color: var(--text);">{{ paySplit?.userName }}</span>
+        </div>
+      </div>
+
+      <!-- Admin Selector (when multiple admins exist) -->
+      @if (groupAdmins().length > 1) {
+        <div>
+          <label class="block text-xs font-bold mb-1.5" style="color: var(--text);">
+            Choose Admin to Pay:
+          </label>
+          <div class="grid grid-cols-2 gap-2">
+            @for (adm of groupAdmins(); track adm.userId) {
+              <button type="button"
+                      (click)="selectAdmin(adm)"
+                      class="p-2.5 rounded-xl border text-left transition cursor-pointer flex items-center gap-2"
+                      [style.background]="selectedAdmin()?.userId === adm.userId ? 'rgba(99, 102, 241, 0.12)' : 'var(--bg2)'"
+                      [style.border-color]="selectedAdmin()?.userId === adm.userId ? '#6366f1' : 'var(--border)'">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold text-white shrink-0"
+                     style="background: #6366f1;">
+                  {{ adm.fullName?.charAt(0) || 'A' }}
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="text-xs font-bold truncate" style="color: var(--text);">
+                    {{ adm.fullName }}
+                  </div>
+                  <div class="text-[10px] truncate" style="color: var(--t3);">
+                    {{ adm.upiId ? adm.upiId : 'No default UPI' }}
+                  </div>
+                </div>
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Admin UPI ID Display (Read-Only) -->
+      <div class="p-3 rounded-2xl border" style="background: var(--bg2); border-color: var(--border);">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[11px] font-bold uppercase tracking-wider" style="color: var(--t3);">
+            Recipient UPI ID
+          </span>
+          @if (payCopied) {
+            <span class="text-[10px] font-bold text-emerald-500 flex items-center gap-1">
+              <i class="fa-solid fa-check"></i> Copied!
+            </span>
+          } @else if (payUpiId) {
+            <button type="button"
+                    (click)="copyUpiId()"
+                    class="text-[11px] font-bold text-indigo-500 hover:underline cursor-pointer flex items-center gap-1">
+              <i class="fa-regular fa-copy"></i> Copy UPI
+            </button>
+          }
+        </div>
+
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <i class="fa-solid fa-shield-halved text-emerald-500 text-xs shrink-0"></i>
+            <span class="text-xs font-mono font-bold truncate select-all" style="color: var(--text);">
+              {{ payUpiId || 'No UPI ID configured by Admin' }}
+            </span>
+          </div>
+          <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full shrink-0">
+            Admin VPA
+          </span>
+        </div>
+      </div>
+
+      <!-- QR Code Canvas Display -->
+      @if (payUpiId) {
+        <div class="p-3 rounded-2xl border flex flex-col items-center justify-center"
+             style="background: #ffffff; border-color: rgba(0, 0, 0, 0.1);">
+          <canvas #payQrCanvas class="rounded-xl block"></canvas>
+          <div class="text-[10px] font-bold text-slate-600 mt-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-camera text-slate-400"></i>
+            <span>Scan with GPay · PhonePe · Paytm · BHIM</span>
+          </div>
+        </div>
+      } @else {
+        <div class="p-4 rounded-xl border text-center text-xs text-amber-500 bg-amber-500/10 border-amber-500/30">
+          <i class="fa-solid fa-triangle-exclamation mb-1 text-base"></i>
+          <div>Please enter Admin's UPI ID above to generate the payment QR code.</div>
+        </div>
+      }
+
+      <!-- Action Buttons -->
+      <div class="space-y-2 pt-1">
+        @if (getUpiUri()) {
+          <a [href]="getUpiUri()"
+             class="btn w-full py-3 text-xs font-black shadow-md flex items-center justify-center gap-2 cursor-pointer"
+             style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+            <i class="fa-solid fa-mobile-screen-button text-sm"></i>
+            <span>Pay via UPI App (Instant)</span>
+          </a>
+        }
+
+        <button type="button"
+                (click)="confirmPaymentSent()"
+                [disabled]="isSubmittingPayment"
+                class="btn w-full py-3 text-xs font-black shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
+          @if (isSubmittingPayment) {
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            <span>Notifying Admin...</span>
+          } @else {
+            <i class="fa-solid fa-check-double text-xs"></i>
+            <span>I Have Paid (Notify Admin)</span>
+          }
         </button>
       </div>
 

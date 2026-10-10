@@ -112,10 +112,20 @@
         <div class="text-2xl sm:text-3xl font-black tracking-tight" style="color: var(--text);">
           ₹{{ poolBalance() | number:'1.0-0' }}
         </div>
-        <span class="text-[11px] font-black px-2 py-0.5 rounded-full inline-flex items-center gap-1"
-              style="background: color-mix(in srgb, var(--p1) 18%, transparent); color: var(--p1);">
-          <i class="fa-solid fa-circle-check text-[10px]"></i> Available
-        </span>
+        @if (poolBalance() <= 500) {
+          <span class="text-[11px] font-black px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-red-500/15 text-red-500 animate-pulse border border-red-500/30">
+            <i class="fa-solid fa-triangle-exclamation text-[10px]"></i> Critical (≤ ₹500)
+          </span>
+        } @else if (poolBalance() <= 1000) {
+          <span class="text-[11px] font-black px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+            <i class="fa-solid fa-circle-exclamation text-[10px]"></i> Low (≤ ₹1,000)
+          </span>
+        } @else {
+          <span class="text-[11px] font-black px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+                style="background: color-mix(in srgb, var(--p1) 18%, transparent); color: var(--p1);">
+            <i class="fa-solid fa-circle-check text-[10px]"></i> Available
+          </span>
+        }
       </div>
 
       <div class="text-xs font-semibold mb-3.5 flex items-center gap-1.5 flex-wrap" style="color: var(--t2);">

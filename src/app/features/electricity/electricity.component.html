@@ -30,17 +30,19 @@
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="flex items-center gap-2 flex-wrap">
-      <button type="button"
-              (click)="openAddModal()"
-              class="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-sm transition active:scale-95 cursor-pointer btn-add-account">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-          <path d="M5 12h14m-7-7v14"/>
-        </svg>
-        <span>Add Account</span>
-      </button>
-    </div>
+    <!-- Actions (Admin Only) -->
+    @if (isAdmin()) {
+      <div class="flex items-center gap-2 flex-wrap">
+        <button type="button"
+                (click)="openAddModal()"
+                class="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-sm transition active:scale-95 cursor-pointer btn-add-account">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <path d="M5 12h14m-7-7v14"/>
+          </svg>
+          <span>Add Account</span>
+        </button>
+      </div>
+    }
   </div>
 
   <!-- ═══════════════════════════════════════════
@@ -84,14 +86,22 @@
         Connect your flat's electricity provider (TGSPDCL, TGNPDCL, BESCOM, TNEB, MSEDCL, and all Indian discoms).
         RoomLedger will automatically check for new bills twice a day and split them equally among roommates!
       </p>
-      <button type="button"
-              (click)="openAddModal()"
-              class="px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider inline-flex items-center gap-2 shadow-lg transition active:scale-95 cursor-pointer btn-primary-gradient">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-          <path d="M5 12h14m-7-7v14"/>
-        </svg>
-        <span>Add Electricity Account</span>
-      </button>
+      @if (isAdmin()) {
+        <button type="button"
+                (click)="openAddModal()"
+                class="px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider inline-flex items-center gap-2 shadow-lg transition active:scale-95 cursor-pointer btn-primary-gradient">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <path d="M5 12h14m-7-7v14"/>
+          </svg>
+          <span>Add Electricity Account</span>
+        </button>
+      } @else {
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold"
+             style="background: var(--bg2); border-color: var(--border); color: var(--t2);">
+          <i class="fa-solid fa-shield-halved text-amber-500"></i>
+          <span>Only group Admin can add or configure electricity accounts</span>
+        </div>
+      }
     </div>
   }
 
@@ -128,40 +138,54 @@
             </div>
           </div>
 
-          <!-- MANUAL CHECK BUTTON & DAILY LIMIT -->
-          <div class="flex flex-col sm:items-end gap-2">
-            <button type="button"
-                    (click)="checkBill()"
-                    [disabled]="checking() || acc.remainingManualChecksToday <= 0"
-                    class="px-5 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase flex items-center justify-center gap-2 shadow-md transition active:scale-95 cursor-pointer btn-manual-check"
-                    [class.disabled-btn]="acc.remainingManualChecksToday <= 0">
-              @if (checking()) {
-                <div class="spinner-sm"></div>
-                <span>Checking TGSPDCL...</span>
-              } @else {
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.85.83 6.72 2.24L21 8"/>
-                  <path d="M21 3v5h-5"/>
-                </svg>
-                <span>Check Bill Now</span>
-              }
-            </button>
+          <!-- MANUAL CHECK BUTTON (ADMIN ONLY) OR NON-ADMIN STATUS BADGE -->
+          @if (isAdmin()) {
+            <div class="flex flex-col sm:items-end gap-2">
+              <button type="button"
+                      (click)="checkBill()"
+                      [disabled]="checking() || acc.remainingManualChecksToday <= 0"
+                      class="px-5 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase flex items-center justify-center gap-2 shadow-md transition active:scale-95 cursor-pointer btn-manual-check"
+                      [class.disabled-btn]="acc.remainingManualChecksToday <= 0">
+                @if (checking()) {
+                  <div class="spinner-sm"></div>
+                  <span>Checking TGSPDCL...</span>
+                } @else {
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.85.83 6.72 2.24L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                  </svg>
+                  <span>Check Bill Now</span>
+                }
+              </button>
 
-            <!-- Remaining Limit Badge / Reached Warning -->
-            <div class="text-right">
-              @if (acc.remainingManualChecksToday > 0) {
-                <div class="text-[11px] font-bold check-limit-note">
-                  <i class="fa-solid fa-clock-rotate-left mr-1"></i>
-                  Manual checks remaining today: <strong class="text-emerald-500">{{ acc.remainingManualChecksToday }} / 2</strong>
-                </div>
-              } @else {
-                <div class="text-[11px] font-black px-2.5 py-1 rounded-lg check-limit-reached-badge">
-                  <i class="fa-solid fa-triangle-exclamation mr-1"></i>
-                  You have reached today's 2 check limit.
-                </div>
-              }
+              <!-- Remaining Limit Badge / Reached Warning -->
+              <div class="text-right">
+                @if (acc.remainingManualChecksToday > 0) {
+                  <div class="text-[11px] font-bold check-limit-note">
+                    <i class="fa-solid fa-clock-rotate-left mr-1"></i>
+                    Manual checks remaining today: <strong class="text-emerald-500">{{ acc.remainingManualChecksToday }} / 2</strong>
+                  </div>
+                } @else {
+                  <div class="text-[11px] font-black px-2.5 py-1 rounded-lg check-limit-reached-badge">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+                    You have reached today's 2 check limit.
+                  </div>
+                }
+              </div>
             </div>
-          </div>
+          } @else {
+            <div class="flex flex-col sm:items-end gap-1.5">
+              <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold"
+                   style="background: color-mix(in srgb, var(--bg2) 80%, transparent); border-color: var(--border); color: var(--t2);">
+                <i class="fa-solid fa-shield-halved text-amber-500"></i>
+                <span>Monitored by Admin</span>
+              </div>
+              <div class="text-[11px] font-semibold flex items-center gap-1.5" style="color: var(--t3);">
+                <i class="fa-solid fa-clock-rotate-left text-xs"></i>
+                <span>Auto-checked twice daily at 10 AM &amp; 10 PM</span>
+              </div>
+            </div>
+          }
         </div>
 
         <!-- TIMELINE & SCHEDULE META BAR -->
@@ -371,7 +395,7 @@
                     <div class="text-right">
                       <div class="text-sm font-black text-indigo-300">₹{{ member.shareAmount | number:'1.2-2' }}</div>
                       <div class="text-[10px] font-bold" [class.text-emerald-400]="member.isPaid" [class.text-amber-400]="!member.isPaid">
-                        {{ member.isPaid ? 'PAID' : 'PENDING' }}
+                        {{ member.isPaid ? 'PAID ✓' : 'PENDING' }}
                       </div>
                     </div>
                   </div>
