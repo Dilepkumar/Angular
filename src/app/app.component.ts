@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { PopupHostComponent } from './features/shared/components/popup-host/popup-host.component';
 import { LoadingService } from './core/services/loading.service';
+import { AnalyticsComponent } from './core/components/analytics/analytics.component';
+import { SpeedInsightsComponent } from './core/components/speed-insights/speed-insights.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, PopupHostComponent],
+  imports: [CommonModule, RouterOutlet, PopupHostComponent, AnalyticsComponent, SpeedInsightsComponent],
   template: `
     <!-- Top Glowing Loading Progress Bar -->
     @if (loadingService.isLoading()) {
@@ -30,6 +32,8 @@ import { LoadingService } from './core/services/loading.service';
 
     <router-outlet />
     <app-popup-host />
+    <app-analytics />
+    <app-speed-insights />
   `,
   styles: [`
     @keyframes loadingRunner {
