@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ElectricityService, CreateElectricityAccountPayload } from '../../core/services/electricity.service';
 import { ApiService } from '../../core/services/api.service';
 import { PopupService } from '../../core/services/popup.service';
+import { PageLoaderComponent } from '../shared/components/page-loader/page-loader.component';
 import {
   ElectricityAccount,
   ElectricityBill,
@@ -17,7 +18,7 @@ import {
 @Component({
   selector: 'app-electricity',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PageLoaderComponent],
   templateUrl: './electricity.component.html',
   styleUrls: ['./electricity.component.scss']
 })

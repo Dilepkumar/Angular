@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PageLoaderComponent } from '../shared/components/page-loader/page-loader.component';
 
 export interface MyGroup {
   id: number;
@@ -17,7 +18,7 @@ export interface MyGroup {
 @Component({
   selector: 'app-group-picker',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PageLoaderComponent],
   templateUrl: './group-picker.component.html',
   styleUrls: ['./group-picker.component.scss']
 })

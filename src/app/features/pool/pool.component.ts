@@ -6,6 +6,7 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PopupService } from '../../core/services/popup.service';
 import { PendingContribution, MemberStatus } from '../shared/models';
+import { PageLoaderComponent } from '../shared/components/page-loader/page-loader.component';
 import { environment } from '../../../environments/environment';
 
 export interface PoolTransactionItem {
@@ -122,7 +123,7 @@ interface ReceiptRow {
 @Component({
   selector: 'app-pool',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PageLoaderComponent],
   templateUrl: './pool.component.html',
   styleUrls: ['./pool.component.scss']
 })

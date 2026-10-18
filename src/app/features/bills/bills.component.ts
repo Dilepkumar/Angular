@@ -7,11 +7,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { PopupService } from '../../core/services/popup.service';
 import { MonthlyBillsOverview, BillSplit } from '../shared/models';
 import * as QRCode from 'qrcode';
+import { PageLoaderComponent } from '../shared/components/page-loader/page-loader.component';
 
 @Component({
   selector: 'app-bills',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PageLoaderComponent],
   templateUrl: './bills.component.html',
   styleUrls: ['./bills.component.scss']
 })

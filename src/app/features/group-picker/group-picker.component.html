@@ -73,13 +73,7 @@
     </div>
 
     @if (loading() && groups().length === 0) {
-      <div class="py-16 text-center flex flex-col items-center justify-center fade-up" style="color: var(--t3);">
-        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-sm"
-             style="background: color-mix(in srgb, var(--p1) 15%, transparent); color: var(--p1);">
-          <i class="fa-solid fa-circle-notch fa-spin text-2xl"></i>
-        </div>
-        <div class="text-sm font-extrabold" style="color: var(--text);">Loading your flats…</div>
-      </div>
+      <app-page-loader title="Loading Your Flats…" subtitle="Fetching your active shared groups" />
     } @else {
       <div class="space-y-3">
         @for (g of groups(); track g.id) {

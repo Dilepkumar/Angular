@@ -252,12 +252,7 @@
 
     <!-- Loading State -->
     @if (historyLoading()) {
-      <div class="py-16 text-center text-xs font-bold" style="color: var(--t3);">
-        <div class="text-3xl mb-3 animate-spin">
-          <i class="fa-solid fa-spinner" style="color: rgb(99, 230, 190);"></i>
-        </div>
-        <div>Loading ledger transactions &amp; receipts…</div>
-      </div>
+      <app-page-loader title="Loading Ledger History…" subtitle="Fetching past transactions, settlements & receipts" />
     } @else if (filteredTransactions().length === 0) {
       <!-- Empty State -->
       <div class="py-16 text-center space-y-2">

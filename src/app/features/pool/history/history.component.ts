@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { environment } from '../../../../environments/environment';
+import { PageLoaderComponent } from '../../shared/components/page-loader/page-loader.component';
 
 export interface PoolHistoryTransaction {
   id: string;
@@ -38,7 +39,7 @@ export interface PoolHistoryResponse {
 @Component({
   selector: 'app-history',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PageLoaderComponent],
   templateUrl: './history.component.html',
   styleUrls: ['./history.component.scss']
 })

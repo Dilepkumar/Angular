@@ -6,6 +6,7 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PopupService } from '../../core/services/popup.service';
 import { MyBalance, DebtPair } from '../shared/models';
+import { PageLoaderComponent } from '../shared/components/page-loader/page-loader.component';
 import * as QRCode from 'qrcode';
 
 interface GroupMemberVm {
@@ -17,7 +18,7 @@ interface GroupMemberVm {
 @Component({
   selector: 'app-iou',
   standalone: true,
-  imports: [CommonModule, FormsModule, DecimalPipe, RouterLink],
+  imports: [CommonModule, FormsModule, DecimalPipe, RouterLink, PageLoaderComponent],
   templateUrl: './iou.component.html',
   styleUrls: ['./iou.component.scss']
 })

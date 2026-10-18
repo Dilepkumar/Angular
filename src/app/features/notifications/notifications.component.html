@@ -151,10 +151,7 @@
       </div>
 
       @if (loading()) {
-        <div class="card p-8 text-center rounded-2xl border" style="border-color: var(--border);">
-          <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2" style="color: var(--p1);"></i>
-          <p class="text-xs font-bold" style="color: var(--t3);">Loading notifications...</p>
-        </div>
+        <app-page-loader title="Loading Notifications…" subtitle="Retrieving recent activity & alerts" />
       } @else if (items().length > 0) {
         <div class="card p-0 rounded-2xl overflow-hidden divide-y border shadow-sm"
              style="background: var(--card); border-color: var(--border);">

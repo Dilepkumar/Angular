@@ -43,10 +43,7 @@
   </div>
 
   @if (loading()) {
-    <div class="py-16 text-center text-sm font-bold flex flex-col items-center justify-center" style="color: var(--t3);">
-      <i class="fa-solid fa-spinner fa-spin text-3xl mb-3" style="color: var(--p1);"></i>
-      Loading pool balance &amp; receipts…
-    </div>
+    <app-page-loader title="Loading Daily Pool…" subtitle="Fetching pool balance, members & expense receipts" />
   } @else if (error()) {
     <div class="card p-6 text-center my-8 max-w-md mx-auto" style="border-color: color-mix(in srgb, var(--err) 30%, transparent);">
       <i class="fa-solid fa-triangle-exclamation text-2xl mb-2 text-rose-500 block"></i>

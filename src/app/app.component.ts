@@ -21,15 +21,6 @@ import { SpeedInsightsComponent } from './core/components/speed-insights/speed-i
       </div>
     }
 
-    <!-- Floating Page Transition Indicator on Route Change -->
-    @if (loadingService.isNavigating()) {
-      <div class="fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-[99999] flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full shadow-2xl backdrop-blur-md border pointer-events-none select-none animate-in fade-in zoom-in-95 duration-150"
-           style="background: rgba(20, 35, 33, 0.92); border-color: rgba(38, 212, 178, 0.3); color: #ffffff; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 16px rgba(26, 188, 156, 0.35);">
-        <i class="fa-solid fa-circle-notch fa-spin text-sm" style="color: #26D4B2;"></i>
-        <span class="text-[11px] sm:text-xs font-black tracking-wide">{{ loadingService.navMessage() }}</span>
-      </div>
-    }
-
     <router-outlet />
     <app-popup-host />
     <app-analytics />

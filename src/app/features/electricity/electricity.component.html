@@ -66,11 +66,7 @@
        LOADING STATE
   ═══════════════════════════════════════════ -->
   @if (loading()) {
-    <div class="card p-12 text-center my-6">
-      <div class="spinner mx-auto mb-3"></div>
-      <div class="text-sm font-bold" style="color: var(--text);">Connecting to TGSPDCL gateway...</div>
-      <div class="text-xs" style="color: var(--t2);">Retrieving latest consumer bills and monitoring records</div>
-    </div>
+    <app-page-loader title="Connecting to Electricity Gateway…" subtitle="Retrieving latest meter readings, bills and monitoring records" />
   }
 
   <!-- ═══════════════════════════════════════════

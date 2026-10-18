@@ -4,11 +4,12 @@ import { ApiService } from '../../core/services/api.service';
 import { PushNotificationService } from '../../core/services/push-notification.service';
 import { PopupService } from '../../core/services/popup.service';
 import { Notification } from '../shared/models';
+import { PageLoaderComponent } from '../shared/components/page-loader/page-loader.component';
 
 @Component({
   selector: 'app-notifications',
   standalone: true,
-  imports: [CommonModule, DatePipe],
+  imports: [CommonModule, DatePipe, PageLoaderComponent],
   templateUrl: './notifications.component.html',
   styleUrls: ['./notifications.scss']
 })
