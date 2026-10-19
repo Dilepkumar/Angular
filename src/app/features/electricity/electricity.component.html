@@ -18,7 +18,7 @@
       </button>
       <div>
         <div class="text-xl font-black tracking-tight flex items-center gap-2 flex-wrap" style="color: var(--text);">
-          <span class="bolt-icon-badge">⚡</span>
+          <span class="bolt-icon-badge"><i class="fa-solid fa-bolt text-amber-400"></i></span>
           <span>Electricity Bill Monitoring</span>
           <span class="text-xs font-black px-2.5 py-0.5 rounded-full uppercase group-badge">
             {{ groupName() }}
@@ -36,9 +36,7 @@
         <button type="button"
                 (click)="openAddModal()"
                 class="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-sm transition active:scale-95 cursor-pointer btn-add-account">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-            <path d="M5 12h14m-7-7v14"/>
-          </svg>
+          <i class="fa-solid fa-plus text-xs"></i>
           <span>Add Account</span>
         </button>
       </div>
@@ -55,7 +53,8 @@
                 (click)="selectAccount(acc)"
                 class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer border account-pill"
                 [class.active]="selectedAccount()?.id === acc.id">
-          <span>⚡ {{ acc.billerName }}</span>
+          <i class="fa-solid fa-bolt text-amber-400 text-xs"></i>
+          <span>{{ acc.billerName }}</span>
           <span class="opacity-75">({{ acc.consumerNumber }})</span>
         </button>
       }
@@ -75,7 +74,7 @@
   @if (!loading() && accounts().length === 0) {
     <div class="card empty-card text-center p-10 my-6">
       <div class="w-16 h-16 rounded-3xl mx-auto mb-4 flex items-center justify-center text-3xl empty-icon-wrap">
-        ⚡
+        <i class="fa-solid fa-bolt text-3xl text-amber-400"></i>
       </div>
       <h3 class="text-lg font-black mb-1" style="color: var(--text);">No Electricity Accounts Added</h3>
       <p class="text-xs max-w-md mx-auto mb-6" style="color: var(--t2);">
@@ -86,9 +85,7 @@
         <button type="button"
                 (click)="openAddModal()"
                 class="px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider inline-flex items-center gap-2 shadow-lg transition active:scale-95 cursor-pointer btn-primary-gradient">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-            <path d="M5 12h14m-7-7v14"/>
-          </svg>
+          <i class="fa-solid fa-plus text-xs"></i>
           <span>Add Electricity Account</span>
         </button>
       } @else {
@@ -112,7 +109,7 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-5" style="border-color: var(--border);">
           <div class="flex items-start gap-4">
             <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl meter-logo-badge">
-              ⚡
+              <i class="fa-solid fa-bolt text-2xl text-amber-400"></i>
             </div>
             <div>
               <div class="flex items-center gap-2 flex-wrap">
@@ -371,6 +368,53 @@
               </div>
             </div>
 
+            <!-- PENDING PAYMENT APPROVALS BANNER FOR ADMIN -->
+            @if (isAdmin() && pendingApprovals().length > 0) {
+              <div class="p-4 rounded-2xl mb-4 border space-y-3"
+                   style="background: color-mix(in srgb, #f59e0b 12%, var(--card)); border-color: rgba(245, 158, 11, 0.4);">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg flex items-center justify-center bg-amber-500/20 text-amber-500 font-black text-xs">
+                      <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <span class="text-xs font-black text-amber-500 dark:text-amber-400 uppercase tracking-wider">
+                      {{ pendingApprovals().length }} Payment Claim Awaiting Your Bank Verification
+                    </span>
+                  </div>
+                </div>
+
+                @for (pending of pendingApprovals(); track pending.id) {
+                  <div class="p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                       style="background: var(--bg2); border-color: var(--border);">
+                    <div>
+                      <div class="text-xs font-extrabold" style="color: var(--text);">
+                        {{ pending.payerName }} submitted ₹{{ pending.amount | number:'1.2-2' }}
+                      </div>
+                      <div class="text-[11px] font-medium mt-0.5" style="color: var(--t3);">
+                        Via {{ pending.paymentApp || 'UPI' }} · UTR: <span class="font-mono font-bold text-amber-600 dark:text-amber-400">{{ pending.bankUtr || 'Direct UPI' }}</span>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                      <button type="button"
+                              (click)="approvePaymentClaim(pending, true)"
+                              class="btn py-1.5 px-3 text-xs font-black cursor-pointer shadow-sm flex items-center gap-1.5"
+                              style="background: #10B981;">
+                        <i class="fa-solid fa-check text-xs"></i>
+                        <span>Approve</span>
+                      </button>
+                      <button type="button"
+                              (click)="approvePaymentClaim(pending, false)"
+                              class="btns py-1.5 px-3 text-xs font-bold cursor-pointer text-rose-500 flex items-center gap-1.5">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                        <span>Reject</span>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
             @if (loadingSplits()) {
               <div class="py-6 text-center text-xs" style="color: var(--t2);">
                 <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Loading roommate splits...
@@ -388,11 +432,34 @@
                         <div class="text-[10px]" style="color: var(--t2);">Equal Share</div>
                       </div>
                     </div>
-                    <div class="text-right">
+                    <div class="text-right flex flex-col items-end gap-1">
                       <div class="text-sm font-black text-indigo-300">₹{{ member.shareAmount | number:'1.2-2' }}</div>
-                      <div class="text-[10px] font-bold" [class.text-emerald-400]="member.isPaid" [class.text-amber-400]="!member.isPaid">
-                        {{ member.isPaid ? 'PAID ✓' : 'PENDING' }}
-                      </div>
+                      @if (member.isPaid) {
+                        <div class="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                          <i class="fa-solid fa-circle-check text-[9px]"></i>
+                          <span>PAID</span>
+                        </div>
+                      } @else if (isClaimPending(member.userId)) {
+                        <div class="text-[10px] font-bold text-amber-500 dark:text-amber-400 flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                          <i class="fa-solid fa-clock text-[9px]"></i>
+                          <span>VERIFYING</span>
+                        </div>
+                      } @else {
+                        @if (canPay(member)) {
+                          <button type="button"
+                                  (click)="openElectricityUpi(member)"
+                                  class="text-[10px] font-black px-2 py-0.5 rounded-lg text-white shadow-xs cursor-pointer flex items-center gap-1 transition hover:brightness-110 active:scale-95"
+                                  style="background: linear-gradient(135deg, #1ABC9C 0%, #16A085 100%);"
+                                  title="1-Tap Instant UPI">
+                            <i class="fa-solid fa-bolt text-[9px]"></i>
+                            <span>Pay UPI</span>
+                          </button>
+                        } @else {
+                          <div class="text-[10px] font-bold text-amber-400">
+                            PENDING
+                          </div>
+                        }
+                      }
                     </div>
                   </div>
                 }
@@ -418,7 +485,7 @@
         @if (!acc.latestBill) {
           <div class="card p-8 text-center no-bill-card">
             <div class="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center text-2xl radar-box">
-              📡
+              <i class="fa-solid fa-tower-broadcast text-2xl text-sky-400"></i>
             </div>
             <h3 class="text-base font-black mb-1" style="color: var(--text);">Bill not generated yet</h3>
             <p class="text-xs max-w-md mx-auto mb-4" style="color: var(--t2);">
@@ -449,7 +516,7 @@
       <div class="flex items-center justify-between p-5 border-b shrink-0" style="border-color: var(--border);">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl modal-icon-box shrink-0">
-            ⚡
+            <i class="fa-solid fa-bolt text-xl text-amber-400"></i>
           </div>
           <div>
             <h3 class="text-base font-black tracking-tight" style="color: var(--text);">Add Electricity Account</h3>
@@ -460,7 +527,7 @@
                 (click)="closeAddModal()"
                 class="w-9 h-9 rounded-xl flex items-center justify-center text-base transition hover:bg-black/10 cursor-pointer"
                 style="color: var(--t2);">
-          ✕
+          <i class="fa-solid fa-xmark text-sm"></i>
         </button>
       </div>
 
@@ -474,15 +541,16 @@
               Select Electricity Biller (Discom)
             </label>
             @if (selectedBillerId && selectedBillerDetail()) {
-              <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                ✓ Provider Connected
+              <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
+                <i class="fa-solid fa-check text-[10px]"></i>
+                <span>Provider Connected</span>
               </span>
             }
           </div>
 
           <!-- Searchable Combobox Field -->
           <div class="relative flex items-center">
-            <span class="absolute left-3.5 text-base pointer-events-none opacity-80">⚡</span>
+            <i class="fa-solid fa-bolt absolute left-3.5 text-amber-400 pointer-events-none text-sm"></i>
             <input type="text"
                    [(ngModel)]="billerSearch"
                    (focus)="billerDropdownOpen.set(true)"
@@ -496,7 +564,7 @@
                         (click)="clearBillerSelection()"
                         class="w-7 h-7 rounded-lg flex items-center justify-center text-xs opacity-60 hover:opacity-100 transition cursor-pointer"
                         title="Clear">
-                  ✕
+                  <i class="fa-solid fa-xmark text-xs"></i>
                 </button>
               }
               <button type="button"
@@ -540,7 +608,7 @@
                          [class.selected]="selectedBillerId === b.id">
                       <div class="flex items-center gap-2.5 min-w-0 pr-2">
                         <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black biller-avatar-tag shrink-0">
-                          ⚡
+                          <i class="fa-solid fa-bolt text-xs text-amber-400"></i>
                         </div>
                         <div class="min-w-0">
                           <div class="text-xs font-bold truncate" style="color: var(--text);">
@@ -556,9 +624,15 @@
                       </div>
                       <div class="shrink-0">
                         @if (selectedBillerId === b.id) {
-                          <span class="text-xs font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">Selected ✓</span>
+                          <span class="text-xs font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 inline-flex items-center gap-1">
+                            <i class="fa-solid fa-check text-[10px]"></i>
+                            <span>Selected</span>
+                          </span>
                         } @else {
-                          <span class="text-[11px] font-bold text-amber-500 opacity-60 hover:opacity-100">Select →</span>
+                          <span class="text-[11px] font-bold text-amber-500 opacity-60 hover:opacity-100 inline-flex items-center gap-1">
+                            <span>Select</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                          </span>
                         }
                       </div>
                     </div>
@@ -666,7 +740,7 @@
                 (click)="closeLogsModal()"
                 class="w-7 h-7 rounded-lg flex items-center justify-center transition hover:bg-black/10 cursor-pointer"
                 style="color: var(--t2);">
-          ✕
+          <i class="fa-solid fa-xmark text-sm"></i>
         </button>
       </div>
 
@@ -703,3 +777,20 @@
     </div>
   </div>
 }
+
+<!-- ═══════════════════════════════════════════
+     YOUPI-PG INSTANT UPI PAYMENT MODAL
+═══════════════════════════════════════════ -->
+<app-upi-payment-modal
+  [isOpen]="showUpiModal()"
+  [groupId]="groupId()"
+  [amount]="upiAmount()"
+  [purpose]="'ElectricitySplit'"
+  [purposeTitle]="'Electricity Bill Share'"
+  [referenceId]="upiSplitId()"
+  [recipientVpa]="adminUpiId()"
+  [recipientName]="adminName()"
+  (paymentSuccess)="onUpiElectricitySuccess($event)"
+  (modalClosed)="closeUpiModal()">
+</app-upi-payment-modal>
+

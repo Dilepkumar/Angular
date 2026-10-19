@@ -68,7 +68,8 @@
               class="py-2 px-3 rounded-xl text-xs font-black shadow-sm flex items-center gap-1.5 cursor-pointer border transition active:scale-95"
               style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.05)); border-color: rgba(245, 158, 11, 0.4); color: #f59e0b;"
               title="Electricity Bill Monitoring (TGSPDCL)">
-        <span>⚡ Electricity (TGSPDCL)</span>
+        <i class="fa-solid fa-bolt text-amber-500 text-xs"></i>
+        <span>Electricity (TGSPDCL)</span>
       </button>
 
       @if (isAdmin) {
@@ -128,6 +129,55 @@
     </div>
 
   </div>
+
+  <!-- ═══════════════════════════════════════════
+       ADMIN PAYMENT APPROVAL BANNER (PENDING VERIFICATION)
+  ═══════════════════════════════════════════ -->
+  @if (isAdmin && pendingApprovals().length > 0) {
+    <div class="card p-4 mb-6 rounded-2xl border space-y-3"
+         style="background: color-mix(in srgb, #f59e0b 8%, var(--card)); border-color: rgba(245, 158, 11, 0.35);">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center bg-amber-500/20 text-amber-500 font-black text-xs">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+          </div>
+          <span class="text-xs font-black text-amber-500 dark:text-amber-400 uppercase tracking-wider">
+            {{ pendingApprovals().length }} Bill Payment Claim Awaiting Your Bank Verification
+          </span>
+        </div>
+      </div>
+
+      @for (pending of pendingApprovals(); track pending.id) {
+        <div class="p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+             style="background: var(--bg2); border-color: var(--border);">
+          <div>
+            <div class="text-xs font-extrabold" style="color: var(--text);">
+              {{ pending.payerName }} submitted ₹{{ pending.amount | number:'1.2-2' }}
+            </div>
+            <div class="text-[11px] font-medium mt-0.5" style="color: var(--t3);">
+              Via {{ pending.paymentApp || 'UPI' }} · UTR: <span class="font-mono font-bold text-amber-600 dark:text-amber-400">{{ pending.bankUtr || 'Direct UPI' }}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button type="button"
+                    (click)="approvePaymentClaim(pending, true)"
+                    class="btn py-1.5 px-3 text-xs font-black cursor-pointer shadow-sm flex items-center gap-1.5"
+                    style="background: #10B981;">
+              <i class="fa-solid fa-check text-xs"></i>
+              <span>Approve</span>
+            </button>
+            <button type="button"
+                    (click)="approvePaymentClaim(pending, false)"
+                    class="btns py-1.5 px-3 text-xs font-bold cursor-pointer text-rose-500 flex items-center gap-1.5">
+              <i class="fa-solid fa-xmark text-xs"></i>
+              <span>Reject</span>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
 
   <!-- ═══════════════════════════════════════════
        RECURRING BILLS LIST
@@ -193,6 +243,11 @@
                     <span>{{ bill.paidFromPool ? 'POOL PAID' : 'PAID' }}</span>
                     <i class="fa-solid fa-check text-[9px]"></i>
                   </span>
+                } @else if (isClaimPending(s.userId)) {
+                  <div class="text-[10px] font-bold text-amber-500 dark:text-amber-400 flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                    <i class="fa-solid fa-clock text-[9px]"></i>
+                    <span>VERIFYING</span>
+                  </div>
                 } @else {
                   <div class="flex items-center gap-1.5 flex-wrap justify-end">
                     <span class="pp">PENDING</span>
@@ -209,11 +264,20 @@
 
                     @if (canPay(s)) {
                       <button type="button"
+                              (click)="openInstantUpi(s, bill)"
+                              class="text-[11px] font-black px-2.5 py-1 rounded-lg text-white transition shadow-sm cursor-pointer flex items-center gap-1 hover:brightness-110 active:scale-95"
+                              style="background: linear-gradient(135deg, #1ABC9C 0%, #16A085 100%);"
+                              title="1-Tap Instant UPI (Direct Auto-Verification)">
+                        <i class="fa-solid fa-bolt text-[10px]"></i>
+                        <span>Pay UPI</span>
+                      </button>
+                      <button type="button"
                               (click)="openPayModal(s, bill)"
-                              class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-sm cursor-pointer flex items-center gap-1"
-                              title="Pay split via UPI / QR code">
+                              class="text-[11px] font-bold px-2 py-0.5 rounded-lg border text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition cursor-pointer flex items-center gap-1"
+                              style="border-color: rgba(99, 102, 241, 0.3);"
+                              title="Manual QR & Admin Notification">
                         <i class="fa-solid fa-qrcode text-[9px]"></i>
-                        <span>Pay</span>
+                        <span>Manual</span>
                       </button>
                     }
                   </div>
@@ -474,6 +538,40 @@
         </div>
       </div>
 
+      <!-- Instant UPI Gateway Option -->
+      <div class="p-3.5 rounded-2xl border flex flex-col gap-2 shadow-xs"
+           style="background: linear-gradient(135deg, rgba(26, 188, 156, 0.12) 0%, rgba(22, 160, 133, 0.05) 100%); border-color: rgba(26, 188, 156, 0.35);">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-black shadow-xs"
+                 style="background: linear-gradient(135deg, #1ABC9C 0%, #16A085 100%);">
+              <i class="fa-solid fa-bolt"></i>
+            </div>
+            <div>
+              <div class="text-xs font-black" style="color: var(--text);">Instant UPI Auto-Verification</div>
+              <div class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Zero Admin Review · Auto-Marked Paid</div>
+            </div>
+          </div>
+          <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+            FASTEST
+          </span>
+        </div>
+
+        <button type="button"
+                (click)="openInstantUpi(paySplit, payBill)"
+                class="w-full py-2.5 px-3 rounded-xl font-black text-xs text-white shadow-md cursor-pointer flex items-center justify-center gap-2 transition hover:brightness-110 active:scale-98"
+                style="background: linear-gradient(135deg, #1ABC9C 0%, #16A085 100%);">
+          <i class="fa-solid fa-bolt text-xs"></i>
+          <span>Pay ₹{{ paySplit?.shareAmount | number:'1.2-2' }} via Instant UPI (GPay/PhonePe)</span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="h-px flex-1" style="background: var(--border);"></div>
+        <span class="text-[10px] font-extrabold uppercase tracking-wider" style="color: var(--t3);">Or Manual QR Transfer</span>
+        <div class="h-px flex-1" style="background: var(--border);"></div>
+      </div>
+
       <!-- Admin Selector (when multiple admins exist) -->
       @if (groupAdmins().length > 1) {
         <div>
@@ -582,3 +680,20 @@
     </div>
   </div>
 }
+
+<!-- ═══════════════════════════════════════════
+     YOUPI-PG INSTANT UPI PAYMENT MODAL
+═══════════════════════════════════════════ -->
+<app-upi-payment-modal
+  [isOpen]="showUpiModal()"
+  [groupId]="groupId"
+  [amount]="upiAmount()"
+  [purpose]="'BillSplit'"
+  [purposeTitle]="upiBillTitle()"
+  [referenceId]="upiSplitId()"
+  [recipientVpa]="payUpiId"
+  [recipientName]="selectedAdmin()?.fullName || 'Room Admin'"
+  (paymentSuccess)="onUpiBillPaymentSuccess($event)"
+  (modalClosed)="closeUpiModal()">
+</app-upi-payment-modal>
+

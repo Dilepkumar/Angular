@@ -7,6 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { PopupService } from '../../core/services/popup.service';
 import { MyBalance, DebtPair } from '../shared/models';
 import { PageLoaderComponent } from '../shared/components/page-loader/page-loader.component';
+import { UpiPaymentModalComponent } from '../shared/components/upi-payment-modal/upi-payment-modal.component';
 import * as QRCode from 'qrcode';
 
 interface GroupMemberVm {
@@ -18,7 +19,7 @@ interface GroupMemberVm {
 @Component({
   selector: 'app-iou',
   standalone: true,
-  imports: [CommonModule, FormsModule, DecimalPipe, RouterLink, PageLoaderComponent],
+  imports: [CommonModule, FormsModule, DecimalPipe, RouterLink, PageLoaderComponent, UpiPaymentModalComponent],
   templateUrl: './iou.component.html',
   styleUrls: ['./iou.component.scss']
 })
@@ -53,6 +54,13 @@ export class IouComponent implements OnInit {
   settleNote = '';
   settleUpiId = '';
   error = signal<string | null>(null);
+
+  // ── Instant UPI Payment Gateway (YouPI-PG) ──
+  showUpiModal = signal<boolean>(false);
+  upiAmount = signal<number>(0);
+  upiPayeeId = signal<number | null>(null);
+  upiPayeeName = signal<string>('Flatmate');
+  upiPayeeVpa = signal<string>('roomledger@upi');
 
   myUpiId = '';
   me = this.auth.user;
@@ -243,6 +251,30 @@ export class IouComponent implements OnInit {
         this.showToast(`❌ ${e.error?.message || 'Failed to record settlement'}`);
       }
     });
+  }
+
+  // ═══════════════════════════════════════════
+  // INSTANT UPI PAYMENT (YOUPI GATEWAY)
+  // ═══════════════════════════════════════════
+  openInstantUpi(d: DebtPair): void {
+    this.settleTarget = d;
+    this.upiPayeeId.set(d.toUserId);
+    this.upiPayeeName.set(d.toUserName || 'Flatmate');
+    this.upiPayeeVpa.set(d.upiId || 'roomledger@upi');
+    this.upiAmount.set(d.amount);
+    this.showSettle = false;
+    this.showUpiModal.set(true);
+  }
+
+  closeUpiModal(): void {
+    this.showUpiModal.set(false);
+  }
+
+  onUpiIouSuccess(event: { orderId: string; utr?: string; amount: number }): void {
+    this.showUpiModal.set(false);
+    this.showToast(`🎉 Settled ₹${event.amount} via Instant UPI! Debt cleared.`);
+    this.load();
+    this.loadExpenses();
   }
 
   async markReceived(d: DebtPair): Promise<void> {

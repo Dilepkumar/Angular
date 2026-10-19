@@ -7,6 +7,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { PopupService } from '../../core/services/popup.service';
 import { PendingContribution, MemberStatus } from '../shared/models';
 import { PageLoaderComponent } from '../shared/components/page-loader/page-loader.component';
+import { UpiPaymentModalComponent } from '../shared/components/upi-payment-modal/upi-payment-modal.component';
+import { YoupiPaymentService, PaymentTransactionStatus } from '../../core/services/youpi-payment.service';
 import { environment } from '../../../environments/environment';
 
 export interface PoolTransactionItem {
@@ -123,7 +125,7 @@ interface ReceiptRow {
 @Component({
   selector: 'app-pool',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageLoaderComponent],
+  imports: [CommonModule, FormsModule, PageLoaderComponent, UpiPaymentModalComponent],
   templateUrl: './pool.component.html',
   styleUrls: ['./pool.component.scss']
 })
@@ -133,6 +135,7 @@ export class PoolComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private popup = inject(PopupService);
+  private paymentService = inject(YoupiPaymentService);
 
   groupId!: string;
   groupName = signal('Apartment 402');
@@ -151,6 +154,7 @@ export class PoolComponent implements OnInit {
   // ── Admin: Pending Approvals ──
   isAdmin = signal(false);
   pending = signal<PendingContribution[]>([]);
+  pendingUpiApprovals = signal<PaymentTransactionStatus[]>([]);
   showPending = false;
   showRejectFor: PendingContribution | null = null;
   rejectReason = '';
@@ -242,6 +246,12 @@ export class PoolComponent implements OnInit {
   contributing = false;
   contributeMembers = signal<{ userId: number; name: string; initials: string; selected: boolean }[]>([]);
 
+  // ── Instant UPI Payment Gateway (YouPI-PG) ──
+  showUpiPayment = signal<boolean>(false);
+  upiPaymentAmount = signal<number>(500);
+  adminUpiId = signal<string>('roomledger@upi');
+  adminName = signal<string>('RoomLedger Pool');
+
   // ── Single Member Quick Pay ("Mark as Paid") Modal ──
   showQuickPayModal = signal<boolean>(false);
   quickPayTarget = signal<any>(null);
@@ -301,6 +311,10 @@ export class PoolComponent implements OnInit {
         this.isAdmin.set(b.isAdmin);
         this.pending.set(b.pendingItems ?? []);
 
+        if (b.isAdmin) {
+          this.loadPendingUpiApprovals();
+        }
+
         if (b.availableMonths && b.availableMonths.length > 0) {
           this.availableMonths.set(b.availableMonths);
         } else if (!this.availableMonths().includes(this.selectedMonth())) {
@@ -345,6 +359,11 @@ export class PoolComponent implements OnInit {
     this.api.get<any>(`groups/${this.groupId}`).subscribe({
       next: (g) => {
         if (g?.groupName) this.groupName.set(g.groupName);
+        const admins = (g?.members || []).filter((m: any) => m.role === 'Admin');
+        if (admins.length > 0) {
+          if (admins[0].upiId) this.adminUpiId.set(admins[0].upiId);
+          if (admins[0].name) this.adminName.set(admins[0].name);
+        }
       },
       error: () => {}
     });
@@ -756,6 +775,65 @@ export class PoolComponent implements OnInit {
         this.showToast(`❌ ${e.error?.message || 'Contribution failed'}`);
       }
     });
+  }
+
+  // ═══════════════════════════════════════════
+  // INSTANT UPI PAYMENT (YOUPI GATEWAY)
+  // ═══════════════════════════════════════════
+  openUpiPaymentModal(amount?: number): void {
+    const amt = amount || this.contributeAmount || 500;
+    this.upiPaymentAmount.set(amt);
+    this.showContribute = false;
+    this.showQuickPayModal.set(false);
+    this.showUpiPayment.set(true);
+  }
+
+  closeUpiPaymentModal(): void {
+    this.showUpiPayment.set(false);
+  }
+
+  onUpiPaymentSuccess(event: { orderId: string; utr?: string; amount: number; isApproved?: boolean }): void {
+    this.showUpiPayment.set(false);
+    if (event.isApproved) {
+      this.showToast(`🎉 Payment of ₹${event.amount} verified & credited to pool balance!`);
+    } else {
+      this.showToast(`⏳ Contribution of ₹${event.amount} submitted — waiting for Admin bank verification.`);
+    }
+    this.load();
+    this.loadPendingUpiApprovals();
+  }
+
+  loadPendingUpiApprovals(): void {
+    if (!this.isAdmin()) return;
+    const gIdNum = parseInt(this.groupId, 10) || 1;
+    this.paymentService.getPendingApprovals(gIdNum).subscribe({
+      next: (list) => {
+        const poolPending = (list || []).filter(p => p.purpose === 'PoolContribution');
+        this.pendingUpiApprovals.set(poolPending);
+      },
+      error: () => {}
+    });
+  }
+
+  approveUpiPaymentClaim(claim: PaymentTransactionStatus, approve: boolean): void {
+    const action = approve ? 'approve' : 'reject';
+    this.paymentService.approvePayment(claim.id, approve).subscribe({
+      next: (res) => {
+        this.popup.success(res.message || (approve ? 'Payment approved and credited to pool!' : 'Payment claim rejected.'));
+        this.loadPendingUpiApprovals();
+        this.load();
+      },
+      error: (e) => this.popup.error(e.error?.message || `Failed to ${action} payment claim`)
+    });
+  }
+
+  isMemberUpiPending(userId: number): boolean {
+    return this.pendingUpiApprovals().some(p => p.payerUserId === userId);
+  }
+
+  payMemberContribution(m: any): void {
+    const amt = m.pendingAmount > 0 ? m.pendingAmount : (m.expectedThisMonth > 0 ? m.expectedThisMonth : 1000);
+    this.openUpiPaymentModal(amt);
   }
 
   // ═══════════════════════════════════════════
