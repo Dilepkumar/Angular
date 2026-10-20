@@ -537,7 +537,7 @@ export class ProfileComponent implements OnInit, AfterViewInit {
 
     const name = this.fullName().trim() || 'Roommate';
     // Standard NPCI UPI URI Specification — 100% compliant with GPay, PhonePe, Paytm, BHIM & Google Lens
-    const upiUri = `upi://pay?pa=${encodeURIComponent(upi)}&pn=${encodeURIComponent(name)}&cu=INR`;
+    const upiUri = `upi://pay?pa=${upi}&pn=${encodeURIComponent(name)}&cu=INR`;
 
     QRCode.toCanvas(cv, upiUri, {
       width: 150,

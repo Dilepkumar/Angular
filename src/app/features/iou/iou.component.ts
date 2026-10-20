@@ -154,9 +154,22 @@ export class IouComponent implements OnInit {
     this.selectedMembers.set(new Set());
   }
 
-  addExpense(): void {
-    if (!this.description.trim() || !this.amount || this.amount <= 0) return;
+  splitMode = signal<'equal' | 'custom' | 'itemized'>('equal');
+  customShares: { [memberId: string]: number | null } = {};
+  receiptItems = signal<Array<{ itemName: string; amount: number | null; eaterUserIds: Set<number> }>>([
+    { itemName: 'Item 1', amount: null, eaterUserIds: new Set<number>() }
+  ]);
 
+  setSplitMode(mode: 'equal' | 'custom' | 'itemized'): void {
+    this.splitMode.set(mode);
+    if (mode === 'custom') {
+      this.initCustomShares();
+    } else if (mode === 'itemized' && this.receiptItems().length === 0) {
+      this.addItemizedRow();
+    }
+  }
+
+  getActiveSplitMemberIds(): string[] {
     const participantIds = [...this.selectedMembers()];
     if (this.includeMeInSplit && this.auth.user()?.id) {
       const myIdStr = String(this.auth.user()!.id);
@@ -164,35 +177,215 @@ export class IouComponent implements OnInit {
         participantIds.push(myIdStr);
       }
     }
+    return participantIds;
+  }
 
-    if (participantIds.length === 0) {
-      this.popup.warning('Please select at least one roommate to split with');
+  initCustomShares(): void {
+    const list = this.getActiveSplitMemberIds();
+    if (!this.amount || this.amount <= 0 || list.length === 0) return;
+    const equalShare = Math.round((this.amount / list.length) * 100) / 100;
+    for (const id of list) {
+      if (this.customShares[id] == null) {
+        this.customShares[id] = equalShare;
+      }
+    }
+  }
+
+  getCustomSum(): number {
+    const list = this.getActiveSplitMemberIds();
+    return list.reduce((acc, id) => acc + (Number(this.customShares[id]) || 0), 0);
+  }
+
+  getCustomRemaining(): number {
+    return (this.amount || 0) - this.getCustomSum();
+  }
+
+  addItemizedRow(): void {
+    const allMemberUserIds = new Set<number>();
+    for (const m of this.groupMembers()) {
+      allMemberUserIds.add(Number(m.id));
+    }
+    if (this.auth.user()?.id) {
+      allMemberUserIds.add(this.auth.user()!.id);
+    }
+
+    this.receiptItems.update(items => [
+      ...items,
+      {
+        itemName: `Item ${items.length + 1}`,
+        amount: null,
+        eaterUserIds: new Set<number>(allMemberUserIds)
+      }
+    ]);
+  }
+
+  removeItemizedRow(index: number): void {
+    this.receiptItems.update(items => items.filter((_, i) => i !== index));
+  }
+
+  toggleItemEater(index: number, userId: number): void {
+    this.receiptItems.update(items => {
+      const next = [...items];
+      const item = { ...next[index] };
+      const eaters = new Set(item.eaterUserIds);
+      if (eaters.has(userId)) {
+        eaters.delete(userId);
+      } else {
+        eaters.add(userId);
+      }
+      item.eaterUserIds = eaters;
+      next[index] = item;
+      return next;
+    });
+  }
+
+  isEaterSelected(index: number, userId: number): boolean {
+    const item = this.receiptItems()[index];
+    return item ? item.eaterUserIds.has(userId) : false;
+  }
+
+  getItemizedSum(): number {
+    return this.receiptItems().reduce((acc, it) => acc + (Number(it.amount) || 0), 0);
+  }
+
+  getItemizedRemaining(): number {
+    return (this.amount || 0) - this.getItemizedSum();
+  }
+
+  myUserIdStr(): string {
+    return this.auth.user()?.id ? String(this.auth.user()!.id) : '0';
+  }
+
+  getAllGroupMembersWithMe(): GroupMemberVm[] {
+    const list = [...this.groupMembers()];
+    const u = this.auth.user();
+    if (u) {
+      list.unshift({
+        id: String(u.id),
+        name: `${u.fullName || u.name || 'You'} (Me)`,
+        isAdmin: false
+      });
+    }
+    return list;
+  }
+
+  addExpense(): void {
+    if (!this.description.trim() || !this.amount || this.amount <= 0) {
+      this.popup.warning('Please enter a description and amount');
       return;
     }
 
-    const participants = participantIds.map(id => ({
-      userId: parseInt(id, 10),
-      shareAmount: null
-    }));
+    const mode = this.splitMode();
 
-    const body = {
-      description: this.description.trim(),
-      amount: this.amount,
-      sharedWith: participantIds,
-      participants: participants,
-      expenseDate: new Date().toISOString().slice(0, 10)
-    };
+    if (mode === 'equal') {
+      const participantIds = this.getActiveSplitMemberIds();
+      if (participantIds.length === 0) {
+        this.popup.warning('Please select at least one roommate to split with');
+        return;
+      }
+      const participants = participantIds.map(id => ({
+        userId: parseInt(id, 10),
+        shareAmount: null
+      }));
+      const body = {
+        description: this.description.trim(),
+        amount: this.amount,
+        sharedWith: participantIds,
+        participants: participants,
+        expenseDate: new Date().toISOString().slice(0, 10)
+      };
 
-    this.api.post(`groups/${this.groupId}/iou/expenses`, body).subscribe({
-      next: () => {
-        this.showAdd = false;
-        this.showToast('✅ Shared expense added & split!');
-        this.load();
-        this.loadExpenses();
-        this.resetForm();
-      },
-      error: (e) => this.popup.error(e.error?.message ?? 'Failed to add expense')
-    });
+      this.api.post(`groups/${this.groupId}/iou/expenses`, body).subscribe({
+        next: () => {
+          this.showAdd = false;
+          this.showToast('✅ Shared expense added (Equal Split)!');
+          this.load();
+          this.loadExpenses();
+          this.resetForm();
+        },
+        error: (e) => this.popup.error(e.error?.message ?? 'Failed to add expense')
+      });
+    } else if (mode === 'custom') {
+      const participantIds = this.getActiveSplitMemberIds();
+      if (participantIds.length === 0) {
+        this.popup.warning('Please select participants for custom split');
+        return;
+      }
+      const remaining = Math.abs(this.getCustomRemaining());
+      if (remaining > 0.05) {
+        this.popup.warning(`Custom shares sum (₹${this.getCustomSum().toFixed(2)}) must equal total ₹${this.amount}. Difference: ₹${this.getCustomRemaining().toFixed(2)}`);
+        return;
+      }
+      const participants = participantIds.map(id => ({
+        userId: parseInt(id, 10),
+        shareAmount: Number(this.customShares[id]) || 0
+      }));
+      const body = {
+        description: this.description.trim(),
+        amount: this.amount,
+        sharedWith: participantIds,
+        participants: participants,
+        expenseDate: new Date().toISOString().slice(0, 10)
+      };
+
+      this.api.post(`groups/${this.groupId}/iou/expenses`, body).subscribe({
+        next: () => {
+          this.showAdd = false;
+          this.showToast('✅ Shared expense added (Custom Split)!');
+          this.load();
+          this.loadExpenses();
+          this.resetForm();
+        },
+        error: (e) => this.popup.error(e.error?.message ?? 'Failed to add expense')
+      });
+    } else if (mode === 'itemized') {
+      const items = this.receiptItems();
+      if (items.length === 0) {
+        this.popup.warning('Add at least one item');
+        return;
+      }
+      for (const it of items) {
+        if (!it.itemName?.trim()) {
+          this.popup.warning('All receipt items must have a name');
+          return;
+        }
+        if (!it.amount || it.amount <= 0) {
+          this.popup.warning(`Item "${it.itemName}" has an invalid amount`);
+          return;
+        }
+        if (it.eaterUserIds.size === 0) {
+          this.popup.warning(`Item "${it.itemName}" must have at least one flatmate selected`);
+          return;
+        }
+      }
+      const diff = Math.abs(this.getItemizedRemaining());
+      if (diff > 0.05) {
+        this.popup.warning(`Itemized items total (₹${this.getItemizedSum().toFixed(2)}) must match bill total ₹${this.amount}`);
+        return;
+      }
+
+      const payload = {
+        description: this.description.trim(),
+        amount: this.amount,
+        expenseDate: new Date().toISOString().slice(0, 10),
+        items: items.map(it => ({
+          itemName: it.itemName.trim(),
+          amount: Number(it.amount),
+          eaterUserIds: Array.from(it.eaterUserIds)
+        }))
+      };
+
+      this.api.post(`groups/${this.groupId}/iou/expenses/itemized`, payload).subscribe({
+        next: () => {
+          this.showAdd = false;
+          this.showToast('✅ Itemized expense added & split!');
+          this.load();
+          this.loadExpenses();
+          this.resetForm();
+        },
+        error: (e) => this.popup.error(e.error?.message ?? 'Failed to add itemized expense')
+      });
+    }
   }
 
   openSettle(d: DebtPair): void {
@@ -220,7 +413,7 @@ export class IouComponent implements OnInit {
     const name = encodeURIComponent(payeeName.trim() || 'Flatmate');
     const amt = amount ? amount.toFixed(2) : '0.00';
     const note = encodeURIComponent('RoomLedger Settle Up');
-    return `upi://pay?pa=${encodeURIComponent(vpa)}&pn=${name}&am=${amt}&cu=INR&tn=${note}`;
+    return `upi://pay?pa=${vpa}&pn=${name}&am=${amt}&cu=INR&tn=${note}`;
   }
 
   payViaUpiApp(): void {
@@ -260,7 +453,7 @@ export class IouComponent implements OnInit {
     this.settleTarget = d;
     this.upiPayeeId.set(d.toUserId);
     this.upiPayeeName.set(d.toUserName || 'Flatmate');
-    this.upiPayeeVpa.set(d.upiId || 'roomledger@upi');
+    this.upiPayeeVpa.set(d.upiId?.trim() || '');
     this.upiAmount.set(d.amount);
     this.showSettle = false;
     this.showUpiModal.set(true);
@@ -309,7 +502,7 @@ export class IouComponent implements OnInit {
     this.showMyQr = true;
     const myName = this.auth.user()?.fullName || this.auth.user()?.name || 'Flatmate';
     const uri = this.myUpiId 
-      ? `upi://pay?pa=${encodeURIComponent(this.myUpiId)}&pn=${encodeURIComponent(myName)}&cu=INR` 
+      ? `upi://pay?pa=${this.myUpiId.trim()}&pn=${encodeURIComponent(myName)}&cu=INR` 
       : 'upi://pay';
     setTimeout(() => this.drawQrCode(this.myQrCanvasRef, uri), 100);
   }
@@ -377,6 +570,11 @@ export class IouComponent implements OnInit {
     this.amount = null;
     this.selectedMembers.set(new Set());
     this.includeMeInSplit = true;
+    this.splitMode.set('equal');
+    this.customShares = {};
+    this.receiptItems.set([
+      { itemName: 'Item 1', amount: null, eaterUserIds: new Set<number>() }
+    ]);
     this.error.set(null);
   }
 

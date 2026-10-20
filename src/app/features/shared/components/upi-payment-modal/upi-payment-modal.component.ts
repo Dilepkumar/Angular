@@ -105,6 +105,42 @@ import { Subscription } from 'rxjs';
                 </span>
               </div>
 
+              <!-- RECIPIENT & VPA CARD WITH 1-TAP COPY -->
+              <div class="p-3.5 rounded-2xl border flex items-center justify-between gap-3 shadow-xs"
+                   style="background: var(--bg2); border-color: var(--border);">
+                <div class="min-w-0 flex-1">
+                  <div class="text-[10px] font-black tracking-wider uppercase" style="color: var(--t3);">
+                    PAYING TO
+                  </div>
+                  <div class="text-xs sm:text-[13px] font-black truncate" style="color: var(--text);">
+                    {{ recipientName }}
+                  </div>
+                  <div class="font-mono text-[11px] font-bold truncate flex items-center gap-1.5 mt-0.5" style="color: var(--p1);">
+                    <span>{{ effectiveVpa() }}</span>
+                  </div>
+                </div>
+
+                <button type="button"
+                        (click)="copyVpa()"
+                        class="px-3 py-2 rounded-xl border text-xs font-black cursor-pointer shadow-xs transition active:scale-95 shrink-0 flex items-center gap-1.5"
+                        [style.background]="copiedVpa() ? 'var(--ok)' : 'var(--card)'"
+                        [style.borderColor]="copiedVpa() ? 'var(--ok)' : 'var(--border)'"
+                        [style.color]="copiedVpa() ? 'white' : 'var(--text)'"
+                        title="Copy Recipient UPI ID">
+                  <i class="fa-solid" [ngClass]="copiedVpa() ? 'fa-check' : 'fa-copy'"></i>
+                  <span>{{ copiedVpa() ? 'Copied!' : 'Copy UPI' }}</span>
+                </button>
+              </div>
+
+              <!-- AUTO-REDIRECT / RETURN HELPER NOTE -->
+              <div class="p-2.5 rounded-xl border flex items-center gap-2.5 text-[11px] leading-relaxed"
+                   style="background: color-mix(in srgb, #1ABC9C 8%, var(--bg2)); border-color: color-mix(in srgb, #1ABC9C 25%, transparent); color: var(--text);">
+                <i class="fa-solid fa-arrow-left-rotate text-emerald-500 text-xs shrink-0"></i>
+                <div>
+                  <strong>Auto-Verify:</strong> After entering your PIN in PhonePe/GPay, <strong>return to this tab</strong> to see your instant verified receipt.
+                </div>
+              </div>
+
               <!-- 1-TAP MOBILE UPI APP LAUNCHERS -->
               <div>
                 <div class="flex items-center justify-between mb-2">
@@ -117,7 +153,7 @@ import { Subscription } from 'rxjs';
                   
                   <!-- Google Pay -->
                   <a [href]="getAppUri('gpay')"
-                     (click)="selectApp('Google Pay')"
+                     (click)="openApp('Google Pay')"
                      class="p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition transform active:scale-95 no-underline group shadow-xs cursor-pointer relative"
                      [style.background]="selectedApp() === 'Google Pay' ? 'color-mix(in srgb, #1ABC9C 10%, var(--bg2))' : 'var(--bg2)'"
                      [style.borderColor]="selectedApp() === 'Google Pay' ? '#1ABC9C' : 'var(--border)'">
@@ -130,7 +166,7 @@ import { Subscription } from 'rxjs';
 
                   <!-- PhonePe -->
                   <a [href]="getAppUri('phonepe')"
-                     (click)="selectApp('PhonePe')"
+                     (click)="openApp('PhonePe')"
                      class="p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition transform active:scale-95 no-underline group shadow-xs cursor-pointer relative"
                      [style.background]="selectedApp() === 'PhonePe' ? 'color-mix(in srgb, #1ABC9C 10%, var(--bg2))' : 'var(--bg2)'"
                      [style.borderColor]="selectedApp() === 'PhonePe' ? '#1ABC9C' : 'var(--border)'">
@@ -143,7 +179,7 @@ import { Subscription } from 'rxjs';
 
                   <!-- Paytm -->
                   <a [href]="getAppUri('paytm')"
-                     (click)="selectApp('Paytm')"
+                     (click)="openApp('Paytm')"
                      class="p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition transform active:scale-95 no-underline group shadow-xs cursor-pointer relative"
                      [style.background]="selectedApp() === 'Paytm' ? 'color-mix(in srgb, #1ABC9C 10%, var(--bg2))' : 'var(--bg2)'"
                      [style.borderColor]="selectedApp() === 'Paytm' ? '#1ABC9C' : 'var(--border)'">
@@ -156,7 +192,7 @@ import { Subscription } from 'rxjs';
 
                   <!-- Any UPI / CRED -->
                   <a [href]="getAppUri('generic')"
-                     (click)="selectApp('Other UPI')"
+                     (click)="openApp('Other UPI')"
                      class="p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition transform active:scale-95 no-underline group shadow-xs cursor-pointer relative"
                      [style.background]="selectedApp() === 'Other UPI' ? 'color-mix(in srgb, #1ABC9C 10%, var(--bg2))' : 'var(--bg2)'"
                      [style.borderColor]="selectedApp() === 'Other UPI' ? '#1ABC9C' : 'var(--border)'">
@@ -169,14 +205,14 @@ import { Subscription } from 'rxjs';
                 </div>
               </div>
 
-              <!-- QR CODE TOGGLE / ACCORDION -->
+              <!-- QR CODE WITH SAVE TO GALLERY OPTION (MATCHES PHONEPE / PAYTM GALLERY SCAN REQUIREMENT) -->
               <div class="border rounded-2xl p-3.5" style="border-color: var(--border); background: var(--bg2);">
                 <div class="flex items-center justify-between cursor-pointer"
                      (click)="toggleQr()">
                   <div class="flex items-center gap-2">
                     <i class="fa-solid fa-qrcode text-sm" style="color: #1ABC9C;"></i>
                     <span class="text-xs font-bold" style="color: var(--text);">
-                      Scan UPI QR with another device
+                      Scan UPI QR or Save to Gallery
                     </span>
                   </div>
                   <i class="fa-solid fa-chevron-down text-xs transition-transform"
@@ -185,24 +221,40 @@ import { Subscription } from 'rxjs';
                 </div>
 
                 @if (showQr()) {
-                  <div class="mt-3 pt-3 border-t flex flex-col items-center justify-center gap-2"
+                  <div class="mt-3 pt-3 border-t flex flex-col items-center justify-center gap-2.5"
                        style="border-color: var(--border);">
                     <div class="p-3 bg-white rounded-2xl shadow-sm border border-slate-200">
                       <canvas #qrCanvas class="max-w-[190px] h-auto"></canvas>
                     </div>
+
                     <div class="flex items-center gap-2">
                       <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
                       <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
                         Listening for live bank payment…
                       </span>
                     </div>
-                    <button type="button"
-                            (click)="copyUpiLink()"
-                            class="text-[11px] font-bold inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border cursor-pointer hover:bg-black/5"
-                            style="border-color: var(--border); color: var(--p1);">
-                      <i class="fa-regular fa-copy"></i>
-                      <span>{{ copiedUpi() ? 'Copied to Clipboard!' : 'Copy Raw UPI Link' }}</span>
-                    </button>
+
+                    <div class="flex items-center gap-2 flex-wrap justify-center w-full">
+                      <button type="button"
+                              (click)="saveQrToPhotos()"
+                              class="text-[11px] font-bold inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border cursor-pointer hover:bg-black/5"
+                              style="border-color: #1ABC9C; color: #16A085;">
+                        <i class="fa-solid fa-download"></i>
+                        <span>{{ savedQrToPhotos() ? 'Saved to Gallery!' : 'Save QR to Photos' }}</span>
+                      </button>
+
+                      <button type="button"
+                              (click)="copyUpiLink()"
+                              class="text-[11px] font-bold inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border cursor-pointer hover:bg-black/5"
+                              style="border-color: var(--border); color: var(--p1);">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>{{ copiedUpi() ? 'Copied Link!' : 'Copy Raw UPI Link' }}</span>
+                      </button>
+                    </div>
+
+                    <div class="text-[10px] text-center font-medium max-w-xs" style="color: var(--t3);">
+                      Tip: If your UPI app blocks web links, tap <strong>Save QR to Photos</strong>, then open PhonePe/Paytm ➔ Scanner ➔ Gallery to pay seamlessly.
+                    </div>
                   </div>
                 }
               </div>
@@ -498,6 +550,9 @@ export class UpiPaymentModalComponent implements OnInit, OnDestroy {
   verifiedApp = signal<string | null>(null);
   showQr = signal<boolean>(false);
   copiedUpi = signal<boolean>(false);
+  copiedVpa = signal<boolean>(false);
+  savedQrToPhotos = signal<boolean>(false);
+  editableVpa = signal<string>('');
   inputUtr: string = '';
 
   // Timers
@@ -556,6 +611,7 @@ export class UpiPaymentModalComponent implements OnInit, OnDestroy {
     this.step.set('creating');
     this.errorMessage.set(null);
     this.remainingSeconds.set(300);
+    this.editableVpa.set(this.recipientVpa && this.recipientVpa !== 'roomledger@upi' ? this.recipientVpa : '');
 
     const numericGroupId = Number(this.groupId);
     const numericRefId = (this.referenceId != null && (this.referenceId as any) !== '') 
@@ -660,27 +716,57 @@ export class UpiPaymentModalComponent implements OnInit, OnDestroy {
     const session = this.activeSession();
     const orderId = session?.orderId || `RL_PAY_${Date.now()}`;
     return this.paymentService.buildUpiUri({
-      vpa: this.recipientVpa,
+      vpa: this.effectiveVpa(),
       name: this.recipientName,
       amount: this.amount,
       note: orderId
     });
   }
 
-  getAppUri(app: 'gpay' | 'phonepe' | 'paytm' | 'generic'): string {
-    const rawUri = this.getUpiUri();
-    const payload = rawUri.replace('upi://pay?', '');
+  effectiveVpa(): string {
+    const edit = this.editableVpa()?.trim();
+    if (edit) return edit;
+    const vpa = this.recipientVpa?.trim();
+    return vpa && vpa !== '' ? vpa : 'roomledger@upi';
+  }
 
-    switch (app) {
-      case 'gpay':
-        return `gpay://upi/pay?${payload}`;
-      case 'phonepe':
-        return `phonepe://pay?${payload}`;
-      case 'paytm':
-        return `paytmmp://pay?${payload}`;
-      default:
-        return rawUri;
+  copyVpa(): void {
+    const vpa = this.effectiveVpa();
+    navigator.clipboard.writeText(vpa).then(() => {
+      this.copiedVpa.set(true);
+      setTimeout(() => this.copiedVpa.set(false), 2500);
+    });
+  }
+
+  onVpaChange(newVpa: string): void {
+    this.editableVpa.set(newVpa);
+    setTimeout(() => this.renderQrCode(), 50);
+  }
+
+  saveQrToPhotos(): void {
+    if (!this.qrCanvas?.nativeElement) return;
+    try {
+      const dataUrl = this.qrCanvas.nativeElement.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `UPI-QR-${this.amount}INR.png`;
+      a.click();
+      this.savedQrToPhotos.set(true);
+      setTimeout(() => this.savedQrToPhotos.set(false), 3000);
+    } catch {
+      this.popup.info('Screenshot the QR code on your screen to upload to PhonePe / Paytm gallery.');
     }
+  }
+
+  openApp(app: string): void {
+    this.selectApp(app);
+    const uri = this.getUpiUri();
+    window.location.href = uri;
+  }
+
+  getAppUri(app: 'gpay' | 'phonepe' | 'paytm' | 'generic'): string {
+    // Standard universal upi://pay intent ensures all UPI apps open cleanly on Android & iOS without proprietary URL scheme blocks
+    return this.getUpiUri();
   }
 
   renderQrCode(): void {

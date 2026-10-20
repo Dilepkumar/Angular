@@ -491,17 +491,16 @@ export class PoolComponent implements OnInit {
   }
 
   onRowPriceChange(row?: ReceiptRow): void {
-    // Only auto-fill expenseTotal if the user hasn't entered a total spend yet.
-    // If the user already set total spend (e.g. ₹300), keep it untouched when editing items!
-    if (!this.expenseTotal || this.expenseTotal <= 0) {
+    if (this.expenseRows.length === 1) {
+      this.expenseTotal = row?.price != null && row.price > 0 ? row.price : null;
+    } else if (!this.expenseTotal || this.expenseTotal <= 0) {
       this.expenseTotal = Number(this.itemsSum.toFixed(2));
     }
   }
 
   onTotalSpendChange(): void {
-    // Only initialize row 1 price if it's currently unset/zero
-    if (this.expenseRows.length === 1 && (!this.expenseRows[0].price || this.expenseRows[0].price <= 0)) {
-      this.expenseRows[0].price = this.expenseTotal;
+    if (this.expenseRows.length === 1) {
+      this.expenseRows[0].price = this.expenseTotal != null && this.expenseTotal > 0 ? this.expenseTotal : null;
     }
   }
 

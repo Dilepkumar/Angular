@@ -358,14 +358,16 @@ export class LogExpenseComponent implements OnInit {
   }
 
   onRowPriceChange(row?: ReceiptRow): void {
-    if (!this.expenseTotal || this.expenseTotal <= 0) {
+    if (this.expenseRows.length === 1) {
+      this.expenseTotal = row?.price != null && row.price > 0 ? row.price : null;
+    } else if (!this.expenseTotal || this.expenseTotal <= 0) {
       this.expenseTotal = Number(this.itemsSum.toFixed(2));
     }
   }
 
   onTotalSpendChange(): void {
-    if (this.expenseRows.length === 1 && (!this.expenseRows[0].price || this.expenseRows[0].price <= 0)) {
-      this.expenseRows[0].price = this.expenseTotal;
+    if (this.expenseRows.length === 1) {
+      this.expenseRows[0].price = this.expenseTotal != null && this.expenseTotal > 0 ? this.expenseTotal : null;
     }
   }
 

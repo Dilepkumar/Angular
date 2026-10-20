@@ -282,7 +282,7 @@ export class BillsComponent implements OnInit {
     if (!this.payUpiId?.trim() || !this.paySplit?.shareAmount) return '';
     const adminName = this.selectedAdmin()?.fullName || 'Room Admin';
     const billName = this.formatBillName(this.payBill?.billName) || 'Flat Bill';
-    return `upi://pay?pa=${encodeURIComponent(this.payUpiId.trim())}&pn=${encodeURIComponent(adminName)}&am=${this.paySplit.shareAmount}&cu=INR&tn=${encodeURIComponent(billName + ' share')}`;
+    return `upi://pay?pa=${this.payUpiId.trim()}&pn=${encodeURIComponent(adminName)}&am=${this.paySplit.shareAmount}&cu=INR&tn=${encodeURIComponent(billName + ' share')}`;
   }
 
   drawPayQrCode(): void {

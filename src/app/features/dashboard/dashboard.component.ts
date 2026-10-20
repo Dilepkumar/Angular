@@ -5,6 +5,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PageLoaderComponent } from '../shared/components/page-loader/page-loader.component';
+import { UpiPaymentModalComponent } from '../shared/components/upi-payment-modal/upi-payment-modal.component';
+import { PopupService } from '../../core/services/popup.service';
+import * as QRCode from 'qrcode';
 import { environment } from '../../../environments/environment';
 
 interface ReceiptRow {
@@ -110,13 +113,14 @@ export interface DashboardIouDebt {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageLoaderComponent],
+  imports: [CommonModule, FormsModule, PageLoaderComponent, UpiPaymentModalComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit, AfterViewInit {
   private api = inject(ApiService);
   private auth = inject(AuthService);
+  private popup = inject(PopupService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -322,6 +326,13 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   // Toast feedback
   toastMessage = signal<string | null>(null);
 
+  // ── Real UPI PG Modal State for Paying Debts ──
+  showUpiModal = signal<boolean>(false);
+  upiAmount = signal<number>(0);
+  upiPayeeId = signal<number | null>(null);
+  upiPayeeName = signal<string>('');
+  upiPayeeVpa = signal<string>('');
+
   // ── UPI Settle Modal State ──
   settleModal = signal<SettleModalData | null>(null);
 
@@ -523,14 +534,83 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/g', this.groupId, 'iou']);
   }
 
+  abs(n: number): number {
+    return Math.abs(n);
+  }
+
   // ── UPI Settle Methods ──
   openSettleModal(name: string, upiId: string, amount: number): void {
     this.settleModal.set({ name, upiId, amount });
-    setTimeout(() => this.drawSettleQr(upiId), 80);
+    const uri = upiId?.startsWith('upi://')
+      ? upiId
+      : (upiId ? `upi://pay?pa=${upiId.trim()}&pn=${encodeURIComponent(name)}&am=${amount}&cu=INR` : 'upi://pay');
+    setTimeout(() => this.drawSettleQr(uri), 100);
   }
 
   closeSettleModal(): void {
     this.settleModal.set(null);
+  }
+
+
+
+  // ── Record Settlement (When flatmate pays you) ──
+  async markReceived(debt: DashboardIouDebt): Promise<void> {
+    const confirmed = await this.popup.confirm({
+      title: 'Confirm Payment Received',
+      message: `Confirm that ${debt.debtorName} has settled ₹${debt.amount}? This will clear their debt from the group ledger.`,
+      confirmText: 'Mark as Received',
+      cancelText: 'Cancel',
+      type: 'primary'
+    });
+    if (!confirmed) return;
+
+    this.api.post<any>(`groups/${this.groupId}/iou/settle-up`, {
+      fromUserId: debt.debtorId,
+      payerId: debt.debtorId,
+      payeeId: this.me()?.id,
+      amount: debt.amount,
+      note: `Settled by ${debt.debtorName}`
+    }).subscribe({
+      next: () => {
+        this.popup.success(`Payment of ₹${debt.amount} from ${debt.debtorName} recorded successfully!`);
+        this.loadDashboardData();
+      },
+      error: (err) => {
+        this.popup.error(err?.error?.message || 'Failed to record settlement');
+      }
+    });
+  }
+
+  // ── Remind Flatmate to Settle ──
+  sendReminder(debt: DashboardIouDebt): void {
+    if (!debt.debtorId) return;
+    this.api.post<any>(`groups/${this.groupId}/iou/debts/${debt.debtorId}/remind`, {}).subscribe({
+      next: (res) => {
+        this.popup.success(res?.message || `Friendly reminder sent to ${debt.debtorName}!`);
+      },
+      error: (err) => {
+        this.popup.error(err?.error?.message || `Failed to send reminder to ${debt.debtorName}`);
+      }
+    });
+  }
+
+  // ── Pay Debt to Creditor via UPI ──
+  payDebtViaUpi(debt: DashboardIouDebt): void {
+    this.upiAmount.set(debt.amount);
+    this.upiPayeeId.set(debt.creditorId);
+    this.upiPayeeName.set(debt.creditorName);
+    this.upiPayeeVpa.set(debt.creditorUpiId || 'roomledger@upi');
+    this.showUpiModal.set(true);
+  }
+
+  closeUpiModal(): void {
+    this.showUpiModal.set(false);
+  }
+
+  onUpiSuccess(event: any): void {
+    this.showUpiModal.set(false);
+    this.popup.success(`Successfully settled ₹${event.amount} via UPI!`);
+    this.loadDashboardData();
   }
 
   viewReceipt(url?: string | null): void {
@@ -590,62 +670,14 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   drawSettleQr(text: string): void {
     const cv = this.settleQrCanvasRef?.nativeElement;
     if (!cv) return;
-    const ctx = cv.getContext('2d');
-    if (!ctx) return;
-
-    const sz = cv.width;
-    const m = 21;
-    const mod = sz / m;
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, sz, sz);
-
-    let seed = 0;
-    for (let i = 0; i < text.length; i++) {
-      seed = (seed * 31 + text.charCodeAt(i)) & 0xffffff;
-    }
-
-    function rnd(x: number, y: number) {
-      let s = seed ^ (x * 374761393) ^ (y * 1274126177);
-      s = ((s >> 16) ^ s) * 0x45d9f3b;
-      s = ((s >> 16) ^ s) * 0x45d9f3b;
-      return (s >> 16) ^ s;
-    }
-
-    ctx.fillStyle = '#1A3330';
-    for (let r = 0; r < m; r++) {
-      for (let c = 0; c < m; c++) {
-        const tl = r < 7 && c < 7;
-        const tr = r < 7 && c >= m - 7;
-        const bl = r >= m - 7 && c < 7;
-        let dk = false;
-        if (tl) {
-          dk = (r === 0 || r === 6 || c === 0 || c === 6) || (r >= 2 && r <= 4 && c >= 2 && c <= 4);
-        } else if (tr) {
-          const lr = r, lc = c - (m - 7);
-          dk = (lr === 0 || lr === 6 || lc === 0 || lc === 6) || (lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4);
-        } else if (bl) {
-          const lr = r - (m - 7), lc = c;
-          dk = (lr === 0 || lr === 6 || lc === 0 || lc === 6) || (lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4);
-        } else {
-          dk = r === 6 || c === 6 ? (r + c) % 2 === 0 : (rnd(r, c) & 1) === 1;
-        }
-        if (dk) {
-          ctx.fillRect(c * mod + 0.5, r * mod + 0.5, mod - 0.5, mod - 0.5);
-        }
-      }
-    }
-
-    ctx.fillStyle = '#1ABC9C';
-    ctx.beginPath();
-    ctx.arc(sz / 2, sz / 2, 13, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 10px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('RL', sz / 2, sz / 2);
+    QRCode.toCanvas(cv, text, {
+      width: 160,
+      margin: 1,
+      color: { dark: '#111827', light: '#ffffff' },
+      errorCorrectionLevel: 'M'
+    }, (err: any) => {
+      if (err) console.error('Failed to generate settle QR code', err);
+    });
   }
 
   showToast(msg: string): void {

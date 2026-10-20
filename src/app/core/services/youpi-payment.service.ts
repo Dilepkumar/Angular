@@ -124,10 +124,10 @@ export class YoupiPaymentService {
    * Builds standardized UPI payment intent URI
    */
   buildUpiUri(params: { vpa: string; name: string; amount: number; note: string }): string {
-    const encVpa = encodeURIComponent(params.vpa);
-    const encName = encodeURIComponent(params.name);
-    const encNote = encodeURIComponent(params.note);
+    const cleanVpa = (params.vpa || '').trim();
+    const encName = encodeURIComponent(params.name || 'Flatmate');
+    const encNote = encodeURIComponent(params.note || 'RoomLedger Payment');
     const amt = params.amount.toFixed(2);
-    return `upi://pay?pa=${encVpa}&pn=${encName}&am=${amt}&tn=${encNote}&cu=INR`;
+    return `upi://pay?pa=${cleanVpa}&pn=${encName}&am=${amt}&tn=${encNote}&cu=INR`;
   }
 }

@@ -832,129 +832,176 @@
        BUCKET 3: GROUP SPLIT & IOUS
   ─────────────────────────────────────────── -->
   @if (activeBucket() === 'iou') {
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 fade-up">
-      
-      <!-- Column 1: They Owe You -->
-      <div>
-        <div class="sl flex items-center gap-1.5">
-          <i class="fa-solid fa-arrow-down-left text-xs" style="color: var(--ok);"></i>
-          <span>They Owe You</span>
-        </div>
-        <div class="space-y-3.5">
-          @for (debt of theyOweMe(); track debt.debtorId) {
-            <div class="dcard">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-3">
-                  <div class="av w-9 h-9 text-xs font-black text-white" style="background: var(--err);">
-                    {{ getInitials(debt.debtorName) }}
-                  </div>
-                  <div>
-                    <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">{{ debt.debtorName }}</div>
-                    <div class="text-[11px] font-medium" style="color: var(--t3);">Roommate debt</div>
-                  </div>
-                </div>
-                <div class="text-lg font-black" style="color: var(--ok);">₹{{ debt.amount | number:'1.0-0' }}</div>
-              </div>
-              <div class="flex gap-2">
-                <button type="button"
-                        (click)="openSettleModal(debt.debtorName, debt.creditorUpiId || '', debt.amount)"
-                        class="btng flex-1 py-2 font-black text-xs flex items-center justify-center gap-1.5">
-                  <i class="fa-solid fa-indian-rupee-sign text-xs"></i>
-                  <span>Settle via UPI</span>
-                </button>
-                <button type="button"
-                        (click)="showToast('Reminder sent to ' + debt.debtorName)"
-                        class="btns text-xs py-1.5 px-3 flex items-center justify-center gap-1">
-                  <i class="fa-solid fa-bell text-xs"></i>
-                  <span>Remind</span>
-                </button>
-              </div>
-            </div>
-          } @empty {
-            <div class="p-6 rounded-2xl border text-center text-xs font-semibold flex flex-col items-center justify-center"
-                 style="background: var(--card); border-color: var(--border); color: var(--t3);">
-              <i class="fa-solid fa-circle-check text-2xl mb-2 opacity-40" style="color: var(--ok);"></i>
-              <span>No roommates currently owe you money!</span>
-            </div>
-          }
-        </div>
-      </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-up">
 
-      <!-- Column 2: You Owe Them & Net Balance -->
-      <div class="space-y-4">
-        <div>
-          <div class="sl flex items-center gap-1.5">
-            <i class="fa-solid fa-arrow-up-right text-xs" style="color: var(--err);"></i>
-            <span>You Owe Them</span>
+        <!-- ────── COLUMN 1: THEY OWE YOU ────── -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between px-1">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs"
+                   style="background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok);">
+                <i class="fa-solid fa-arrow-down-left"></i>
+              </div>
+              <span class="text-sm font-extrabold" style="color: var(--text);">They Owe You</span>
+            </div>
+            <span class="text-xs font-black px-2.5 py-0.5 rounded-full"
+                  style="background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok);">
+              +₹{{ totalTheyOweMe() | number:'1.0-0' }}
+            </span>
           </div>
-          <div class="space-y-3.5">
-            @for (debt of iOweThem(); track debt.creditorId) {
-              <div class="dcard" style="border-color: color-mix(in srgb, var(--err) 25%, transparent);">
-                <div class="flex items-center justify-between mb-3">
+
+          <div class="space-y-3">
+            @for (debt of theyOweMe(); track debt.debtorId) {
+              <div class="dcard">
+                <div class="flex items-center justify-between mb-3.5">
                   <div class="flex items-center gap-3">
-                    <div class="av w-9 h-9 text-xs font-black text-white" style="background: var(--warn);">
-                      {{ getInitials(debt.creditorName) }}
+                    <div class="av w-10 h-10 text-xs font-black text-white shadow-xs"
+                         style="background: linear-gradient(135deg, #10B981 0%, #059669 100%);">
+                      {{ getInitials(debt.debtorName) }}
                     </div>
                     <div>
-                      <div class="text-xs sm:text-[13px] font-bold" style="color: var(--text);">{{ debt.creditorName }}</div>
-                      <div class="text-[11px] font-medium" style="color: var(--t3);">Roommate debt</div>
+                      <div class="text-[13px] font-extrabold" style="color: var(--text);">
+                        {{ debt.debtorName }}
+                      </div>
+                      <div class="text-[11px] font-medium" style="color: var(--t3);">
+                        Roommate debt · Owes you
+                      </div>
                     </div>
                   </div>
-                  <div class="text-lg font-black" style="color: var(--err);">₹{{ debt.amount | number:'1.0-0' }}</div>
+                  <div class="text-right">
+                    <div class="text-lg font-black tracking-tight" style="color: var(--ok);">
+                      ₹{{ debt.amount | number:'1.0-0' }}
+                    </div>
+                    <div class="text-[10px] font-bold" style="color: var(--ok);">
+                      To be received
+                    </div>
+                  </div>
                 </div>
+
+                <!-- Action Buttons: Mark Received & Remind -->
                 <div class="flex gap-2">
                   <button type="button"
-                          (click)="openSettleModal(debt.creditorName, debt.creditorUpiId || '', debt.amount)"
-                          class="btnr flex-1 py-2 font-black text-xs flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-indian-rupee-sign text-xs"></i>
-                    <span>Pay via UPI</span>
+                          (click)="markReceived(debt)"
+                          class="btng flex-1 py-2 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                          title="Click when roommate pays in cash, GPay, or outside app">
+                    <i class="fa-solid fa-check text-xs"></i>
+                    <span>Mark Received</span>
                   </button>
+
                   <button type="button"
-                          (click)="goToIou()"
-                          class="btns text-xs py-1.5 px-3">
-                    Details
+                          (click)="sendReminder(debt)"
+                          class="btns text-xs py-2 px-3.5 font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                          title="Send a notification reminder">
+                    <i class="fa-solid fa-bell text-xs"></i>
+                    <span>Remind</span>
                   </button>
                 </div>
               </div>
             } @empty {
-              <div class="p-6 rounded-2xl border text-center text-xs font-semibold flex flex-col items-center justify-center"
-                   style="background: var(--card); border-color: var(--border); color: var(--t3);">
-                <i class="fa-solid fa-thumbs-up text-2xl mb-2 opacity-40" style="color: var(--ok);"></i>
-                <span>You have zero pending debts to any roommate!</span>
+              <div class="p-8 rounded-2xl border text-center flex flex-col items-center justify-center space-y-2"
+                   style="background: var(--card); border-color: var(--border);">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center text-xl"
+                     style="background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok);">
+                  <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div class="text-sm font-black" style="color: var(--text);">All Collected!</div>
+                <div class="text-xs max-w-xs" style="color: var(--t3);">
+                  No flatmates currently owe you money for shared groceries, food, or bills.
+                </div>
               </div>
             }
           </div>
         </div>
 
-        <!-- Net Position Summary Card -->
-        <div class="card"
-             style="background: color-mix(in srgb, var(--ok) 6%, var(--card)); border-color: color-mix(in srgb, var(--ok) 25%, transparent);">
-          <div class="sl">Net Debt Position</div>
-          
-          <div class="flex justify-between items-center text-xs mb-2">
-            <span style="color: var(--t2);">Total owed to you</span>
-            <span class="font-bold" style="color: var(--ok);">+₹{{ totalTheyOweMe() | number:'1.0-0' }}</span>
-          </div>
-
-          <div class="flex justify-between items-center text-xs mb-2">
-            <span style="color: var(--t2);">Total you owe</span>
-            <span class="font-bold" style="color: var(--err);">−₹{{ totalIOweThem() | number:'1.0-0' }}</span>
-          </div>
-
-          <div class="div"></div>
-
-          <div class="flex justify-between items-center pt-1">
-            <span class="text-xs font-extrabold" style="color: var(--text);">Net balance</span>
-            <span class="text-xl font-black"
-                  [style.color]="(totalTheyOweMe() - totalIOweThem()) >= 0 ? 'var(--ok)' : 'var(--err)'">
-              {{ (totalTheyOweMe() - totalIOweThem()) >= 0 ? '+' : '−' }}₹{{ ((totalTheyOweMe() - totalIOweThem()) >= 0 ? (totalTheyOweMe() - totalIOweThem()) : (totalIOweThem() - totalTheyOweMe())) | number:'1.0-0' }}
+        <!-- ────── COLUMN 2: YOU OWE THEM ────── -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between px-1">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs"
+                   style="background: color-mix(in srgb, var(--err) 15%, transparent); color: var(--err);">
+                <i class="fa-solid fa-arrow-up-right"></i>
+              </div>
+              <span class="text-sm font-extrabold" style="color: var(--text);">You Owe Them</span>
+            </div>
+            <span class="text-xs font-black px-2.5 py-0.5 rounded-full"
+                  style="background: color-mix(in srgb, var(--err) 12%, transparent); color: var(--err);">
+              −₹{{ totalIOweThem() | number:'1.0-0' }}
             </span>
+          </div>
+
+          <div class="space-y-3">
+            @for (debt of iOweThem(); track debt.creditorId) {
+              <div class="dcard" style="border-color: color-mix(in srgb, var(--err) 30%, transparent);">
+                <div class="flex items-center justify-between mb-3.5">
+                  <div class="flex items-center gap-3">
+                    <div class="av w-10 h-10 text-xs font-black text-white shadow-xs"
+                         style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);">
+                      {{ getInitials(debt.creditorName) }}
+                    </div>
+                    <div>
+                      <div class="text-[13px] font-extrabold" style="color: var(--text);">
+                        {{ debt.creditorName }}
+                      </div>
+                      <div class="text-[11px] font-medium" style="color: var(--t3);">
+                        Roommate debt · You owe
+                      </div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-lg font-black tracking-tight" style="color: var(--err);">
+                      ₹{{ debt.amount | number:'1.0-0' }}
+                    </div>
+                    <div class="text-[10px] font-bold" style="color: var(--err);">
+                      Pending settlement
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action Button: Pay via UPI -->
+                <div class="flex gap-2">
+                  <button type="button"
+                          (click)="payDebtViaUpi(debt)"
+                          class="btn flex-1 py-2 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                          style="background: linear-gradient(135deg, #1ABC9C 0%, #16A085 100%);"
+                          title="Pay directly via UPI apps (GPay, PhonePe, Paytm)">
+                    <i class="fa-solid fa-bolt text-xs"></i>
+                    <span>Pay ₹{{ debt.amount | number:'1.0-0' }} via UPI</span>
+                  </button>
+
+                  <button type="button"
+                          (click)="goToIou()"
+                          class="btns text-xs py-2 px-3 font-bold"
+                          title="View expense breakdown">
+                    Details
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              <!-- Beautiful Clean Debt-Free State (Matches User Scenario) -->
+              <div class="p-8 rounded-2xl border text-center flex flex-col items-center justify-center space-y-2.5"
+                   style="background: var(--card); border-color: color-mix(in srgb, var(--ok) 25%, var(--border));">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm"
+                     style="background: linear-gradient(135deg, rgba(26, 188, 156, 0.15) 0%, rgba(22, 160, 133, 0.25) 100%); color: var(--ok);">
+                  <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div class="text-sm font-black" style="color: var(--text);">You're Completely Squared Up!</div>
+                <div class="text-xs max-w-xs leading-relaxed" style="color: var(--t3);">
+                  You have zero pending debts to any roommate in this flat. You're completely debt-free!
+                </div>
+                <div class="pt-2">
+                  <button type="button"
+                          (click)="goToIou()"
+                          class="btns py-1.5 px-3.5 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer">
+                    <span>View Shared Expenses</span>
+                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                  </button>
+                </div>
+              </div>
+            }
           </div>
         </div>
 
       </div>
-
-    </div>
   }
 
   }
@@ -1050,6 +1097,23 @@
     </div>
   </div>
 }
+
+
+
+<!-- ═══════════════════════════════════════════
+     MODAL: LIVE UPI PAYMENT GATEWAY (PG)
+═══════════════════════════════════════════ -->
+<app-upi-payment-modal
+  [isOpen]="showUpiModal()"
+  [groupId]="groupId"
+  [amount]="upiAmount()"
+  purpose="IouSettlement"
+  [purposeTitle]="'IOU Settle-Up with ' + upiPayeeName()"
+  [referenceId]="upiPayeeId()"
+  [recipientVpa]="upiPayeeVpa()"
+  [recipientName]="upiPayeeName()"
+  (paymentSuccess)="onUpiSuccess($event)"
+  (modalClosed)="closeUpiModal()" />
 
 <!-- Toast Feedback Popup -->
 @if (toastMessage()) {

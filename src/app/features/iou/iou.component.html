@@ -301,8 +301,24 @@
                 <div class="text-xs sm:text-sm font-extrabold" style="color: var(--text);">
                   {{ exp.description }}
                 </div>
-                <div class="text-[11px] font-medium" style="color: var(--t3);">
-                  {{ exp.expenseDate }} · {{ exp.participants?.length || 0 }} flatmate(s) included
+                <div class="text-[11px] font-medium flex items-center gap-1.5 flex-wrap" style="color: var(--t3);">
+                  <span>{{ exp.expenseDate }}</span>
+                  <span>·</span>
+                  @if (exp.items && exp.items.length > 0) {
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                      Itemized ({{ exp.items.length }} items)
+                    </span>
+                  } @else if (exp.splitType === 'custom') {
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                      Custom Split
+                    </span>
+                  } @else {
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                      Equal Split
+                    </span>
+                  }
+                  <span>·</span>
+                  <span>{{ exp.participants?.length || exp.items?.length || 0 }} flatmate(s)</span>
                 </div>
               </div>
             </div>
@@ -500,11 +516,12 @@
 @if (showAdd) {
   <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 z-50 fade-up"
        (click)="showAdd = false">
-    <div class="w-full max-w-md rounded-3xl overflow-hidden shadow-2xl relative"
+    <div class="w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl relative max-h-[90vh] flex flex-col"
          style="background: var(--card); border: 1.5px solid var(--border);"
          (click)="$event.stopPropagation()">
       
-      <div class="p-6 text-white flex items-center justify-between" style="background: var(--btn);">
+      <!-- Modal Header -->
+      <div class="p-5 text-white flex items-center justify-between shrink-0" style="background: var(--btn);">
         <div>
           <h2 class="text-xl font-black">Add Shared Expense</h2>
           <p class="text-xs text-white/80 mt-0.5">{{ groupName() }} · Group Split</p>
@@ -516,92 +533,285 @@
         </button>
       </div>
 
-      <div class="p-6 space-y-4">
+      <!-- Scrollable Modal Body -->
+      <div class="p-6 overflow-y-auto space-y-4 flex-1">
+        
+        <!-- Description -->
         <div>
           <label class="sl block">EXPENSE DESCRIPTION</label>
           <input class="inp"
                  type="text"
                  [(ngModel)]="description"
-                 placeholder="e.g. Dinner, Movie tickets, Cab fare, Groceries" />
+                 placeholder="e.g. Dinner, Groceries, Movie, Cab fare" />
         </div>
 
+        <!-- Total Amount -->
         <div>
-          <label class="sl block">TOTAL AMOUNT (₹)</label>
+          <label class="sl block">TOTAL BILL AMOUNT (₹)</label>
           <div class="relative">
             <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-2xl font-black" style="color: var(--p1);">₹</span>
             <input class="inp font-black text-2xl"
                    style="padding-left: 36px;"
                    type="number"
                    [(ngModel)]="amount"
+                   (ngModelChange)="initCustomShares()"
                    placeholder="1200" />
           </div>
         </div>
 
-        <!-- Roommate Selection -->
+        <!-- Split Mode Selector Tabs -->
         <div>
-          <div class="flex justify-between items-center mb-2">
-            <label class="sl block mb-0">SPLIT WITH FLATMATES</label>
-            <div class="flex gap-2 text-[11px] font-black">
-              <button type="button"
-                      (click)="selectAllMembers()"
-                      class="text-[11px] underline cursor-pointer"
-                      style="color: var(--p1);">
-                Select All
-              </button>
-              <span style="color: var(--t3);">·</span>
-              <button type="button"
-                      (click)="clearSelectedMembers()"
-                      class="text-[11px] underline cursor-pointer"
-                      style="color: var(--t3);">
-                Clear
-              </button>
+          <label class="sl block mb-1.5">HOW DO YOU WANT TO SPLIT?</label>
+          <div class="grid grid-cols-3 gap-1.5 p-1 rounded-2xl border"
+               style="background: var(--bg2); border-color: var(--border);">
+            <button type="button"
+                    (click)="setSplitMode('equal')"
+                    class="py-2 px-1 text-center rounded-xl text-xs font-black transition cursor-pointer"
+                    [style.background]="splitMode() === 'equal' ? 'var(--p1)' : 'transparent'"
+                    [style.color]="splitMode() === 'equal' ? 'white' : 'var(--t2)'">
+              <i class="fa-solid fa-scale-balanced mr-1 text-[11px]"></i>
+              <span>Equal</span>
+            </button>
+            <button type="button"
+                    (click)="setSplitMode('custom')"
+                    class="py-2 px-1 text-center rounded-xl text-xs font-black transition cursor-pointer"
+                    [style.background]="splitMode() === 'custom' ? 'var(--p1)' : 'transparent'"
+                    [style.color]="splitMode() === 'custom' ? 'white' : 'var(--t2)'">
+              <i class="fa-solid fa-sliders mr-1 text-[11px]"></i>
+              <span>Custom</span>
+            </button>
+            <button type="button"
+                    (click)="setSplitMode('itemized')"
+                    class="py-2 px-1 text-center rounded-xl text-xs font-black transition cursor-pointer"
+                    [style.background]="splitMode() === 'itemized' ? 'var(--p1)' : 'transparent'"
+                    [style.color]="splitMode() === 'itemized' ? 'white' : 'var(--t2)'">
+              <i class="fa-solid fa-receipt mr-1 text-[11px]"></i>
+              <span>Itemized</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ────────────────────────── MODE: EQUAL SPLIT ────────────────────────── -->
+        @if (splitMode() === 'equal') {
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label class="sl block mb-0">SPLIT WITH FLATMATES</label>
+              <div class="flex gap-2 text-[11px] font-black">
+                <button type="button"
+                        (click)="selectAllMembers()"
+                        class="text-[11px] underline cursor-pointer"
+                        style="color: var(--p1);">
+                  Select All
+                </button>
+                <span style="color: var(--t3);">·</span>
+                <button type="button"
+                        (click)="clearSelectedMembers()"
+                        class="text-[11px] underline cursor-pointer"
+                        style="color: var(--t3);">
+                  Clear
+                </button>
+              </div>
             </div>
+
+            @if (groupMembers().length > 0) {
+              <div class="flex flex-wrap gap-2">
+                @for (m of groupMembers(); track m.id) {
+                  <button type="button"
+                          (click)="toggleMember(m.id)"
+                          class="px-3 py-1.5 rounded-full text-xs font-bold border transition cursor-pointer inline-flex items-center gap-1.5"
+                          [style.background]="selectedMembers().has(m.id) ? 'var(--p1)' : 'transparent'"
+                          [style.color]="selectedMembers().has(m.id) ? 'white' : 'var(--t2)'"
+                          [style.borderColor]="selectedMembers().has(m.id) ? 'var(--p1)' : 'var(--border)'">
+                    <span>{{ m.name }}</span>
+                    @if (selectedMembers().has(m.id)) {
+                      <i class="fa-solid fa-check text-[10px]"></i>
+                    }
+                  </button>
+                }
+              </div>
+            } @else {
+              <p class="text-xs font-semibold" style="color: var(--t3);">
+                No other flatmates found in this group.
+              </p>
+            }
           </div>
 
-          @if (groupMembers().length > 0) {
-            <div class="flex flex-wrap gap-2">
+          <!-- Include Myself in Split Toggle -->
+          <div class="flex items-center justify-between p-3 rounded-2xl border"
+               style="background: var(--bg2); border-color: var(--border);">
+            <div>
+              <div class="text-xs font-extrabold" style="color: var(--text);">Include me in the split</div>
+              <div class="text-[11px] font-medium" style="color: var(--t3);">Divide cost equally including yourself</div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" [(ngModel)]="includeMeInSplit" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1ABC9C]"></div>
+            </label>
+          </div>
+
+          <!-- Live Split Preview -->
+          @if (amount && amount > 0 && getActiveSplitMemberIds().length > 0) {
+            <div class="p-3 rounded-2xl border text-center text-xs font-bold"
+                 style="background: color-mix(in srgb, var(--p1) 8%, var(--bg2)); border-color: color-mix(in srgb, var(--p1) 25%, transparent); color: var(--p1);">
+              <span>Each flatmate's share: </span>
+              <span class="text-sm font-black">₹{{ (amount / getActiveSplitMemberIds().length) | number:'1.2-2' }}</span>
+              <span class="text-[11px] font-normal" style="color: var(--t3);"> ({{ getActiveSplitMemberIds().length }} flatmate(s))</span>
+            </div>
+          }
+        }
+
+        <!-- ────────────────────────── MODE: CUSTOM SPLIT ────────────────────────── -->
+        @else if (splitMode() === 'custom') {
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label class="sl block mb-0">PARTICIPANTS &amp; SHARES (₹)</label>
+              <button type="button"
+                      (click)="initCustomShares()"
+                      class="text-[11px] underline font-bold cursor-pointer"
+                      style="color: var(--p1);">
+                Split Evenly as Starting Point
+              </button>
+            </div>
+
+            <!-- Participants share inputs -->
+            <div class="space-y-2">
+              <!-- Include myself row -->
+              <div class="p-3 rounded-2xl border flex items-center justify-between gap-3"
+                   style="background: var(--bg2); border-color: var(--border);">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white" style="background: var(--p1);">
+                    Me
+                  </div>
+                  <span class="text-xs font-extrabold" style="color: var(--text);">You (Paid by you)</span>
+                </div>
+                <div class="relative w-28">
+                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-black" style="color: var(--t3);">₹</span>
+                  <input class="inp text-xs font-bold w-full"
+                         style="padding-left: 20px;"
+                         type="number"
+                         [(ngModel)]="customShares[myUserIdStr()]"
+                         placeholder="0" />
+                </div>
+              </div>
+
+              <!-- Other flatmates rows -->
               @for (m of groupMembers(); track m.id) {
-                <button type="button"
-                        (click)="toggleMember(m.id)"
-                        class="px-3 py-1.5 rounded-full text-xs font-bold border transition cursor-pointer inline-flex items-center gap-1"
-                        [style.background]="selectedMembers().has(m.id) ? 'var(--p1)' : 'transparent'"
-                        [style.color]="selectedMembers().has(m.id) ? 'white' : 'var(--t2)'"
-                        [style.borderColor]="selectedMembers().has(m.id) ? 'var(--p1)' : 'var(--border)'">
-                  <span>{{ m.name }}</span>
-                  @if (selectedMembers().has(m.id)) {
-                    <i class="fa-solid fa-check text-[10px]"></i>
-                  }
-                </button>
+                <div class="p-3 rounded-2xl border flex items-center justify-between gap-3"
+                     style="background: var(--bg2); border-color: var(--border);">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white bg-slate-500">
+                      {{ m.name.charAt(0).toUpperCase() }}
+                    </div>
+                    <span class="text-xs font-extrabold" style="color: var(--text);">{{ m.name }}</span>
+                  </div>
+                  <div class="relative w-28">
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-black" style="color: var(--t3);">₹</span>
+                    <input class="inp text-xs font-bold w-full"
+                           style="padding-left: 20px;"
+                           type="number"
+                           [(ngModel)]="customShares[m.id]"
+                           placeholder="0" />
+                  </div>
+                </div>
               }
             </div>
-          } @else {
-            <p class="text-xs font-semibold" style="color: var(--t3);">
-              No other flatmates found in this group. Invite roommates first!
-            </p>
-          }
-        </div>
 
-        <!-- Include Myself in Split Toggle -->
-        <div class="flex items-center justify-between p-3 rounded-2xl border"
-             style="background: var(--bg2); border-color: var(--border);">
-          <div>
-            <div class="text-xs font-extrabold" style="color: var(--text);">Include me in the split</div>
-            <div class="text-[11px] font-medium" style="color: var(--t3);">Split cost equally including yourself</div>
+            <!-- Live Custom Balance Indicator -->
+            <div class="mt-3 p-3 rounded-2xl border flex items-center justify-between text-xs font-black"
+                 [style.background]="abs(getCustomRemaining()) <= 0.05 ? 'color-mix(in srgb, var(--ok) 10%, var(--bg2))' : 'color-mix(in srgb, var(--err) 10%, var(--bg2))'"
+                 [style.borderColor]="abs(getCustomRemaining()) <= 0.05 ? 'var(--ok)' : 'var(--err)'">
+              <span [style.color]="abs(getCustomRemaining()) <= 0.05 ? 'var(--ok)' : 'var(--err)'">
+                Allocated: ₹{{ getCustomSum() | number:'1.2-2' }} / ₹{{ amount || 0 }}
+              </span>
+              <span [style.color]="abs(getCustomRemaining()) <= 0.05 ? 'var(--ok)' : 'var(--err)'">
+                {{ abs(getCustomRemaining()) <= 0.05 ? 'Exact Match ✅' : ('Remaining: ₹' + (getCustomRemaining() | number:'1.2-2')) }}
+              </span>
+            </div>
           </div>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" [(ngModel)]="includeMeInSplit" class="sr-only peer">
-            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1ABC9C]"></div>
-          </label>
-        </div>
+        }
+
+        <!-- ────────────────────────── MODE: ITEMIZED RECEIPT SPLIT ────────────────────────── -->
+        @else if (splitMode() === 'itemized') {
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <label class="sl block mb-0">RECEIPT ITEMS &amp; WHO SHARED</label>
+              <button type="button"
+                      (click)="addItemizedRow()"
+                      class="text-xs font-black flex items-center gap-1 cursor-pointer"
+                      style="color: var(--p1);">
+                <i class="fa-solid fa-plus text-[10px]"></i>
+                <span>Add Item</span>
+              </button>
+            </div>
+
+            <div class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+              @for (it of receiptItems(); track $index) {
+                <div class="p-3 rounded-2xl border space-y-2"
+                     style="background: var(--bg2); border-color: var(--border);">
+                  <div class="flex items-center gap-2">
+                    <input class="inp text-xs font-bold flex-1"
+                           type="text"
+                           [(ngModel)]="it.itemName"
+                           placeholder="Item description (e.g. Pizza, Salad, Drink)" />
+                    <div class="relative w-24">
+                      <span class="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-black" style="color: var(--t3);">₹</span>
+                      <input class="inp text-xs font-bold w-full"
+                             style="padding-left: 16px;"
+                             type="number"
+                             [(ngModel)]="it.amount"
+                             placeholder="Amount" />
+                    </div>
+                    @if (receiptItems().length > 1) {
+                      <button type="button"
+                              (click)="removeItemizedRow($index)"
+                              class="text-xs text-red-500 hover:text-red-700 p-1 cursor-pointer"
+                              title="Delete Item">
+                        <i class="fa-solid fa-trash-can"></i>
+                      </button>
+                    }
+                  </div>
+
+                  <!-- Eater Selection Chips for this Item -->
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-[10px] font-bold uppercase mr-1" style="color: var(--t3);">Eaters:</span>
+                    @for (m of getAllGroupMembersWithMe(); track m.id) {
+                      <button type="button"
+                              (click)="toggleItemEater($index, +m.id)"
+                              class="px-2 py-0.5 rounded-full text-[10px] font-bold border transition cursor-pointer"
+                              [style.background]="isEaterSelected($index, +m.id) ? 'var(--p1)' : 'transparent'"
+                              [style.color]="isEaterSelected($index, +m.id) ? 'white' : 'var(--t2)'"
+                              [style.borderColor]="isEaterSelected($index, +m.id) ? 'var(--p1)' : 'var(--border)'">
+                        <span>{{ m.name }}</span>
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Live Itemized Balance Indicator -->
+            <div class="p-3 rounded-2xl border flex items-center justify-between text-xs font-black"
+                 [style.background]="abs(getItemizedRemaining()) <= 0.05 ? 'color-mix(in srgb, var(--ok) 10%, var(--bg2))' : 'color-mix(in srgb, var(--err) 10%, var(--bg2))'"
+                 [style.borderColor]="abs(getItemizedRemaining()) <= 0.05 ? 'var(--ok)' : 'var(--err)'">
+              <span [style.color]="abs(getItemizedRemaining()) <= 0.05 ? 'var(--ok)' : 'var(--err)'">
+                Items Total: ₹{{ getItemizedSum() | number:'1.2-2' }} / ₹{{ amount || 0 }}
+              </span>
+              <span [style.color]="abs(getItemizedRemaining()) <= 0.05 ? 'var(--ok)' : 'var(--err)'">
+                {{ abs(getItemizedRemaining()) <= 0.05 ? 'Exact Match ✅' : ('Remaining: ₹' + (getItemizedRemaining() | number:'1.2-2')) }}
+              </span>
+            </div>
+          </div>
+        }
 
         @if (error()) {
           <p class="text-xs font-bold text-red-500">{{ error() }}</p>
         }
 
+        <!-- Submit Button -->
         <button type="button"
                 (click)="addExpense()"
-                [disabled]="!description.trim() || !amount || amount <= 0 || (selectedMembers().size === 0 && !includeMeInSplit)"
-                class="btn w-full py-3.5 text-sm font-black shadow-md disabled:opacity-50 cursor-pointer">
+                [disabled]="!description.trim() || !amount || amount <= 0"
+                class="btn w-full py-3.5 text-sm font-black shadow-md disabled:opacity-50 cursor-pointer mt-2">
           Add Expense &amp; Split
         </button>
       </div>
