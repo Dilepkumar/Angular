@@ -599,7 +599,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     this.upiAmount.set(debt.amount);
     this.upiPayeeId.set(debt.creditorId);
     this.upiPayeeName.set(debt.creditorName);
-    this.upiPayeeVpa.set(debt.creditorUpiId || 'roomledger@upi');
+    this.upiPayeeVpa.set(debt.creditorUpiId || '');
     this.showUpiModal.set(true);
   }
 

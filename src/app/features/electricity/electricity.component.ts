@@ -49,7 +49,7 @@ export class ElectricityComponent implements OnInit {
   showUpiModal = signal<boolean>(false);
   upiAmount = signal<number>(0);
   upiSplitId = signal<number | null>(null);
-  adminUpiId = signal<string>('roomledger@upi');
+  adminUpiId = signal<string>('');
   adminName = signal<string>('Room Admin');
   pendingApprovals = signal<PaymentTransactionStatus[]>([]);
 

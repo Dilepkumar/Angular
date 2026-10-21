@@ -125,9 +125,11 @@ export class YoupiPaymentService {
    */
   buildUpiUri(params: { vpa: string; name: string; amount: number; note: string }): string {
     const cleanVpa = (params.vpa || '').trim();
-    const encName = encodeURIComponent(params.name || 'Flatmate');
-    const encNote = encodeURIComponent(params.note || 'RoomLedger Payment');
-    const amt = params.amount.toFixed(2);
-    return `upi://pay?pa=${cleanVpa}&pn=${encName}&am=${amt}&tn=${encNote}&cu=INR`;
+    const cleanName = (params.name || 'Flatmate').replace(/[^a-zA-Z0-9 ]/g, ' ').trim().slice(0, 50);
+    const cleanNote = (params.note || 'RoomLedger Payment').replace(/[^a-zA-Z0-9 ]/g, ' ').trim().slice(0, 30);
+    const encName = encodeURIComponent(cleanName || 'Flatmate');
+    const encNote = encodeURIComponent(cleanNote || 'RoomLedger Payment');
+    const amt = Number(params.amount || 0).toFixed(2);
+    return `upi://pay?pa=${encodeURIComponent(cleanVpa)}&pn=${encName}&am=${amt}&tn=${encNote}&cu=INR`;
   }
 }

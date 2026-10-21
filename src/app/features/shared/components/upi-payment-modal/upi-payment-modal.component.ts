@@ -105,6 +105,26 @@ import { Subscription } from 'rxjs';
                 </span>
               </div>
 
+              <!-- MISSING RECIPIENT UPI ID PROMPT (Shows if payee has no UPI ID or placeholder) -->
+              @if (!isVpaConfigured()) {
+                <div class="p-3.5 rounded-2xl border bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-200 space-y-2">
+                  <div class="flex items-center gap-2 font-black text-xs text-amber-600 dark:text-amber-400">
+                    <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+                    <span>{{ recipientName }} hasn't added their UPI ID</span>
+                  </div>
+                  <p class="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
+                    Enter <strong>{{ recipientName }}'s UPI ID</strong> (e.g. mobile&#64;ybl, name&#64;okaxis) so you can pay them directly:
+                  </p>
+                  <div class="flex items-center gap-2">
+                    <input type="text"
+                           [ngModel]="editableVpa()"
+                           (ngModelChange)="onVpaChange($event)"
+                           placeholder="e.g. 9876543210@ybl or username@okaxis"
+                           class="flex-1 px-3 py-2 text-xs font-mono font-bold rounded-xl border bg-white dark:bg-slate-800 border-amber-500/50 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500" />
+                  </div>
+                </div>
+              }
+
               <!-- RECIPIENT & VPA CARD WITH 1-TAP COPY -->
               <div class="p-3.5 rounded-2xl border flex items-center justify-between gap-3 shadow-xs"
                    style="background: var(--bg2); border-color: var(--border);">
@@ -115,14 +135,38 @@ import { Subscription } from 'rxjs';
                   <div class="text-xs sm:text-[13px] font-black truncate" style="color: var(--text);">
                     {{ recipientName }}
                   </div>
-                  <div class="font-mono text-[11px] font-bold truncate flex items-center gap-1.5 mt-0.5" style="color: var(--p1);">
-                    <span>{{ effectiveVpa() }}</span>
-                  </div>
+
+                  @if (isEditingVpa()) {
+                    <div class="mt-1 flex items-center gap-1.5">
+                      <input type="text"
+                             [ngModel]="editableVpa()"
+                             (ngModelChange)="onVpaChange($event)"
+                             placeholder="e.g. mobile@ybl or name@okaxis"
+                             class="px-2.5 py-1 text-xs font-mono font-bold rounded-lg border bg-white dark:bg-slate-800 border-emerald-500 text-slate-900 dark:text-white flex-1 min-w-0" />
+                      <button type="button" 
+                              (click)="isEditingVpa.set(false)" 
+                              class="text-[10px] px-2.5 py-1 bg-emerald-600 text-white rounded-lg font-bold shrink-0 cursor-pointer">
+                        Done
+                      </button>
+                    </div>
+                  } @else {
+                    <div class="font-mono text-[11px] font-bold truncate flex items-center gap-1.5 mt-0.5" style="color: var(--p1);">
+                      <span>{{ isVpaConfigured() ? effectiveVpa() : 'No UPI ID Set' }}</span>
+                      <button type="button" 
+                              (click)="isEditingVpa.set(true)" 
+                              class="text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer flex items-center gap-1 ml-1" 
+                              title="Edit UPI ID">
+                        <i class="fa-solid fa-pen-to-square text-[9px]"></i>
+                        <span>Edit</span>
+                      </button>
+                    </div>
+                  }
                 </div>
 
                 <button type="button"
                         (click)="copyVpa()"
-                        class="px-3 py-2 rounded-xl border text-xs font-black cursor-pointer shadow-xs transition active:scale-95 shrink-0 flex items-center gap-1.5"
+                        [disabled]="!isVpaConfigured()"
+                        class="px-3 py-2 rounded-xl border text-xs font-black cursor-pointer shadow-xs transition active:scale-95 shrink-0 flex items-center gap-1.5 disabled:opacity-40"
                         [style.background]="copiedVpa() ? 'var(--ok)' : 'var(--card)'"
                         [style.borderColor]="copiedVpa() ? 'var(--ok)' : 'var(--border)'"
                         [style.color]="copiedVpa() ? 'white' : 'var(--text)'"
@@ -141,7 +185,7 @@ import { Subscription } from 'rxjs';
                 </div>
               </div>
 
-              <!-- 1-TAP MOBILE UPI APP LAUNCHERS -->
+              <!-- 1-TAP MOBILE UPI APP LAUNCHERS (Targeting App Packages Directly) -->
               <div>
                 <div class="flex items-center justify-between mb-2">
                   <label class="sl">1-TAP PAY WITH ANY UPI APP</label>
@@ -153,8 +197,9 @@ import { Subscription } from 'rxjs';
                   
                   <!-- Google Pay -->
                   <a [href]="getAppUri('gpay')"
-                     (click)="openApp('Google Pay')"
+                     (click)="openApp('gpay', 'Google Pay', $event)"
                      class="p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition transform active:scale-95 no-underline group shadow-xs cursor-pointer relative"
+                     [class.opacity-60]="!isVpaConfigured()"
                      [style.background]="selectedApp() === 'Google Pay' ? 'color-mix(in srgb, #1ABC9C 10%, var(--bg2))' : 'var(--bg2)'"
                      [style.borderColor]="selectedApp() === 'Google Pay' ? '#1ABC9C' : 'var(--border)'">
                     @if (selectedApp() === 'Google Pay') {
@@ -166,8 +211,9 @@ import { Subscription } from 'rxjs';
 
                   <!-- PhonePe -->
                   <a [href]="getAppUri('phonepe')"
-                     (click)="openApp('PhonePe')"
+                     (click)="openApp('phonepe', 'PhonePe', $event)"
                      class="p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition transform active:scale-95 no-underline group shadow-xs cursor-pointer relative"
+                     [class.opacity-60]="!isVpaConfigured()"
                      [style.background]="selectedApp() === 'PhonePe' ? 'color-mix(in srgb, #1ABC9C 10%, var(--bg2))' : 'var(--bg2)'"
                      [style.borderColor]="selectedApp() === 'PhonePe' ? '#1ABC9C' : 'var(--border)'">
                     @if (selectedApp() === 'PhonePe') {
@@ -179,8 +225,9 @@ import { Subscription } from 'rxjs';
 
                   <!-- Paytm -->
                   <a [href]="getAppUri('paytm')"
-                     (click)="openApp('Paytm')"
+                     (click)="openApp('paytm', 'Paytm', $event)"
                      class="p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition transform active:scale-95 no-underline group shadow-xs cursor-pointer relative"
+                     [class.opacity-60]="!isVpaConfigured()"
                      [style.background]="selectedApp() === 'Paytm' ? 'color-mix(in srgb, #1ABC9C 10%, var(--bg2))' : 'var(--bg2)'"
                      [style.borderColor]="selectedApp() === 'Paytm' ? '#1ABC9C' : 'var(--border)'">
                     @if (selectedApp() === 'Paytm') {
@@ -192,8 +239,9 @@ import { Subscription } from 'rxjs';
 
                   <!-- Any UPI / CRED -->
                   <a [href]="getAppUri('generic')"
-                     (click)="openApp('Other UPI')"
+                     (click)="openApp('generic', 'Other UPI', $event)"
                      class="p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition transform active:scale-95 no-underline group shadow-xs cursor-pointer relative"
+                     [class.opacity-60]="!isVpaConfigured()"
                      [style.background]="selectedApp() === 'Other UPI' ? 'color-mix(in srgb, #1ABC9C 10%, var(--bg2))' : 'var(--bg2)'"
                      [style.borderColor]="selectedApp() === 'Other UPI' ? '#1ABC9C' : 'var(--border)'">
                     @if (selectedApp() === 'Other UPI') {
@@ -205,7 +253,7 @@ import { Subscription } from 'rxjs';
                 </div>
               </div>
 
-              <!-- QR CODE WITH SAVE TO GALLERY OPTION (MATCHES PHONEPE / PAYTM GALLERY SCAN REQUIREMENT) -->
+              <!-- QR CODE WITH SAVE TO GALLERY OPTION -->
               <div class="border rounded-2xl p-3.5" style="border-color: var(--border); background: var(--bg2);">
                 <div class="flex items-center justify-between cursor-pointer"
                      (click)="toggleQr()">
@@ -223,38 +271,45 @@ import { Subscription } from 'rxjs';
                 @if (showQr()) {
                   <div class="mt-3 pt-3 border-t flex flex-col items-center justify-center gap-2.5"
                        style="border-color: var(--border);">
-                    <div class="p-3 bg-white rounded-2xl shadow-sm border border-slate-200">
-                      <canvas #qrCanvas class="max-w-[190px] h-auto"></canvas>
-                    </div>
+                    @if (isVpaConfigured()) {
+                      <div class="p-3 bg-white rounded-2xl shadow-sm border border-slate-200">
+                        <canvas #qrCanvas class="max-w-[190px] h-auto"></canvas>
+                      </div>
 
-                    <div class="flex items-center gap-2">
-                      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                      <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                        Listening for live bank payment…
-                      </span>
-                    </div>
+                      <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                          Listening for live bank payment…
+                        </span>
+                      </div>
 
-                    <div class="flex items-center gap-2 flex-wrap justify-center w-full">
-                      <button type="button"
-                              (click)="saveQrToPhotos()"
-                              class="text-[11px] font-bold inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border cursor-pointer hover:bg-black/5"
-                              style="border-color: #1ABC9C; color: #16A085;">
-                        <i class="fa-solid fa-download"></i>
-                        <span>{{ savedQrToPhotos() ? 'Saved to Gallery!' : 'Save QR to Photos' }}</span>
-                      </button>
+                      <div class="flex items-center gap-2 flex-wrap justify-center w-full">
+                        <button type="button"
+                                (click)="saveQrToPhotos()"
+                                class="text-[11px] font-bold inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border cursor-pointer hover:bg-black/5"
+                                style="border-color: #1ABC9C; color: #16A085;">
+                          <i class="fa-solid fa-download"></i>
+                          <span>{{ savedQrToPhotos() ? 'Saved to Gallery!' : 'Save QR to Photos' }}</span>
+                        </button>
 
-                      <button type="button"
-                              (click)="copyUpiLink()"
-                              class="text-[11px] font-bold inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border cursor-pointer hover:bg-black/5"
-                              style="border-color: var(--border); color: var(--p1);">
-                        <i class="fa-regular fa-copy"></i>
-                        <span>{{ copiedUpi() ? 'Copied Link!' : 'Copy Raw UPI Link' }}</span>
-                      </button>
-                    </div>
+                        <button type="button"
+                                (click)="copyUpiLink()"
+                                class="text-[11px] font-bold inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border cursor-pointer hover:bg-black/5"
+                                style="border-color: var(--border); color: var(--p1);">
+                          <i class="fa-regular fa-copy"></i>
+                          <span>{{ copiedUpi() ? 'Copied Link!' : 'Copy Raw UPI Link' }}</span>
+                        </button>
+                      </div>
 
-                    <div class="text-[10px] text-center font-medium max-w-xs" style="color: var(--t3);">
-                      Tip: If your UPI app blocks web links, tap <strong>Save QR to Photos</strong>, then open PhonePe/Paytm ➔ Scanner ➔ Gallery to pay seamlessly.
-                    </div>
+                      <div class="text-[10px] text-center font-medium max-w-xs" style="color: var(--t3);">
+                        Tip: If your UPI app blocks web links, tap <strong>Save QR to Photos</strong>, then open PhonePe/Paytm ➔ Scanner ➔ Gallery to pay seamlessly.
+                      </div>
+                    } @else {
+                      <div class="p-4 text-center text-xs font-bold text-amber-600 dark:text-amber-400 space-y-1">
+                        <i class="fa-solid fa-triangle-exclamation text-base"></i>
+                        <div>Please enter {{ recipientName }}'s UPI ID above to generate the payment QR code.</div>
+                      </div>
+                    }
                   </div>
                 }
               </div>
@@ -553,6 +608,7 @@ export class UpiPaymentModalComponent implements OnInit, OnDestroy {
   copiedVpa = signal<boolean>(false);
   savedQrToPhotos = signal<boolean>(false);
   editableVpa = signal<string>('');
+  isEditingVpa = signal<boolean>(false);
   inputUtr: string = '';
 
   // Timers
@@ -611,7 +667,9 @@ export class UpiPaymentModalComponent implements OnInit, OnDestroy {
     this.step.set('creating');
     this.errorMessage.set(null);
     this.remainingSeconds.set(300);
-    this.editableVpa.set(this.recipientVpa && this.recipientVpa !== 'roomledger@upi' ? this.recipientVpa : '');
+    const initialVpa = this.recipientVpa && this.recipientVpa.toLowerCase() !== 'roomledger@upi' ? this.recipientVpa.trim() : '';
+    this.editableVpa.set(initialVpa);
+    this.isEditingVpa.set(!this.isVpaValid(initialVpa));
 
     const numericGroupId = Number(this.groupId);
     const numericRefId = (this.referenceId != null && (this.referenceId as any) !== '') 
@@ -712,14 +770,23 @@ export class UpiPaymentModalComponent implements OnInit, OnDestroy {
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   }
 
+  isVpaValid(vpa?: string | null): boolean {
+    if (!vpa) return false;
+    const clean = vpa.trim().toLowerCase();
+    return clean !== '' && clean !== 'roomledger@upi' && clean.includes('@') && clean.length >= 4;
+  }
+
+  isVpaConfigured(): boolean {
+    return this.isVpaValid(this.effectiveVpa());
+  }
+
   private getUpiUri(): string {
-    const session = this.activeSession();
-    const orderId = session?.orderId || `RL_PAY_${Date.now()}`;
+    const cleanNote = (this.purposeTitle || 'RoomLedger Payment').replace(/[^a-zA-Z0-9 ]/g, ' ').trim().slice(0, 30);
     return this.paymentService.buildUpiUri({
       vpa: this.effectiveVpa(),
       name: this.recipientName,
       amount: this.amount,
-      note: orderId
+      note: cleanNote
     });
   }
 
@@ -727,11 +794,16 @@ export class UpiPaymentModalComponent implements OnInit, OnDestroy {
     const edit = this.editableVpa()?.trim();
     if (edit) return edit;
     const vpa = this.recipientVpa?.trim();
-    return vpa && vpa !== '' ? vpa : 'roomledger@upi';
+    return vpa && vpa.toLowerCase() !== 'roomledger@upi' ? vpa : '';
   }
 
   copyVpa(): void {
     const vpa = this.effectiveVpa();
+    if (!this.isVpaValid(vpa)) {
+      this.isEditingVpa.set(true);
+      this.popup.warning(`Please enter ${this.recipientName}'s UPI ID first.`);
+      return;
+    }
     navigator.clipboard.writeText(vpa).then(() => {
       this.copiedVpa.set(true);
       setTimeout(() => this.copiedVpa.set(false), 2500);
@@ -740,7 +812,9 @@ export class UpiPaymentModalComponent implements OnInit, OnDestroy {
 
   onVpaChange(newVpa: string): void {
     this.editableVpa.set(newVpa);
-    setTimeout(() => this.renderQrCode(), 50);
+    if (this.isVpaValid(newVpa)) {
+      setTimeout(() => this.renderQrCode(), 50);
+    }
   }
 
   saveQrToPhotos(): void {
@@ -758,19 +832,70 @@ export class UpiPaymentModalComponent implements OnInit, OnDestroy {
     }
   }
 
-  openApp(app: string): void {
-    this.selectApp(app);
-    const uri = this.getUpiUri();
-    window.location.href = uri;
+  openApp(appCode: 'gpay' | 'phonepe' | 'paytm' | 'generic', appLabel: string, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+    }
+
+    if (!this.isVpaConfigured()) {
+      this.isEditingVpa.set(true);
+      this.popup.warning(`Please enter ${this.recipientName}'s UPI ID before opening ${appLabel}.`);
+      return;
+    }
+
+    this.selectApp(appLabel);
+    const uri = this.getAppUri(appCode);
+    if (uri && uri !== 'javascript:void(0)') {
+      window.location.href = uri;
+    }
   }
 
   getAppUri(app: 'gpay' | 'phonepe' | 'paytm' | 'generic'): string {
-    // Standard universal upi://pay intent ensures all UPI apps open cleanly on Android & iOS without proprietary URL scheme blocks
-    return this.getUpiUri();
+    const vpa = this.effectiveVpa();
+    if (!this.isVpaValid(vpa)) {
+      return 'javascript:void(0)';
+    }
+
+    const cleanName = (this.recipientName || 'Flatmate').replace(/[^a-zA-Z0-9 ]/g, ' ').trim().slice(0, 50);
+    const cleanNote = (this.purposeTitle || 'RoomLedger Payment').replace(/[^a-zA-Z0-9 ]/g, ' ').trim().slice(0, 30);
+    const name = encodeURIComponent(cleanName || 'Flatmate');
+    const note = encodeURIComponent(cleanNote || 'RoomLedger Payment');
+    const amt = Number(this.amount || 0).toFixed(2);
+    const query = `pa=${encodeURIComponent(vpa)}&pn=${name}&am=${amt}&tn=${note}&cu=INR`;
+
+    const ua = (typeof navigator !== 'undefined' ? navigator.userAgent : '') || '';
+    const isAndroid = /android/i.test(ua);
+    const isIos = /iphone|ipad|ipod/i.test(ua);
+
+    if (isAndroid) {
+      switch (app) {
+        case 'phonepe':
+          return `intent://pay?${query}#Intent;scheme=upi;package=com.phonepe.app;end`;
+        case 'gpay':
+          return `intent://pay?${query}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
+        case 'paytm':
+          return `intent://pay?${query}#Intent;scheme=upi;package=net.one97.paytm;end`;
+        default:
+          return `upi://pay?${query}`;
+      }
+    } else if (isIos) {
+      switch (app) {
+        case 'phonepe':
+          return `phonepe://pay?${query}`;
+        case 'gpay':
+          return `gpay://upi/pay?${query}`;
+        case 'paytm':
+          return `paytmmp://pay?${query}`;
+        default:
+          return `upi://pay?${query}`;
+      }
+    }
+
+    return `upi://pay?${query}`;
   }
 
   renderQrCode(): void {
-    if (!this.qrCanvas?.nativeElement) return;
+    if (!this.qrCanvas?.nativeElement || !this.isVpaConfigured()) return;
     const uri = this.getUpiUri();
     QRCode.toCanvas(this.qrCanvas.nativeElement, uri, {
       width: 190,
@@ -780,6 +905,11 @@ export class UpiPaymentModalComponent implements OnInit, OnDestroy {
   }
 
   copyUpiLink(): void {
+    if (!this.isVpaConfigured()) {
+      this.isEditingVpa.set(true);
+      this.popup.warning(`Please enter ${this.recipientName}'s UPI ID first.`);
+      return;
+    }
     const uri = this.getUpiUri();
     navigator.clipboard.writeText(uri).then(() => {
       this.copiedUpi.set(true);
@@ -817,22 +947,10 @@ export class UpiPaymentModalComponent implements OnInit, OnDestroy {
         if (status.status === 'Success') {
           this.clearAllTimers();
           this.step.set('success');
-          this.paymentSuccess.emit({
-            orderId: status.orderId,
-            utr: status.bankUtr || this.inputUtr?.trim(),
-            amount: status.amount,
-            isApproved: true
-          });
         } else {
           // Status is 'Processing' -> Awaiting Admin Approval
           // Keep polling running in background so if Admin approves, screen turns to Success!
           this.step.set('submitted');
-          this.paymentSuccess.emit({
-            orderId: status.orderId,
-            utr: status.bankUtr || this.inputUtr?.trim(),
-            amount: status.amount,
-            isApproved: false
-          });
         }
       },
       error: (e) => {
@@ -848,15 +966,19 @@ export class UpiPaymentModalComponent implements OnInit, OnDestroy {
     this.verifiedUtr.set(status.bankUtr || (this.inputUtr?.trim() ? this.inputUtr.trim() : 'Bank Verified'));
     this.verifiedApp.set(status.paymentApp || this.selectedApp());
     this.step.set('success');
-    this.paymentSuccess.emit({
-      orderId: status.orderId,
-      utr: status.bankUtr || this.inputUtr?.trim(),
-      amount: status.amount,
-      isApproved: true
-    });
   }
 
   finishAndClose(): void {
+    const session = this.activeSession();
+    const isSuccess = this.step() === 'success';
+    if (session && (isSuccess || this.step() === 'submitted')) {
+      this.paymentSuccess.emit({
+        orderId: session.orderId,
+        utr: this.verifiedUtr() || this.inputUtr?.trim(),
+        amount: this.amount,
+        isApproved: isSuccess
+      });
+    }
     this.closeModal();
   }
 

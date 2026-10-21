@@ -60,7 +60,7 @@ export class IouComponent implements OnInit {
   upiAmount = signal<number>(0);
   upiPayeeId = signal<number | null>(null);
   upiPayeeName = signal<string>('Flatmate');
-  upiPayeeVpa = signal<string>('roomledger@upi');
+  upiPayeeVpa = signal<string>('');
 
   myUpiId = '';
   me = this.auth.user;

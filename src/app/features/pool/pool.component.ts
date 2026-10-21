@@ -94,6 +94,7 @@ export interface PoolBalance {
 
   // Selected Month Budget & Spending (Scenario 2: Fixed Monthly Cycle)
   monthlyTarget: number;
+  remainingTarget?: number;
   monthContributions?: number;
   monthSpent?: number;
   monthlyBudgetRemaining?: number;
@@ -249,7 +250,7 @@ export class PoolComponent implements OnInit {
   // ── Instant UPI Payment Gateway (YouPI-PG) ──
   showUpiPayment = signal<boolean>(false);
   upiPaymentAmount = signal<number>(500);
-  adminUpiId = signal<string>('roomledger@upi');
+  adminUpiId = signal<string>('');
   adminName = signal<string>('RoomLedger Pool');
 
   // ── Single Member Quick Pay ("Mark as Paid") Modal ──
@@ -660,18 +661,41 @@ export class PoolComponent implements OnInit {
   // ═══════════════════════════════════════════
   // QUICK CONTRIBUTE METHODS
   // ═══════════════════════════════════════════
+  get quickPresets(): number[] {
+    const target = this.balance()?.monthlyTarget || 0;
+    if (target > 0) {
+      if (target <= 100) {
+        return [10, 20, 30, Math.min(50, target)].filter(p => p <= target);
+      }
+      if (target <= 1000) {
+        return [100, 250, 500, target].filter(p => p <= target);
+      }
+      if (target <= 5000) {
+        return [500, 1000, 2000, target].filter(p => p <= target);
+      }
+    }
+    return [500, 1000, 1500, 2000];
+  }
+
   openContribute(): void {
     this.showContribute = true;
-    this.contributeAmount = 500;
+    const target = this.balance()?.monthlyTarget ?? 0;
+    const remaining = this.balance()?.remainingTarget ?? (target > 0 ? target : 0);
+    if (target > 0 && remaining > 0) {
+      this.contributeAmount = Math.min(500, remaining);
+    } else {
+      this.contributeAmount = 500;
+    }
     this.contributeMessage = '';
     this.contributeMode.set('per_person');
     if (this.balance()?.memberStatuses) {
       const myId = this.me?.id;
+      // Select ONLY the current user by default so Admin doesn't accidentally multiply by all members!
       this.contributeMembers.set(this.balance()!.memberStatuses.map(m => ({
         userId: m.userId,
         name: m.userName,
         initials: this.getInitials(m.userName),
-        selected: this.isAdmin() ? true : (m.userId === myId)
+        selected: m.userId === myId
       })));
     }
   }
@@ -731,6 +755,21 @@ export class PoolComponent implements OnInit {
     if (!amt || amt <= 0) {
       this.showToast('⚠️ Please enter a valid contribution amount');
       return;
+    }
+
+    const target = this.balance()?.monthlyTarget ?? 0;
+    const remaining = this.balance()?.remainingTarget ?? (target > 0 ? target : 0);
+    const totalToAdd = this.calculatedTotalContribute;
+
+    if (target > 0) {
+      if (remaining <= 0) {
+        this.showToast(`⚠️ Monthly target of ₹${target} has already been reached! No more contributions needed.`);
+        return;
+      }
+      if (totalToAdd > remaining) {
+        this.showToast(`⚠️ Contribution of ₹${totalToAdd} exceeds the remaining target of ₹${remaining} (Target: ₹${target})`);
+        return;
+      }
     }
 
     let memberIds: number[] = [];
@@ -840,7 +879,10 @@ export class PoolComponent implements OnInit {
   // ═══════════════════════════════════════════
   openQuickPay(m: any): void {
     this.quickPayTarget.set(m);
-    this.quickPayAmount = m.pendingAmount > 0 ? m.pendingAmount : (m.expectedThisMonth > 0 ? m.expectedThisMonth : 1000);
+    const target = this.balance()?.monthlyTarget ?? 0;
+    const remaining = this.balance()?.remainingTarget ?? (target > 0 ? target : 0);
+    const memberPending = m.pendingAmount > 0 ? m.pendingAmount : (m.expectedThisMonth > 0 ? m.expectedThisMonth : 1000);
+    this.quickPayAmount = target > 0 && remaining > 0 ? Math.min(memberPending, remaining) : memberPending;
     this.quickPayNote = `Monthly share - ${m.userName}`;
     this.showQuickPayModal.set(true);
   }

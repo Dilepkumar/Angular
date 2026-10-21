@@ -341,7 +341,7 @@ export class BillsComponent implements OnInit {
     if (!this.selectedAdmin() && this.groupAdmins().length > 0) {
       this.selectedAdmin.set(this.groupAdmins()[0]);
     }
-    this.payUpiId = this.selectedAdmin()?.upiId || this.payUpiId || 'roomledger@upi';
+    this.payUpiId = this.selectedAdmin()?.upiId || this.payUpiId || '';
     this.upiSplitId.set(split.id);
     this.upiAmount.set(split.shareAmount);
     this.upiBillTitle.set(`${this.formatBillName(bill?.billName) || 'Bill'} Share`);

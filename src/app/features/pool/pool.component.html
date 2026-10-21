@@ -824,21 +824,29 @@
                       <span class="text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-1"
                             style="background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok);">
                         <i class="fa-solid fa-check text-[10px]"></i>
-                        <span>Paid</span>
+                        <span>Paid (₹{{ m.contributedThisMonth | number:'1.0-0' }})</span>
                       </span>
                     } @else {
+                      @if (m.contributedThisMonth > 0) {
+                        <span class="text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap"
+                              style="background: color-mix(in srgb, #3b82f6 15%, transparent); color: #2563eb;"
+                              title="Partially contributed towards target">
+                          <i class="fa-solid fa-circle-half-stroke text-[9px]"></i>
+                          <span>Paid ₹{{ m.contributedThisMonth | number:'1.0-0' }}</span>
+                        </span>
+                      }
                       @if (m.hasPendingApproval || isMemberUpiPending(m.userId)) {
                         <span class="text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap"
                               style="background: color-mix(in srgb, #f59e0b 16%, transparent); color: #d97706;"
-                              title="Contribution submitted and awaiting admin bank verification">
+                              title="Contribution submitted and awaiting admin approval">
                           <i class="fa-solid fa-hourglass-half text-[9px]"></i>
-                          <span>Awaiting Approval {{ ((m.pendingApprovalAmount || 0) > 0 ? ('₹' + ((m.pendingApprovalAmount || 0) | number:'1.0-2')) : 'Review') }}</span>
+                          <span>Requested {{ ((m.pendingApprovalAmount || 0) > 0 ? ('₹' + ((m.pendingApprovalAmount || 0) | number:'1.0-0')) : 'Review') }}</span>
                         </span>
                       }
                       <span class="text-[10px] sm:text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap"
                             style="background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn);">
                         <i class="fa-solid fa-clock text-[9px]"></i>
-                        <span>Pending ₹{{ m.pendingAmount | number:'1.0-2' }}</span>
+                        <span>Pending ₹{{ m.pendingAmount | number:'1.0-0' }}</span>
                       </span>
                       @if (me?.id === m.userId || isAdmin()) {
                         <button type="button"
@@ -852,10 +860,11 @@
                         @if (isAdmin()) {
                           <button type="button"
                                   (click)="openQuickPay(m)"
-                                  class="text-[10px] font-black px-2 py-1 rounded-lg border transition cursor-pointer hover:scale-105 active:scale-95 flex items-center gap-1 shrink-0"
-                                  style="background: var(--bg3); color: var(--t2); border-color: var(--border);"
-                                  title="Mark as paid manually / Cash / Offset out-of-pocket">
-                            <i class="fa-solid fa-receipt text-[9px]"></i>
+                                  class="text-[10px] font-black px-2 py-1 rounded-lg border transition cursor-pointer hover:scale-105 active:scale-95 flex items-center gap-1 shrink-0 shadow-xs"
+                                  style="background: color-mix(in srgb, var(--ok) 12%, var(--bg2)); color: var(--ok); border-color: color-mix(in srgb, var(--ok) 35%, transparent);"
+                                  title="Admin: Mark this roommate's contribution as paid">
+                            <i class="fa-solid fa-circle-check text-[10px]"></i>
+                            <span>Mark Paid</span>
                           </button>
                         }
                       }
@@ -1150,80 +1159,52 @@
           </div>
         }
 
+        <!-- Target & Remaining Limit Callout -->
+        @if ((balance()?.monthlyTarget || 0) > 0) {
+          <div class="p-3.5 rounded-2xl border text-xs flex items-center justify-between"
+               style="background: var(--bg2); border-color: var(--border);">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-bullseye text-indigo-500 text-sm"></i>
+              <div>
+                <span class="font-extrabold text-[11px]" style="color: var(--t2);">Monthly Pool Target:</span>
+                <span class="font-black ml-1 text-xs" style="color: var(--text);">₹{{ balance()?.monthlyTarget | number:'1.0-0' }}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div>
+                <span class="font-extrabold text-[11px]" style="color: var(--t3);">Remaining:</span>
+                <span class="font-black ml-1 text-xs"
+                      [style.color]="(balance()?.remainingTarget ?? 0) <= 0 ? 'var(--ok)' : 'var(--p1)'">
+                  ₹{{ balance()?.remainingTarget ?? 0 | number:'1.0-0' }}
+                </span>
+              </div>
+              @if ((balance()?.remainingTarget ?? 0) > 0) {
+                <button type="button"
+                        (click)="setPresetAmount(balance()!.remainingTarget!)"
+                        class="text-[10px] font-black px-2 py-0.5 rounded-lg border cursor-pointer hover:bg-black/5"
+                        style="border-color: var(--p1); color: var(--p1);">
+                  Fill Remaining
+                </button>
+              }
+            </div>
+          </div>
+        }
+
         <!-- Quick Presets -->
         <div>
           <label class="sl block">QUICK PRESETS</label>
-          @if (contributeMode() === 'per_person') {
-            <div class="grid grid-cols-4 gap-2">
+          <div class="grid grid-cols-4 gap-2">
+            @for (amt of quickPresets; track amt) {
               <button type="button"
-                      (click)="setPresetAmount(500)"
+                      (click)="setPresetAmount(amt)"
                       class="py-2 rounded-xl border text-xs font-black cursor-pointer transition hover:bg-white"
-                      [style.borderColor]="contributeAmount === 500 ? 'var(--p1)' : 'var(--border)'"
-                      [style.color]="contributeAmount === 500 ? 'var(--p1)' : 'var(--text)'"
+                      [style.borderColor]="contributeAmount === amt ? 'var(--p1)' : 'var(--border)'"
+                      [style.color]="contributeAmount === amt ? 'var(--p1)' : 'var(--text)'"
                       style="background: var(--bg2);">
-                ₹500
+                ₹{{ amt }}
               </button>
-              <button type="button"
-                      (click)="setPresetAmount(1000)"
-                      class="py-2 rounded-xl border text-xs font-black cursor-pointer transition hover:bg-white"
-                      [style.borderColor]="contributeAmount === 1000 ? 'var(--p1)' : 'var(--border)'"
-                      [style.color]="contributeAmount === 1000 ? 'var(--p1)' : 'var(--text)'"
-                      style="background: var(--bg2);">
-                ₹1,000
-              </button>
-              <button type="button"
-                      (click)="setPresetAmount(1500)"
-                      class="py-2 rounded-xl border text-xs font-black cursor-pointer transition hover:bg-white"
-                      [style.borderColor]="contributeAmount === 1500 ? 'var(--p1)' : 'var(--border)'"
-                      [style.color]="contributeAmount === 1500 ? 'var(--p1)' : 'var(--text)'"
-                      style="background: var(--bg2);">
-                ₹1,500
-              </button>
-              <button type="button"
-                      (click)="setPresetAmount(2000)"
-                      class="py-2 rounded-xl border text-xs font-black cursor-pointer transition hover:bg-white"
-                      [style.borderColor]="contributeAmount === 2000 ? 'var(--p1)' : 'var(--border)'"
-                      [style.color]="contributeAmount === 2000 ? 'var(--p1)' : 'var(--text)'"
-                      style="background: var(--bg2);">
-                ₹2,000
-              </button>
-            </div>
-          } @else {
-            <div class="grid grid-cols-4 gap-2">
-              <button type="button"
-                      (click)="setPresetAmount(3000)"
-                      class="py-2 rounded-xl border text-xs font-black cursor-pointer transition hover:bg-white"
-                      [style.borderColor]="contributeAmount === 3000 ? 'var(--p1)' : 'var(--border)'"
-                      [style.color]="contributeAmount === 3000 ? 'var(--p1)' : 'var(--text)'"
-                      style="background: var(--bg2);">
-                ₹3,000
-              </button>
-              <button type="button"
-                      (click)="setPresetAmount(5000)"
-                      class="py-2 rounded-xl border text-xs font-black cursor-pointer transition hover:bg-white"
-                      [style.borderColor]="contributeAmount === 5000 ? 'var(--p1)' : 'var(--border)'"
-                      [style.color]="contributeAmount === 5000 ? 'var(--p1)' : 'var(--text)'"
-                      style="background: var(--bg2);">
-                ₹5,000
-              </button>
-              <button type="button"
-                      (click)="setPresetAmount(8000)"
-                      class="py-2 rounded-xl border text-xs font-black cursor-pointer transition hover:bg-white"
-                      [style.borderColor]="contributeAmount === 8000 ? 'var(--p1)' : 'var(--border)'"
-                      [style.color]="contributeAmount === 8000 ? 'var(--p1)' : 'var(--text)'"
-                      style="background: var(--bg2);">
-                ₹8,000
-              </button>
-              <button type="button"
-                      (click)="setPresetAmount(10000)"
-                      class="py-2 rounded-xl border text-xs font-black cursor-pointer transition hover:bg-white"
-                      [style.borderColor]="contributeAmount === 10000 ? 'var(--p1)' : 'var(--border)'"
-                      [style.color]="contributeAmount === 10000 ? 'var(--p1)' : 'var(--text)'"
-                      style="background: var(--bg2);">
-                ₹10,000
-              </button>
-            </div>
-          }
+            }
+          </div>
         </div>
 
         <!-- Amount Input -->
@@ -1393,21 +1374,32 @@
           <div class="h-px flex-1" style="background: var(--border);"></div>
         </div>
 
+        <!-- Over-Target Warning Alert -->
+        @if ((balance()?.monthlyTarget || 0) > 0 && calculatedTotalContribute > (balance()?.remainingTarget ?? 0)) {
+          <div class="p-3 rounded-2xl border text-xs font-bold flex items-center gap-2"
+               style="background: color-mix(in srgb, var(--err) 12%, transparent); border-color: color-mix(in srgb, var(--err) 30%, transparent); color: var(--err);">
+            <i class="fa-solid fa-triangle-exclamation text-sm shrink-0"></i>
+            <span>
+              Total ₹{{ calculatedTotalContribute }} exceeds the remaining monthly target of ₹{{ balance()?.remainingTarget ?? 0 }} (Target: ₹{{ balance()?.monthlyTarget }}). Please reduce amount.
+            </span>
+          </div>
+        }
+
         <!-- Submit Button -->
         <button type="button"
                 (click)="submitContribution()"
-                [disabled]="!contributeAmount || contributeAmount <= 0 || (isAdmin() && selectedContributeCount === 0) || contributing"
+                [disabled]="!contributeAmount || contributeAmount <= 0 || (isAdmin() && selectedContributeCount === 0) || contributing || ((balance()?.monthlyTarget || 0) > 0 && calculatedTotalContribute > (balance()?.remainingTarget ?? 0))"
                 class="btn w-full py-3.5 text-sm font-black shadow-md disabled:opacity-50 flex items-center justify-center gap-2">
           @if (contributing) {
             <span>Submitting…</span>
           } @else if (isAdmin()) {
             @if (contributeMode() === 'per_person') {
-              <span>Add ₹{{ calculatedTotalContribute | number:'1.0-0' }} to Pool ({{ selectedContributeCount }} Members × ₹{{ contributeAmount }})</span>
+              <span>Directly Mark as Paid &amp; Add ₹{{ calculatedTotalContribute | number:'1.0-0' }} to Pool ({{ selectedContributeCount }} Members)</span>
             } @else {
-              <span>Add ₹{{ contributeAmount | number:'1.0-0' }} to Pool (₹{{ calculatedPerMemberShare }} / member)</span>
+              <span>Directly Mark as Paid &amp; Add ₹{{ contributeAmount | number:'1.0-0' }} to Pool</span>
             }
           } @else {
-            <span>Submit ₹{{ contributeAmount | number:'1.0-0' }} for Admin Approval</span>
+            <span>Submit ₹{{ contributeAmount | number:'1.0-0' }} Request for Admin Approval</span>
           }
         </button>
       </div>
