@@ -91,15 +91,7 @@ export class YoupiPaymentService {
     });
   }
 
-  /**
-   * Local development simulation: Triggers a mock bank webhook callback for an order
-   */
-  simulateWebhook(orderId: string, utr?: string): Observable<{ message: string; transaction: PaymentTransactionStatus }> {
-    return this.api.post<{ message: string; transaction: PaymentTransactionStatus }>('payments/simulate-webhook', {
-      orderId,
-      utr: utr?.trim() || null
-    });
-  }
+
 
   /**
    * Polls status every intervalMs until resolved (Success, Failed, Expired, or Cancelled)

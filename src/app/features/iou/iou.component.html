@@ -380,13 +380,13 @@
       </div>
 
       @if (settleUpiId) {
-        <!-- Instant YouPI Auto-Verified Payment -->
+        <!-- Instant UPI Payment -->
         <button type="button"
                 (click)="openInstantUpi(settleTarget)"
                 class="w-full py-3.5 px-3 rounded-xl font-black text-xs text-white shadow-md cursor-pointer flex items-center justify-center gap-2 transition hover:brightness-110 active:scale-98 mb-2.5"
                 style="background: linear-gradient(135deg, #1ABC9C 0%, #16A085 100%);">
           <i class="fa-solid fa-bolt text-sm"></i>
-          <span>Pay ₹{{ settleAmount }} with Instant UPI (Auto-Verify)</span>
+          <span>Pay ₹{{ settleAmount }} with Instant UPI</span>
         </button>
 
         <!-- Fallback 1-Click UPI Intent Launch (Mobile Apps) -->
