@@ -957,22 +957,14 @@
                   </div>
                 </div>
 
-                <!-- Action Button: Pay via UPI -->
+                <!-- Action Button: Settle Up -->
                 <div class="flex gap-2">
                   <button type="button"
-                          (click)="payDebtViaUpi(debt)"
-                          class="btn flex-1 py-2 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
-                          style="background: linear-gradient(135deg, #1ABC9C 0%, #16A085 100%);"
-                          title="Pay directly via UPI apps (GPay, PhonePe, Paytm)">
-                    <i class="fa-solid fa-bolt text-xs"></i>
-                    <span>Pay ₹{{ debt.amount | number:'1.0-0' }} via UPI</span>
-                  </button>
-
-                  <button type="button"
                           (click)="goToIou()"
-                          class="btns text-xs py-2 px-3 font-bold"
-                          title="View expense breakdown">
-                    Details
+                          class="btn flex-1 py-2 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                          title="Open IOU page to settle debts">
+                    <i class="fa-solid fa-handshake text-xs"></i>
+                    <span>Settle Up (₹{{ debt.amount | number:'1.0-0' }})</span>
                   </button>
                 </div>
               </div>
@@ -1097,23 +1089,6 @@
     </div>
   </div>
 }
-
-
-
-<!-- ═══════════════════════════════════════════
-     MODAL: LIVE UPI PAYMENT GATEWAY (PG)
-═══════════════════════════════════════════ -->
-<app-upi-payment-modal
-  [isOpen]="showUpiModal()"
-  [groupId]="groupId"
-  [amount]="upiAmount()"
-  purpose="IouSettlement"
-  [purposeTitle]="'IOU Settle-Up with ' + upiPayeeName()"
-  [referenceId]="upiPayeeId()"
-  [recipientVpa]="upiPayeeVpa()"
-  [recipientName]="upiPayeeName()"
-  (paymentSuccess)="onUpiSuccess($event)"
-  (modalClosed)="closeUpiModal()" />
 
 <!-- Toast Feedback Popup -->
 @if (toastMessage()) {

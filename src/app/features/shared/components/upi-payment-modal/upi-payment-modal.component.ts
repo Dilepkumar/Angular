@@ -161,10 +161,64 @@ import { PopupService } from '../../../../core/services/popup.service';
                 </div>
               </div>
 
+              <!-- QR CODE WITH SAVE TO GALLERY OPTION (100% RELIABLE ACROSS ALL APPS & IOS) -->
+              <div class="border rounded-2xl p-3.5" style="border-color: var(--border); background: var(--bg2);">
+                <div class="flex items-center justify-between cursor-pointer"
+                     (click)="toggleQr()">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-qrcode text-sm" style="color: #1ABC9C;"></i>
+                    <span class="text-xs font-bold" style="color: var(--text);">
+                      Scan UPI QR Code (Recommended)
+                    </span>
+                  </div>
+                  <i class="fa-solid fa-chevron-down text-xs transition-transform"
+                     [class.rotate-180]="showQr()"
+                     style="color: var(--t3);"></i>
+                </div>
+
+                @if (showQr()) {
+                  <div class="mt-3 pt-3 border-t flex flex-col items-center justify-center gap-2.5"
+                       style="border-color: var(--border);">
+                    @if (isVpaConfigured()) {
+                      <div class="p-3 bg-white rounded-2xl shadow-sm border border-slate-200">
+                        <canvas #qrCanvas class="max-w-[190px] h-auto"></canvas>
+                      </div>
+
+                      <div class="flex items-center gap-2 flex-wrap justify-center w-full">
+                        <button type="button"
+                                (click)="saveQrToPhotos()"
+                                class="text-[11px] font-bold inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border cursor-pointer hover:bg-black/5"
+                                style="border-color: #1ABC9C; color: #16A085;">
+                          <i class="fa-solid fa-download"></i>
+                          <span>{{ savedQrToPhotos() ? 'Saved to Gallery!' : 'Save QR to Photos' }}</span>
+                        </button>
+
+                        <button type="button"
+                                (click)="copyUpiLink()"
+                                class="text-[11px] font-bold inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border cursor-pointer hover:bg-black/5"
+                                style="border-color: var(--border); color: var(--p1);">
+                          <i class="fa-regular fa-copy"></i>
+                          <span>{{ copiedUpi() ? 'Copied Link!' : 'Copy Raw UPI Link' }}</span>
+                        </button>
+                      </div>
+
+                      <div class="text-[10.5px] text-center font-medium max-w-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                        💡 <strong>100% Success Tip:</strong> Tap <strong>Save QR to Photos</strong> &rarr; Open PhonePe/Paytm &rarr; Tap Scanner &rarr; Select from Gallery.
+                      </div>
+                    } @else {
+                      <div class="p-4 text-center text-xs font-bold text-amber-600 dark:text-amber-400 space-y-1">
+                        <i class="fa-solid fa-triangle-exclamation text-base"></i>
+                        <div>Please enter {{ recipientName }}'s UPI ID above to generate the payment QR code.</div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
               <!-- 1-TAP MOBILE UPI APP LAUNCHERS -->
               <div>
                 <div class="flex items-center justify-between mb-2">
-                  <label class="sl">1-TAP PAY WITH ANY UPI APP</label>
+                  <label class="sl">OR PAY DIRECTLY VIA UPI APP</label>
                   <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                     Selected: {{ selectedApp() }}
                   </span>
@@ -227,60 +281,12 @@ import { PopupService } from '../../../../core/services/popup.service';
                     <span class="text-[11px] font-black" style="color: var(--text);">Any UPI App</span>
                   </a>
                 </div>
-              </div>
 
-              <!-- QR CODE WITH SAVE TO GALLERY OPTION -->
-              <div class="border rounded-2xl p-3.5" style="border-color: var(--border); background: var(--bg2);">
-                <div class="flex items-center justify-between cursor-pointer"
-                     (click)="toggleQr()">
-                  <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-qrcode text-sm" style="color: #1ABC9C;"></i>
-                    <span class="text-xs font-bold" style="color: var(--text);">
-                      Scan UPI QR Code
-                    </span>
-                  </div>
-                  <i class="fa-solid fa-chevron-down text-xs transition-transform"
-                     [class.rotate-180]="showQr()"
-                     style="color: var(--t3);"></i>
+                <!-- Guidance Note -->
+                <div class="mt-2 text-[10.5px] leading-relaxed text-amber-700 dark:text-amber-300 font-semibold flex items-start gap-1.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25">
+                  <i class="fa-solid fa-circle-info text-xs mt-0.5 text-amber-500 shrink-0"></i>
+                  <span>If your app says <em>"Payment mode not allowed"</em>, use <strong>Save QR to Photos</strong> above or tap <strong>Copy UPI</strong> to paste in PhonePe/GPay.</span>
                 </div>
-
-                @if (showQr()) {
-                  <div class="mt-3 pt-3 border-t flex flex-col items-center justify-center gap-2.5"
-                       style="border-color: var(--border);">
-                    @if (isVpaConfigured()) {
-                      <div class="p-3 bg-white rounded-2xl shadow-sm border border-slate-200">
-                        <canvas #qrCanvas class="max-w-[190px] h-auto"></canvas>
-                      </div>
-
-                      <div class="flex items-center gap-2 flex-wrap justify-center w-full">
-                        <button type="button"
-                                (click)="saveQrToPhotos()"
-                                class="text-[11px] font-bold inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border cursor-pointer hover:bg-black/5"
-                                style="border-color: #1ABC9C; color: #16A085;">
-                          <i class="fa-solid fa-download"></i>
-                          <span>{{ savedQrToPhotos() ? 'Saved to Gallery!' : 'Save QR to Photos' }}</span>
-                        </button>
-
-                        <button type="button"
-                                (click)="copyUpiLink()"
-                                class="text-[11px] font-bold inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border cursor-pointer hover:bg-black/5"
-                                style="border-color: var(--border); color: var(--p1);">
-                          <i class="fa-regular fa-copy"></i>
-                          <span>{{ copiedUpi() ? 'Copied Link!' : 'Copy Raw UPI Link' }}</span>
-                        </button>
-                      </div>
-
-                      <div class="text-[10px] text-center font-medium max-w-xs" style="color: var(--t3);">
-                        Tip: Open PhonePe/Paytm/GPay &rarr; Scan QR Code from camera or upload from photos.
-                      </div>
-                    } @else {
-                      <div class="p-4 text-center text-xs font-bold text-amber-600 dark:text-amber-400 space-y-1">
-                        <i class="fa-solid fa-triangle-exclamation text-base"></i>
-                        <div>Please enter {{ recipientName }}'s UPI ID above to generate the payment QR code.</div>
-                      </div>
-                    }
-                  </div>
-                }
               </div>
 
               <!-- VERIFY PAYMENT / UTR CONFIRMATION -->
@@ -316,7 +322,7 @@ import { PopupService } from '../../../../core/services/popup.service';
                     <span>Submitting Proof…</span>
                   } @else {
                     <i class="fa-solid fa-paper-plane text-base"></i>
-                    <span>I've Paid — Submit for Verification</span>
+                    <span>{{ purpose === 'IouSettlement' ? "I've Paid — Clear Debt Now" : "I've Paid — Submit for Verification" }}</span>
                   }
                 </button>
                 <div class="text-[11px] text-center font-medium" style="color: var(--t3);">

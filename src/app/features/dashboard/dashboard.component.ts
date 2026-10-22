@@ -5,7 +5,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PageLoaderComponent } from '../shared/components/page-loader/page-loader.component';
-import { UpiPaymentModalComponent } from '../shared/components/upi-payment-modal/upi-payment-modal.component';
 import { PopupService } from '../../core/services/popup.service';
 import * as QRCode from 'qrcode';
 import { environment } from '../../../environments/environment';
@@ -113,7 +112,7 @@ export interface DashboardIouDebt {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageLoaderComponent, UpiPaymentModalComponent],
+  imports: [CommonModule, FormsModule, PageLoaderComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
@@ -325,13 +324,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   // Toast feedback
   toastMessage = signal<string | null>(null);
-
-  // ── Real UPI PG Modal State for Paying Debts ──
-  showUpiModal = signal<boolean>(false);
-  upiAmount = signal<number>(0);
-  upiPayeeId = signal<number | null>(null);
-  upiPayeeName = signal<string>('');
-  upiPayeeVpa = signal<string>('');
 
   // ── UPI Settle Modal State ──
   settleModal = signal<SettleModalData | null>(null);
@@ -592,25 +584,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         this.popup.error(err?.error?.message || `Failed to send reminder to ${debt.debtorName}`);
       }
     });
-  }
-
-  // ── Pay Debt to Creditor via UPI ──
-  payDebtViaUpi(debt: DashboardIouDebt): void {
-    this.upiAmount.set(debt.amount);
-    this.upiPayeeId.set(debt.creditorId);
-    this.upiPayeeName.set(debt.creditorName);
-    this.upiPayeeVpa.set(debt.creditorUpiId || '');
-    this.showUpiModal.set(true);
-  }
-
-  closeUpiModal(): void {
-    this.showUpiModal.set(false);
-  }
-
-  onUpiSuccess(event: any): void {
-    this.showUpiModal.set(false);
-    this.popup.success(`Successfully settled ₹${event.amount} via UPI!`);
-    this.loadDashboardData();
   }
 
   viewReceipt(url?: string | null): void {

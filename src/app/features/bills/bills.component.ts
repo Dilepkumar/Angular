@@ -8,13 +8,11 @@ import { PopupService } from '../../core/services/popup.service';
 import { MonthlyBillsOverview, BillSplit } from '../shared/models';
 import * as QRCode from 'qrcode';
 import { PageLoaderComponent } from '../shared/components/page-loader/page-loader.component';
-import { UpiPaymentModalComponent } from '../shared/components/upi-payment-modal/upi-payment-modal.component';
-import { YoupiPaymentService, PaymentTransactionStatus } from '../../core/services/youpi-payment.service';
 
 @Component({
   selector: 'app-bills',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageLoaderComponent, UpiPaymentModalComponent],
+  imports: [CommonModule, FormsModule, PageLoaderComponent],
   templateUrl: './bills.component.html',
   styleUrls: ['./bills.component.scss']
 })
@@ -24,7 +22,6 @@ export class BillsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private popup = inject(PopupService);
-  private paymentService = inject(YoupiPaymentService);
 
   groupId = '';
   groupName = signal('Apartment 402');
@@ -51,20 +48,12 @@ export class BillsComponent implements OnInit {
   isSubmittingPayment = false;
   @ViewChild('payQrCanvas') payQrCanvasRef?: ElementRef<HTMLCanvasElement>;
 
-  // ── Instant UPI Payment Gateway (YouPI-PG) ──
-  showUpiModal = signal<boolean>(false);
-  upiAmount = signal<number>(0);
-  upiSplitId = signal<number | null>(null);
-  upiBillTitle = signal<string>('Bill Share');
-  pendingApprovals = signal<PaymentTransactionStatus[]>([]);
-
   loading = signal(false);
 
   ngOnInit(): void {
     this.groupId = this.route.snapshot.paramMap.get('groupId') || localStorage.getItem('rl_group_id') || '1';
     this.load();
     this.loadPoolBalance();
-    this.loadPendingApprovals();
 
     this.api.get<any>(`groups/${this.groupId}`).subscribe({
       next: (g) => {
@@ -330,65 +319,6 @@ export class BillsComponent implements OnInit {
         this.popup.error(err.error?.message || 'Failed to record payment');
       }
     });
-  }
-
-  // ═══════════════════════════════════════════
-  // INSTANT UPI PAYMENT (YOUPI GATEWAY)
-  // ═══════════════════════════════════════════
-  openInstantUpi(split: any, bill: any): void {
-    this.paySplit = split;
-    this.payBill = bill;
-    if (!this.selectedAdmin() && this.groupAdmins().length > 0) {
-      this.selectedAdmin.set(this.groupAdmins()[0]);
-    }
-    this.payUpiId = this.selectedAdmin()?.upiId || this.payUpiId || '';
-    this.upiSplitId.set(split.id);
-    this.upiAmount.set(split.shareAmount);
-    this.upiBillTitle.set(`${this.formatBillName(bill?.billName) || 'Bill'} Share`);
-    this.showPayModal = false;
-    this.showUpiModal.set(true);
-  }
-
-  closeUpiModal(): void {
-    this.showUpiModal.set(false);
-  }
-
-  loadPendingApprovals(): void {
-    const gIdNum = parseInt(this.groupId, 10) || 1;
-    this.paymentService.getPendingApprovals(gIdNum).subscribe({
-      next: (list) => {
-        const billSplits = (list || []).filter(p => p.purpose === 'BillSplit');
-        this.pendingApprovals.set(billSplits);
-      },
-      error: () => {}
-    });
-  }
-
-  approvePaymentClaim(claim: PaymentTransactionStatus, approve: boolean): void {
-    const action = approve ? 'approve' : 'reject';
-    this.paymentService.approvePayment(claim.id, approve).subscribe({
-      next: (res) => {
-        this.popup.success(res.message || (approve ? 'Payment approved and recorded!' : 'Payment claim rejected.'));
-        this.loadPendingApprovals();
-        this.load();
-      },
-      error: (e) => this.popup.error(e.error?.message || `Failed to ${action} payment claim`)
-    });
-  }
-
-  isClaimPending(userId: number): boolean {
-    return this.pendingApprovals().some(p => p.payerUserId === userId);
-  }
-
-  onUpiBillPaymentSuccess(event: { orderId: string; utr?: string; amount: number; isApproved?: boolean }): void {
-    this.showUpiModal.set(false);
-    if (event.isApproved) {
-      this.popup.success(`🎉 Payment of ₹${event.amount} verified! Split marked as paid.`);
-    } else {
-      this.popup.info(`⏳ Payment proof of ₹${event.amount} submitted to Group Admin for bank verification.`);
-    }
-    this.load();
-    this.loadPendingApprovals();
   }
 
   sendReminder(bill: any): void {

@@ -7,8 +7,6 @@ import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PopupService } from '../../core/services/popup.service';
 import { PageLoaderComponent } from '../shared/components/page-loader/page-loader.component';
-import { UpiPaymentModalComponent } from '../shared/components/upi-payment-modal/upi-payment-modal.component';
-import { YoupiPaymentService, PaymentTransactionStatus } from '../../core/services/youpi-payment.service';
 import {
   ElectricityAccount,
   ElectricityBill,
@@ -21,13 +19,12 @@ import {
 @Component({
   selector: 'app-electricity',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageLoaderComponent, UpiPaymentModalComponent],
+  imports: [CommonModule, FormsModule, PageLoaderComponent],
   templateUrl: './electricity.component.html',
   styleUrls: ['./electricity.component.scss']
 })
 export class ElectricityComponent implements OnInit {
   private electricityService = inject(ElectricityService);
-  private paymentService = inject(YoupiPaymentService);
   private api = inject(ApiService);
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
@@ -44,14 +41,6 @@ export class ElectricityComponent implements OnInit {
   billers = signal<ElectricityBiller[]>([]);
   splits = signal<ElectricityBillSplits | null>(null);
   monitoringStatus = signal<ElectricityMonitoringStatus | null>(null);
-
-  // ── Instant UPI Payment Gateway (YouPI-PG) ──
-  showUpiModal = signal<boolean>(false);
-  upiAmount = signal<number>(0);
-  upiSplitId = signal<number | null>(null);
-  adminUpiId = signal<string>('');
-  adminName = signal<string>('Room Admin');
-  pendingApprovals = signal<PaymentTransactionStatus[]>([]);
 
   loading = signal<boolean>(false);
   checking = signal<boolean>(false);
@@ -127,13 +116,6 @@ export class ElectricityComponent implements OnInit {
       next: (g) => {
         if (g?.groupName) this.groupName.set(g.groupName);
         if (g?.myRole) this.myRole.set(g.myRole);
-        if (g?.members) {
-          const admins = g.members.filter((m: any) => m.role === 'Admin');
-          if (admins.length > 0) {
-            if (admins[0].upiId) this.adminUpiId.set(admins[0].upiId);
-            if (admins[0].name) this.adminName.set(admins[0].name);
-          }
-        }
       },
       error: () => {}
     });
@@ -170,7 +152,6 @@ export class ElectricityComponent implements OnInit {
     this.selectedAccount.set(acc);
     if (acc?.latestBill?.id) {
       this.loadSplits(acc.id, acc.latestBill.id);
-      this.loadPendingApprovals();
     } else {
       this.splits.set(null);
     }
@@ -459,68 +440,5 @@ export class ElectricityComponent implements OnInit {
       default:
         return status || 'Active';
     }
-  }
-
-  // ═══════════════════════════════════════════
-  // INSTANT UPI PAYMENT (YOUPI GATEWAY)
-  // ═══════════════════════════════════════════
-  canPay(member: any): boolean {
-    if (member.isPaid) return false;
-    const myId = this.auth.user()?.id;
-    return this.isAdmin() || (myId !== undefined && member.userId === myId);
-  }
-
-  openElectricityUpi(member: any): void {
-    this.upiSplitId.set(member.id);
-    this.upiAmount.set(member.shareAmount);
-    this.showUpiModal.set(true);
-  }
-
-  closeUpiModal(): void {
-    this.showUpiModal.set(false);
-  }
-
-  loadPendingApprovals(): void {
-    const gIdNum = parseInt(this.groupId(), 10) || 1;
-    this.paymentService.getPendingApprovals(gIdNum).subscribe({
-      next: (list) => {
-        const elec = (list || []).filter(p => p.purpose === 'ElectricitySplit');
-        this.pendingApprovals.set(elec);
-      },
-      error: () => {}
-    });
-  }
-
-  approvePaymentClaim(claim: PaymentTransactionStatus, approve: boolean): void {
-    const action = approve ? 'approve' : 'reject';
-    this.paymentService.approvePayment(claim.id, approve).subscribe({
-      next: (res) => {
-        this.popup.success(res.message || (approve ? 'Payment approved and recorded!' : 'Payment claim rejected.'));
-        this.loadPendingApprovals();
-        const acc = this.selectedAccount();
-        if (acc?.latestBill?.id) {
-          this.loadSplits(acc.id, acc.latestBill.id);
-        }
-      },
-      error: (e) => this.popup.error(e.error?.message || `Failed to ${action} payment claim`)
-    });
-  }
-
-  isClaimPending(userId: number): boolean {
-    return this.pendingApprovals().some(p => p.payerUserId === userId);
-  }
-
-  onUpiElectricitySuccess(event: { orderId: string; utr?: string; amount: number; isApproved?: boolean }): void {
-    this.showUpiModal.set(false);
-    if (event.isApproved) {
-      this.popup.success(`🎉 Electricity share of ₹${event.amount} paid & verified!`);
-    } else {
-      this.popup.info(`⏳ Payment proof of ₹${event.amount} submitted to Group Admin for bank verification.`);
-    }
-    const acc = this.selectedAccount();
-    if (acc?.latestBill?.id) {
-      this.loadSplits(acc.id, acc.latestBill.id);
-    }
-    this.loadPendingApprovals();
   }
 }
