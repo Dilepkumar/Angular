@@ -242,68 +242,6 @@
         </button>
       </div>
 
-      <!-- Card 2: Notifications Preferences -->
-      <div class="card">
-        <div class="sl flex items-center gap-2">
-          <i class="fa-solid fa-bell text-xs" style="color: var(--p1);"></i>
-          <span>Notification Preferences</span>
-        </div>
-
-        <div class="space-y-3">
-          <!-- Push Notifications -->
-          <div class="flex items-center justify-between py-1">
-            <div>
-              <div class="text-xs sm:text-[13px] font-bold flex items-center gap-1.5" style="color: var(--text);">
-                <i class="fa-solid fa-mobile-screen-button text-xs" style="color: var(--p1);"></i>
-                <span>Push Notifications</span>
-              </div>
-              <div class="text-[11px] font-medium" style="color: var(--t3);">Real-time expense &amp; split alerts</div>
-            </div>
-            <div class="tog"
-                 [class.on]="pushEnabled()"
-                 (click)="pushEnabled.set(!pushEnabled())">
-              <div class="tt"></div>
-            </div>
-          </div>
-
-          <div class="div"></div>
-
-          <!-- WhatsApp Alerts -->
-          <div class="flex items-center justify-between py-1">
-            <div>
-              <div class="text-xs sm:text-[13px] font-bold flex items-center gap-1.5" style="color: var(--text);">
-                <i class="fa-brands fa-whatsapp text-xs" style="color: #25D366;"></i>
-                <span>WhatsApp Alerts</span>
-              </div>
-              <div class="text-[11px] font-medium" style="color: var(--t3);">Payment nudges &amp; reminders</div>
-            </div>
-            <div class="tog"
-                 [class.on]="whatsappEnabled()"
-                 (click)="whatsappEnabled.set(!whatsappEnabled())">
-              <div class="tt"></div>
-            </div>
-          </div>
-
-          <div class="div"></div>
-
-          <!-- Email Digest -->
-          <div class="flex items-center justify-between py-1">
-            <div>
-              <div class="text-xs sm:text-[13px] font-bold flex items-center gap-1.5" style="color: var(--text);">
-                <i class="fa-solid fa-envelope text-xs" style="color: var(--p1);"></i>
-                <span>Weekly Email Digest</span>
-              </div>
-              <div class="text-[11px] font-medium" style="color: var(--t3);">Summary of room budget &amp; spends</div>
-            </div>
-            <div class="tog"
-                 [class.on]="emailDigestEnabled()"
-                 (click)="emailDigestEnabled.set(!emailDigestEnabled())">
-              <div class="tt"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Card 3: Security & Change Password -->
       <div class="card">
         <button type="button"

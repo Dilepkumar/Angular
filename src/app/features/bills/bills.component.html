@@ -44,8 +44,14 @@
                 title="Previous Month">
           ‹
         </button>
-        <span class="text-xs font-black px-2" style="color: var(--text);">
-          {{ formattedMonth() }}
+        <span class="text-xs font-black px-2 flex items-center gap-1.5" style="color: var(--text);">
+          <span>{{ formattedMonth() }}</span>
+          @if (isViewingCurrentMonth) {
+            <span class="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase"
+                  style="background: color-mix(in srgb, var(--p1) 16%, transparent); color: var(--p1);">
+              Current
+            </span>
+          }
         </span>
         <button type="button"
                 (click)="nextMonth()"
@@ -56,13 +62,6 @@
         </button>
       </div>
 
-      @if (isAdmin) {
-        <button type="button"
-                (click)="generateNextMonth()"
-                class="btns py-2 px-3 text-xs font-black cursor-pointer">
-          Generate Next Month
-        </button>
-      }
       <button type="button"
               (click)="goToElectricity()"
               class="py-2 px-3 rounded-xl text-xs font-black shadow-sm flex items-center gap-1.5 cursor-pointer border transition active:scale-95"
@@ -212,7 +211,7 @@
                       </button>
                     }
 
-                    @if (canPay(s)) {
+                    @if (!isElectricity(bill) && canPay(s, bill)) {
                       <button type="button"
                               (click)="openPayModal(s, bill)"
                               class="text-[11px] font-bold px-2 py-0.5 rounded-lg border text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition cursor-pointer flex items-center gap-1"

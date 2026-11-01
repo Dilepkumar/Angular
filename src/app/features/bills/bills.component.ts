@@ -50,8 +50,16 @@ export class BillsComponent implements OnInit {
 
   loading = signal(false);
 
+  get isViewingCurrentMonth(): boolean {
+    return this.billingMonth === new Date().toISOString().slice(0, 7);
+  }
+
   ngOnInit(): void {
     this.groupId = this.route.snapshot.paramMap.get('groupId') || localStorage.getItem('rl_group_id') || '1';
+    const qMonth = this.route.snapshot.queryParamMap.get('month');
+    if (qMonth && /^\d{4}-\d{2}$/.test(qMonth)) {
+      this.billingMonth = qMonth;
+    }
     this.load();
     this.loadPoolBalance();
 
@@ -240,6 +248,7 @@ export class BillsComponent implements OnInit {
   }
 
   openPayModal(split: any, bill: any): void {
+    if (this.isElectricity(bill)) return;
     this.paySplit = split;
     this.payBill = bill;
     if (!this.selectedAdmin() && this.groupAdmins().length > 0) {
@@ -388,25 +397,6 @@ export class BillsComponent implements OnInit {
     });
   }
 
-  async generateNextMonth(): Promise<void> {
-    const confirmed = await this.popup.confirm({
-      title: 'Generate Next Month Bills',
-      message: "Generate recurring bills and member splits for next month?",
-      confirmText: 'Generate Now',
-      cancelText: 'Cancel',
-      type: 'primary'
-    });
-    if (!confirmed) return;
-
-    this.api.post(`groups/${this.groupId}/bills/generate-next-month`, {}).subscribe({
-      next: () => {
-        this.popup.success("✅ Next month's bills generated!");
-        this.nextMonth();
-      },
-      error: (e) => this.popup.error(`❌ ${e.error?.message || 'Failed to generate bills'}`)
-    });
-  }
-
   progress(bill: any): number {
     if (bill.paidFromPool) return 100;
     const splits = bill.splits ?? [];
@@ -425,7 +415,14 @@ export class BillsComponent implements OnInit {
     return this.isAdmin || this.isMine(s);
   }
 
-  canPay(s: any): boolean {
+  isElectricity(bill?: any): boolean {
+    if (!bill) return false;
+    const n = (bill.billName || '').toLowerCase();
+    return n.includes('electr') || n.includes('power') || n.includes('tgspdcl') || n.includes('curren');
+  }
+
+  canPay(s: any, bill?: any): boolean {
+    if (bill && this.isElectricity(bill)) return false;
     return !s?.isPaid && this.isMine(s);
   }
 

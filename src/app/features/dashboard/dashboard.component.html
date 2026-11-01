@@ -31,6 +31,35 @@
     <!-- Header Actions (Notifications, Profile Badge, Log Expense) -->
     <div class="flex items-center gap-2.5 sm:gap-3">
       
+      <!-- Global Dashboard Month Switcher (Beside Notifications) -->
+      <div class="flex items-center rounded-2xl border p-1 shadow-xs select-none"
+           style="background: var(--card); border-color: var(--border);">
+        <button type="button"
+                (click)="prevDashboardMonth()"
+                class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center transition hover:bg-black/5 cursor-pointer font-black text-sm"
+                style="color: var(--text);"
+                title="Previous Month">
+          ‹
+        </button>
+        <span class="text-xs font-black px-2 flex items-center gap-1.5 whitespace-nowrap" style="color: var(--text);">
+          <i class="fa-solid fa-calendar-days text-[11px]" style="color: var(--p1);"></i>
+          <span>{{ formattedDashboardMonth() }}</span>
+          @if (isViewingCurrentDashboardMonth()) {
+            <span class="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase"
+                  style="background: color-mix(in srgb, var(--p1) 16%, transparent); color: var(--p1);">
+              Current
+            </span>
+          }
+        </span>
+        <button type="button"
+                (click)="nextDashboardMonth()"
+                class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center transition hover:bg-black/5 cursor-pointer font-black text-sm"
+                style="color: var(--text);"
+                title="Next Month">
+          ›
+        </button>
+      </div>
+
       <!-- Notifications Bell -->
       <div (click)="goNotifications()"
            class="relative cursor-pointer select-none"
@@ -818,7 +847,7 @@
         <div class="col-span-full p-8 rounded-3xl border text-center space-y-2 flex flex-col items-center justify-center"
              style="background: var(--card); border-color: var(--border);">
           <i class="fa-solid fa-receipt text-3xl mb-1 text-slate-400"></i>
-          <div class="text-sm font-bold" style="color: var(--text);">No Recurring Bills Set Up</div>
+          <div class="text-sm font-bold" style="color: var(--text);">No Recurring Bills for {{ formattedDashboardMonth() }}</div>
           <p class="text-xs" style="color: var(--t3);">Track rent, Wi-Fi, electricity, and house help subscriptions in one place.</p>
           <button type="button" (click)="goToBills()" class="btn py-2 px-5 text-xs font-black mt-2">
             Configure Recurring Bills →

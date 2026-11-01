@@ -223,21 +223,53 @@
       </div>
 
       <!-- ═══════════════════════════════════════════
-           CURRENT BILL CARD (IF BILL EXISTS)
+           CURRENT CYCLE ACTIVE MONITORING (IF AWAITING THIS MONTH'S BILL)
+      ═══════════════════════════════════════════ -->
+      @if (!isCurrentBillingCycle(acc.latestBill)) {
+        <div class="card p-5 rounded-3xl border flex items-center justify-between flex-wrap gap-4"
+             style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(99, 102, 241, 0.06)); border-color: rgba(56, 189, 248, 0.3);">
+          <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl text-sky-400 shrink-0"
+                 style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3);">
+              <i class="fa-solid fa-tower-broadcast animate-pulse"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm font-black" style="color: var(--text);">
+                  Current Cycle: {{ currentMonthName() }}
+                </span>
+                <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30">
+                  AWAITING BILL GENERATION
+                </span>
+              </div>
+              <p class="text-xs font-medium mt-0.5" style="color: var(--t2);">
+                TGSPDCL publishes meter bills around the 5th–8th of each month. RoomLedger monitors daily and will automatically sync and notify the flat once generated.
+              </p>
+            </div>
+          </div>
+          <div class="text-xs font-bold text-sky-400 shrink-0 px-3 py-1.5 rounded-xl border border-sky-500/20"
+               style="background: rgba(56, 189, 248, 0.08);">
+            <i class="fa-solid fa-bolt mr-1"></i> ₹0.00 Current Due
+          </div>
+        </div>
+      }
+
+      <!-- ═══════════════════════════════════════════
+           BILL DISPLAY & DETAILS CARD
       ═══════════════════════════════════════════ -->
       @if (acc.latestBill; as bill) {
         <div class="card p-6 bill-details-card">
           <div class="flex items-center justify-between flex-wrap gap-2 mb-4 pb-3 border-b" style="border-color: var(--border);">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="text-sm font-black uppercase tracking-wider" style="color: var(--text);">
-                Current Billing Cycle
+                {{ isCurrentBillingCycle(bill) ? 'Current Billing Cycle' : 'Previous Settled Bill' }}
               </span>
               @if (bill.billPeriod) {
                 <span class="text-xs font-bold px-2 py-0.5 rounded-md bill-period-pill">
                   {{ bill.billPeriod }}
                 </span>
               }
-              @if (bill.isPaidAtProvider) {
+              @if (bill.isPaidAtProvider || !isCurrentBillingCycle(bill)) {
                 <span class="text-xs font-black px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5 shadow-sm"
                       style="background: rgba(16, 185, 129, 0.16); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
                   <i class="fa-solid fa-circle-check text-xs"></i> Paid at TGSPDCL (Settled via PhonePe / Portal)
@@ -432,6 +464,84 @@
         }
       }
 
+
+      <!-- ═══════════════════════════════════════════
+           RECENT MONITORING ACTIVITY & AUDIT LOGS
+      ═══════════════════════════════════════════ -->
+      <div class="card p-5 sm:p-6 rounded-3xl border" style="border-color: var(--border);">
+        <div class="flex items-center justify-between pb-3 mb-4 border-b flex-wrap gap-2" style="border-color: var(--border);">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center text-indigo-400"
+                 style="background: rgba(99, 102, 241, 0.12);">
+              <i class="fa-solid fa-list-check text-sm"></i>
+            </div>
+            <div>
+              <h4 class="text-sm font-black tracking-tight" style="color: var(--text);">
+                Monitoring Audit Logs &amp; Activity
+              </h4>
+              <p class="text-[11px] font-semibold" style="color: var(--t2);">
+                Real-time check history: Hangfire automatic background checks &amp; manual checks
+              </p>
+            </div>
+          </div>
+          <button type="button"
+                  (click)="loadMonitoringLogs()"
+                  [disabled]="loadingLogs()"
+                  class="px-3 py-1.5 text-xs font-bold rounded-xl border flex items-center gap-1.5 transition hover:bg-black/5 cursor-pointer"
+                  style="border-color: var(--border); color: var(--text);">
+            <i class="fa-solid fa-rotate-right text-[11px]" [class.fa-spin]="loadingLogs()"></i>
+            <span>Refresh Logs</span>
+          </button>
+        </div>
+
+        @if (loadingLogs() && !monitoringStatus()) {
+          <div class="py-6 text-center text-xs" style="color: var(--t2);">
+            <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Loading check audit logs...
+          </div>
+        } @else if (monitoringStatus(); as status) {
+          @if (status.recentLogs.length === 0) {
+            <div class="text-xs text-center py-6" style="color: var(--t2);">
+              No check logs recorded yet. Checks run automatically (10 AM &amp; 10 PM) or when you click "Check Bill Now".
+            </div>
+          } @else {
+            <div class="space-y-2.5">
+              @for (log of status.recentLogs.slice(0, 5); track log.id) {
+                <div class="p-3 sm:p-3.5 rounded-2xl border text-xs flex items-center justify-between flex-wrap gap-2 transition hover:bg-black/5"
+                     style="background: var(--card); border-color: var(--border);">
+                  <div class="flex items-center gap-2.5 flex-wrap">
+                    <span class="font-black px-2 py-0.5 rounded text-[10px] uppercase inline-flex items-center gap-1"
+                          [ngClass]="log.checkType === 'MANUAL' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-emerald-500/20 text-emerald-400'">
+                      <i class="fa-solid" [ngClass]="log.checkType === 'MANUAL' ? 'fa-user' : 'fa-robot'"></i>
+                      <span>{{ log.checkType }} CHECK</span>
+                    </span>
+                    <span class="font-bold text-[11px] px-2 py-0.5 rounded uppercase"
+                          [ngClass]="log.status === 'BILL_GENERATED' ? 'bg-emerald-500/15 text-emerald-400' : (log.status === 'PROVIDER_ERROR' ? 'bg-rose-500/15 text-rose-400' : 'bg-amber-500/15 text-amber-400')">
+                      {{ log.status }}
+                    </span>
+                    <span class="text-[11px] font-medium" style="color: var(--t2);">
+                      {{ log.message }}
+                    </span>
+                  </div>
+                  <div class="text-[11px] font-semibold whitespace-nowrap" style="color: var(--t3);">
+                    {{ log.checkedAt | date:'medium' }}
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (status.recentLogs.length > 5) {
+              <div class="pt-3 text-center">
+                <button type="button"
+                        (click)="openLogsModal()"
+                        class="text-xs font-bold text-indigo-400 hover:underline cursor-pointer inline-flex items-center gap-1">
+                  <span>View all {{ status.recentLogs.length }} audit logs in full</span>
+                  <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </button>
+              </div>
+            }
+          }
+        }
+      </div>
     </div>
   }
 
@@ -676,7 +786,11 @@
         </button>
       </div>
 
-      @if (monitoringStatus(); as status) {
+      @if (loadingLogs() && !monitoringStatus()) {
+        <div class="py-8 text-center text-xs" style="color: var(--t2);">
+          <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Loading check audit logs...
+        </div>
+      } @else if (monitoringStatus(); as status) {
         <div class="space-y-3">
           @if (status.recentLogs.length === 0) {
             <div class="text-xs text-center py-6" style="color: var(--t2);">No check logs recorded yet.</div>

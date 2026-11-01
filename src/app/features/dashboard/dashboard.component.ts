@@ -290,6 +290,11 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   recentExpenses = signal<DashboardExpense[]>([]);
   upcomingBills = signal<DashboardUpcomingBill[]>([]);
+  selectedBillsMonth = signal<string>(this.currentMonthStr);
+  selectedDashboardMonth = signal<string>(this.currentMonthStr);
+  isViewingCurrentDashboardMonth = computed(() => this.selectedDashboardMonth() === this.currentMonthStr);
+  billsLoading = signal<boolean>(false);
+  isViewingCurrentBillsMonth = computed(() => this.selectedBillsMonth() === this.currentMonthStr);
   iouDebts = signal<DashboardIouDebt[]>([]);
 
   // Filtered Debts
@@ -353,7 +358,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   loadDashboardData(): void {
     if (!this.groupId) return;
     this.loading.set(true);
-    this.api.get<any>(`groups/${this.groupId}/dashboard`).subscribe({
+    this.api.get<any>(`groups/${this.groupId}/dashboard?month=${this.selectedDashboardMonth()}`).subscribe({
       next: (d) => {
         this.loading.set(false);
         if (d) {
@@ -404,6 +409,86 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   setBucket(bucket: 'daily' | 'bills' | 'iou'): void {
     this.activeBucket.set(bucket);
+  }
+
+  prevDashboardMonth(): void {
+    const monthVal = this.selectedDashboardMonth();
+    const [y, m] = (monthVal && monthVal.includes('-') ? monthVal : this.currentMonthStr).split('-').map(Number);
+    const d = new Date(y, m - 2, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    this.selectedDashboardMonth.set(key);
+    this.selectedBreakdownMonth.set(key);
+    this.selectedBillsMonth.set(key);
+    this.loadDashboardData();
+  }
+
+  nextDashboardMonth(): void {
+    const monthVal = this.selectedDashboardMonth();
+    const [y, m] = (monthVal && monthVal.includes('-') ? monthVal : this.currentMonthStr).split('-').map(Number);
+    const d = new Date(y, m, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    this.selectedDashboardMonth.set(key);
+    this.selectedBreakdownMonth.set(key);
+    this.selectedBillsMonth.set(key);
+    this.loadDashboardData();
+  }
+
+  formattedDashboardMonth(): string {
+    const monthVal = this.selectedDashboardMonth();
+    if (!monthVal || !monthVal.includes('-')) return 'Current Month';
+    const [y, m] = monthVal.split('-').map(Number);
+    const date = new Date(y, m - 1, 1);
+    return date.toLocaleString('default', { month: 'short', year: 'numeric' });
+  }
+
+  prevBillsMonth(): void {
+    const monthVal = this.selectedBillsMonth();
+    const [y, m] = (monthVal && monthVal.includes('-') ? monthVal : this.currentMonthStr).split('-').map(Number);
+    const d = new Date(y, m - 2, 1);
+    this.selectedBillsMonth.set(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    this.loadBillsForMonth();
+  }
+
+  nextBillsMonth(): void {
+    const monthVal = this.selectedBillsMonth();
+    const [y, m] = (monthVal && monthVal.includes('-') ? monthVal : this.currentMonthStr).split('-').map(Number);
+    const d = new Date(y, m, 1);
+    this.selectedBillsMonth.set(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    this.loadBillsForMonth();
+  }
+
+  formattedBillsMonth(): string {
+    const monthVal = this.selectedBillsMonth();
+    if (!monthVal || !monthVal.includes('-')) return 'Current Month';
+    const [y, m] = monthVal.split('-').map(Number);
+    const date = new Date(y, m - 1, 1);
+    return date.toLocaleString('default', { month: 'short', year: 'numeric' });
+  }
+
+  loadBillsForMonth(): void {
+    if (!this.groupId) return;
+    this.billsLoading.set(true);
+    this.api.get<any>(`groups/${this.groupId}/bills?month=${this.selectedBillsMonth()}`).subscribe({
+      next: (res) => {
+        this.billsLoading.set(false);
+        const myId = this.me()?.id;
+        const mappedBills: DashboardUpcomingBill[] = (res?.bills || []).map((b: any) => {
+          const mySplit = (b.members || []).find((m: any) => Number(m.userId) === Number(myId));
+          const isPaid = b.paidFromPool || (mySplit?.isPaid ?? false);
+          const shareAmount = mySplit?.shareAmount ?? b.perHead ?? 0;
+          return {
+            billName: b.billName,
+            shareAmount,
+            dueDay: b.dueDay || 1,
+            isPaid
+          };
+        });
+        this.upcomingBills.set(mappedBills);
+      },
+      error: () => {
+        this.billsLoading.set(false);
+      }
+    });
   }
 
   setBreakdownScope(scope: 'this_month' | 'monthwise' | 'overall'): void {
@@ -519,7 +604,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   }
 
   goToBills(): void {
-    this.router.navigate(['/g', this.groupId, 'bills']);
+    this.router.navigate(['/g', this.groupId, 'bills'], { queryParams: { month: this.selectedBillsMonth() } });
   }
 
   goToIou(): void {

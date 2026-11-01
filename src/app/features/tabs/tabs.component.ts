@@ -18,9 +18,9 @@ export interface NavTab {
 export class TabsComponent {
   tabs: NavTab[] = [
     { path: 'dashboard', label: 'Home', iconClass: 'fa-solid fa-house' },
-    { path: 'iou', label: 'Settle', iconClass: 'fa-solid fa-handshake' },
+    { path: 'pool', label: 'Pool', iconClass: 'fa-solid fa-wallet' },
     { path: 'log-expense', label: 'Add', iconClass: 'fa-solid fa-plus', isCenter: true },
     { path: 'bills', label: 'Bills', iconClass: 'fa-solid fa-receipt' },
-    { path: 'pool', label: 'Pool', iconClass: 'fa-solid fa-wallet' },
+    { path: 'iou', label: 'Settle', iconClass: 'fa-solid fa-handshake' },
   ];
 }

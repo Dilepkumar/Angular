@@ -62,11 +62,6 @@ export class ProfileComponent implements OnInit, AfterViewInit {
   inviteCodeCopied = signal<boolean>(false);
   inviteLinkCopied = signal<boolean>(false);
 
-  // Notification Toggles
-  pushEnabled = signal(true);
-  whatsappEnabled = signal(true);
-  emailDigestEnabled = signal(false);
-
   avatarUrl = signal<string | null>(null);
   initials = signal('');
   genders = GENDERS;

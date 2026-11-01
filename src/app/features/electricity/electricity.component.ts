@@ -45,6 +45,7 @@ export class ElectricityComponent implements OnInit {
   loading = signal<boolean>(false);
   checking = signal<boolean>(false);
   loadingSplits = signal<boolean>(false);
+  loadingLogs = signal<boolean>(false);
   loadingBillers = signal<boolean>(false);
   loadingBillerDetail = signal<boolean>(false);
 
@@ -88,6 +89,30 @@ export class ElectricityComponent implements OnInit {
     if (!acc) return false;
     return acc.remainingManualChecksToday > 0;
   });
+
+  isCurrentBillingCycle(bill?: ElectricityBill | null): boolean {
+    if (!bill) return false;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    if (bill.billDate) {
+      const bDate = new Date(bill.billDate);
+      if (!isNaN(bDate.getTime())) {
+        return bDate.getFullYear() === currentYear && bDate.getMonth() === currentMonth;
+      }
+    }
+    if (bill.billPeriod) {
+      const currentMonthName = now.toLocaleString('en-US', { month: 'short' }).toLowerCase();
+      const p = bill.billPeriod.toLowerCase();
+      return p.includes(currentMonthName) && p.includes(currentYear.toString());
+    }
+    return false;
+  }
+
+  currentMonthName(): string {
+    return new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  }
 
   // Per Person equal share computed helper
   perPersonShare = computed(() => {
@@ -150,6 +175,7 @@ export class ElectricityComponent implements OnInit {
 
   selectAccount(acc: ElectricityAccount): void {
     this.selectedAccount.set(acc);
+    this.loadMonitoringLogs(acc.id);
     if (acc?.latestBill?.id) {
       this.loadSplits(acc.id, acc.latestBill.id);
     } else {
@@ -201,6 +227,7 @@ export class ElectricityComponent implements OnInit {
         if (res.bill?.id) {
           this.loadSplits(acc.id, res.bill.id);
         }
+        this.loadMonitoringLogs(acc.id);
       },
       error: (err) => {
         this.checking.set(false);
@@ -390,9 +417,22 @@ export class ElectricityComponent implements OnInit {
     if (!acc) return;
 
     this.showLogsModal.set(true);
-    this.electricityService.getMonitoringStatus(acc.id).subscribe({
-      next: (status) => this.monitoringStatus.set(status),
-      error: () => {}
+    this.loadMonitoringLogs(acc.id);
+  }
+
+  loadMonitoringLogs(accountId?: number): void {
+    const id = accountId || this.selectedAccount()?.id;
+    if (!id) return;
+
+    this.loadingLogs.set(true);
+    this.electricityService.getMonitoringStatus(id).subscribe({
+      next: (status) => {
+        this.monitoringStatus.set(status);
+        this.loadingLogs.set(false);
+      },
+      error: () => {
+        this.loadingLogs.set(false);
+      }
     });
   }
 
