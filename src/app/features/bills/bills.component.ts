@@ -431,7 +431,26 @@ export class BillsComponent implements OnInit {
   }
 
   goToElectricity(): void {
-    this.router.navigate(['/g', this.groupId, 'electricity']);
+    this.router.navigate(['/g', this.groupId, 'electricity'], { queryParams: { month: this.billingMonth } });
+  }
+
+  async generateCurrentMonthBills(): Promise<void> {
+    const confirmed = await this.popup.confirm({
+      title: 'Generate Bills',
+      message: `Generate recurring bills (Wi-Fi, etc.) and roommate splits for ${this.formattedMonth()}?`,
+      confirmText: 'Generate Now',
+      cancelText: 'Cancel',
+      type: 'primary'
+    });
+    if (!confirmed) return;
+
+    this.api.post(`groups/${this.groupId}/bills/generate`, { billingMonth: this.billingMonth }).subscribe({
+      next: (res: any) => {
+        this.popup.success(res?.message || `Bills generated for ${this.formattedMonth()}!`);
+        this.load();
+      },
+      error: (e) => this.popup.error(e?.error?.message || 'Failed to generate bills')
+    });
   }
 
   formatBillName(name?: string): string {

@@ -258,18 +258,19 @@
            BILL DISPLAY & DETAILS CARD
       ═══════════════════════════════════════════ -->
       @if (acc.latestBill; as bill) {
+        @if (isCurrentBillingCycle(bill)) {
         <div class="card p-6 bill-details-card">
           <div class="flex items-center justify-between flex-wrap gap-2 mb-4 pb-3 border-b" style="border-color: var(--border);">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="text-sm font-black uppercase tracking-wider" style="color: var(--text);">
-                {{ isCurrentBillingCycle(bill) ? 'Current Billing Cycle' : 'Previous Settled Bill' }}
+                Current Billing Cycle ({{ currentMonthName() }})
               </span>
               @if (bill.billPeriod) {
                 <span class="text-xs font-bold px-2 py-0.5 rounded-md bill-period-pill">
                   {{ bill.billPeriod }}
                 </span>
               }
-              @if (bill.isPaidAtProvider || !isCurrentBillingCycle(bill)) {
+              @if (bill.isPaidAtProvider) {
                 <span class="text-xs font-black px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5 shadow-sm"
                       style="background: rgba(16, 185, 129, 0.16); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
                   <i class="fa-solid fa-circle-check text-xs"></i> Paid at TGSPDCL (Settled via PhonePe / Portal)
@@ -440,6 +441,7 @@
             </div>
           </div>
         </div>
+        }
       }
 
       <!-- ═══════════════════════════════════════════

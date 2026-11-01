@@ -48,6 +48,7 @@ export class ElectricityComponent implements OnInit {
   loadingLogs = signal<boolean>(false);
   loadingBillers = signal<boolean>(false);
   loadingBillerDetail = signal<boolean>(false);
+  selectedMonth = signal<string>(new Date().toISOString().slice(0, 7));
 
   // Add Account Modal State
   showAddModal = signal<boolean>(false);
@@ -92,26 +93,28 @@ export class ElectricityComponent implements OnInit {
 
   isCurrentBillingCycle(bill?: ElectricityBill | null): boolean {
     if (!bill) return false;
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
+    const target = this.selectedMonth();
+    const [tYear, tMonth] = target.split('-').map(Number);
 
     if (bill.billDate) {
       const bDate = new Date(bill.billDate);
       if (!isNaN(bDate.getTime())) {
-        return bDate.getFullYear() === currentYear && bDate.getMonth() === currentMonth;
+        return bDate.getFullYear() === tYear && (bDate.getMonth() + 1) === tMonth;
       }
     }
     if (bill.billPeriod) {
-      const currentMonthName = now.toLocaleString('en-US', { month: 'short' }).toLowerCase();
+      const d = new Date(tYear, tMonth - 1, 1);
+      const shortMonth = d.toLocaleString('en-US', { month: 'short' }).toLowerCase();
       const p = bill.billPeriod.toLowerCase();
-      return p.includes(currentMonthName) && p.includes(currentYear.toString());
+      return p.includes(shortMonth) && p.includes(tYear.toString());
     }
     return false;
   }
 
   currentMonthName(): string {
-    return new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    const [y, m] = this.selectedMonth().split('-').map(Number);
+    const d = new Date(y, m - 1, 1);
+    return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
   }
 
   // Per Person equal share computed helper
@@ -121,7 +124,7 @@ export class ElectricityComponent implements OnInit {
       return s.splits[0].shareAmount;
     }
     const bill = this.selectedAccount()?.latestBill;
-    if (bill && bill.totalAmount > 0) {
+    if (bill && this.isCurrentBillingCycle(bill) && bill.totalAmount > 0) {
       return Math.round((bill.totalAmount / 5) * 100) / 100;
     }
     return 0;
@@ -136,6 +139,11 @@ export class ElectricityComponent implements OnInit {
   ngOnInit(): void {
     const gId = this.route.snapshot.paramMap.get('groupId') || localStorage.getItem('rl_group_id') || '1';
     this.groupId.set(gId);
+
+    const qMonth = this.route.snapshot.queryParamMap.get('month');
+    if (qMonth && /^\d{4}-\d{2}$/.test(qMonth)) {
+      this.selectedMonth.set(qMonth);
+    }
 
     this.api.get<any>(`groups/${gId}`).subscribe({
       next: (g) => {
@@ -176,7 +184,7 @@ export class ElectricityComponent implements OnInit {
   selectAccount(acc: ElectricityAccount): void {
     this.selectedAccount.set(acc);
     this.loadMonitoringLogs(acc.id);
-    if (acc?.latestBill?.id) {
+    if (acc?.latestBill?.id && this.isCurrentBillingCycle(acc.latestBill)) {
       this.loadSplits(acc.id, acc.latestBill.id);
     } else {
       this.splits.set(null);
@@ -441,7 +449,7 @@ export class ElectricityComponent implements OnInit {
   }
 
   goToBills(): void {
-    this.router.navigate(['/g', this.groupId(), 'bills']);
+    this.router.navigate(['/g', this.groupId(), 'bills'], { queryParams: { month: this.selectedMonth() } });
   }
 
   goToDashboard(): void {

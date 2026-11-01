@@ -137,7 +137,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════
-         IN-APP NOTIFICATIONS FEED
+         IN-APP NOTIFICATIONS FEED (SWIPE-TO-ACTION)
     ═══════════════════════════════════════════ -->
     <div>
       <div class="flex items-center justify-between mb-3 px-1">
@@ -156,38 +156,90 @@
         <div class="card p-0 rounded-2xl overflow-hidden divide-y border shadow-sm"
              style="background: var(--card); border-color: var(--border);">
           @for (n of items(); track n.id) {
-            <div class="p-4 flex items-start gap-3.5 transition hover:bg-black/5"
-                 [style.background]="n.isRead ? 'transparent' : 'color-mix(in srgb, var(--p1) 5%, transparent)'">
-              
-              <!-- Icon Container -->
-              <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm shrink-0 border mt-0.5"
-                   style="background: var(--bg2); border-color: var(--border);">
-                <i [class]="iconClass(n.type)"></i>
+            <div class="swipe-row-wrapper"
+                 [class.collapsing]="isCollapsing(n.id)">
+
+              <!-- Action Panels Behind Card (Style A: Reveal Panel) -->
+              <div class="swipe-actions-layer">
+                <!-- Swipe Right = Mark as Read (Teal #1ABC9C) -->
+                <div class="swipe-action-panel swipe-action-read"
+                     [class.visible]="getSwipeOffset(n.id) > 0"
+                     [class.threshold-reached]="getSwipeOffset(n.id) >= SWIPE_THRESHOLD">
+                  <div class="action-content">
+                    <i class="fa-solid fa-check-double text-sm"></i>
+                    <span class="action-text">Mark Read</span>
+                  </div>
+                </div>
+
+                <!-- Swipe Left = Delete (Red #F43F5E) -->
+                <div class="swipe-action-panel swipe-action-delete"
+                     [class.visible]="getSwipeOffset(n.id) < 0"
+                     [class.threshold-reached]="getSwipeOffset(n.id) <= -SWIPE_THRESHOLD">
+                  <div class="action-content">
+                    <span class="action-text">Delete</span>
+                    <i class="fa-solid fa-trash-can text-sm"></i>
+                  </div>
+                </div>
               </div>
 
-              <!-- Message Body -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between gap-2">
-                  <h3 class="text-xs sm:text-sm font-extrabold truncate"
-                      [style.color]="n.isRead ? 'var(--t2)' : 'var(--text)'">
-                    {{ n.title }}
-                  </h3>
-                  @if (!n.isRead) {
-                    <span class="w-2 h-2 rounded-full shrink-0" style="background: var(--p1);"></span>
-                  }
+              <!-- Foreground Swipeable Card -->
+              <div class="notification-swipe-card p-4 flex items-start gap-3.5 transition-colors cursor-grab active:cursor-grabbing select-none"
+                   [class.swiping]="isSwiping(n.id)"
+                   [class.committed]="isCommitted(n.id)"
+                   [style.transform]="'translateX(' + getSwipeOffset(n.id) + 'px)'"
+                   [style.background]="n.isRead ? 'var(--card)' : 'color-mix(in srgb, var(--p1) 5%, var(--card))'"
+                   (touchstart)="onTouchStart($event, n)"
+                   (touchmove)="onTouchMove($event, n)"
+                   (touchend)="onTouchEnd($event, n)"
+                   (touchcancel)="onTouchCancel($event, n)"
+                   (pointerdown)="onPointerDown($event, n)"
+                   (pointermove)="onPointerMove($event, n)"
+                   (pointerup)="onPointerUp($event, n)"
+                   (pointercancel)="onPointerCancel($event, n)">
+
+                <!-- Icon Container -->
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm shrink-0 border mt-0.5 pointer-events-none"
+                     style="background: var(--bg2); border-color: var(--border);">
+                  <i [class]="iconClass(n.type)"></i>
                 </div>
 
-                <p class="text-xs mt-0.5 leading-relaxed font-medium" style="color: var(--t2);">
-                  {{ n.message || n.body }}
-                </p>
+                <!-- Message Body -->
+                <div class="flex-1 min-w-0 pointer-events-none">
+                  <div class="flex items-center justify-between gap-2">
+                    <h3 class="text-xs sm:text-sm font-extrabold truncate"
+                        [style.color]="n.isRead ? 'var(--t2)' : 'var(--text)'">
+                      {{ n.title }}
+                    </h3>
+                    @if (!n.isRead) {
+                      <span class="w-2 h-2 rounded-full shrink-0" style="background: var(--p1);"></span>
+                    }
+                  </div>
 
-                <div class="text-[10px] font-semibold mt-1.5" style="color: var(--t3);">
-                  {{ n.createdAt | date:'EEE, dd MMM · hh:mm a' }}
+                  <p class="text-xs mt-0.5 leading-relaxed font-medium" style="color: var(--t2);">
+                    {{ n.message || n.body }}
+                  </p>
+
+                  <div class="text-[10px] font-semibold mt-1.5" style="color: var(--t3);">
+                    {{ n.createdAt | date:'EEE, dd MMM · hh:mm a' }}
+                  </div>
                 </div>
+
               </div>
 
             </div>
           }
+        </div>
+
+        <!-- Swipe Action Instructions Hint -->
+        <div class="mt-3 px-1 flex items-center justify-between text-[11px] font-medium" style="color: var(--t3);">
+          <span class="flex items-center gap-1.5">
+            <i class="fa-solid fa-arrow-right text-[10px]" style="color: #1ABC9C;"></i>
+            <span>Swipe right to mark read</span>
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span>Swipe left to delete</span>
+            <i class="fa-solid fa-arrow-left text-[10px]" style="color: #F43F5E;"></i>
+          </span>
         </div>
       } @else {
         <div class="card p-10 text-center rounded-2xl border flex flex-col items-center justify-center"
@@ -207,4 +259,24 @@
     </div>
 
   </div>
+
+  <!-- ═══════════════════════════════════════════
+       BOTTOM ACTION FEEDBACK SNACKBAR
+  ═══════════════════════════════════════════ -->
+  @if (snackbar().show) {
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-snackbar-up">
+      <div class="px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2.5 border backdrop-blur-md"
+           style="background: color-mix(in srgb, var(--card) 95%, transparent); border-color: var(--border);">
+        <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs"
+             [style.background]="snackbar().type === 'read' ? 'rgba(26, 188, 156, 0.15)' : 'rgba(244, 63, 94, 0.15)'"
+             [style.color]="snackbar().type === 'read' ? '#1ABC9C' : '#F43F5E'">
+          <i [class]="snackbar().icon"></i>
+        </div>
+        <span class="text-xs font-black" style="color: var(--text);">
+          {{ snackbar().message }}
+        </span>
+      </div>
+    </div>
+  }
+
 </div>
